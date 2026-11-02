@@ -66,7 +66,7 @@ async function mapBuild(id) {
     await gpuBarrier('textures'); // sur téléphone : le GPU finit les textures générées avant l'étape suivante (01a-gpu.js)
     await step(_t('Construction de {0}', info.name), 0.3);
     MAPL.root = new THREE.Group(); MAPL.root.name = 'carte ' + id; MAPL.root.matrixAutoUpdate = false; scene.add(MAPL.root);
-    def.build(); tissusBuild(); MAPL.rails = railingsSeal(); finalizeWorld(); propsFinalize(); buildHash(); reliefGroundTex(); // hauteurs du sable pour les shaders (02-relief.js)
+    def.build(); tissusBuild(); MAPL.rails = railingsSeal(); finalizeWorld(); propsFinalize(); buildHash(); dmgMapReady(); reliefGroundTex(); // hauteurs du sable pour les shaders (02-relief.js)
     if (def.after) def.after();
     grassBuild(def.grass); // brins d'herbe des pelouses (02nb-gazon.js)
     mapDressing(); // chute de neige
@@ -142,7 +142,7 @@ function mapUnload() {
     MAPL.root.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material && !lib.has(o.material)) o.material.dispose(); if (o.isInstancedMesh) o.dispose(); });
     MAPL.root = null;
   }
-  grassClear(); skyPhotoFree();
+  grassClear(); skyPhotoFree(); dmgClear();
   mapTeardown(); freeMaterials(); lightUnload(); navUnload(); mnavUnload();
   COL.length = 0; RAILS.length = 0; RAMPS.length = 0; LINES.length = 0; BRIDGES.length = 0; PONDS.length = 0; OCC.length = 0; LAMPS.length = 0; HASH.clear(); BEAMS.length = 0; PREFABS.clear(); propsClear();
   WORLD.bufs.clear(); WORLD.meshes.length = 0; WORLD.fine.length = 0; WORLD.scatter.length = 0; WORLD.dressing = null; WORLD.force = null;

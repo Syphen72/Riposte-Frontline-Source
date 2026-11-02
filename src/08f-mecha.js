@@ -681,7 +681,8 @@ function mechaShoot(me, i, aim, from0) {
   const w = rayWorld(from.x, from.y, from.z, dir.x, dir.y, dir.z, F.range + 15, 1), wt = w ? w.t : F.range + 15;
   const eh = me.local ? rayEntities(from, dir, wt, me.owner) : null, end = from.clone().addScaledVector(dir, eh ? eh.t : wt);
   const fk = from0 ? 0.35 : 1; // (vue du cockpit : la bouche est à un mètre de l'œil, l'éclair plus petit)
-  FX.tracers.add(from, end); FX.flash.spawn(from.x, from.y, from.z, 0, 0, 0, 0.04, 0.45 * fk, 0.3 * fk, 3, 2.2, 1.2, 1, 0);
+  (from0 ? FX.tracers : FX.heavy).add(from, end, from0 ? 380 : 300); FX.flash.spawn(from.x, from.y, from.z, 0, 0, 0, 0.05, 0.8 * fk, 0.35 * fk, 3, 2.2, 1.2, 1, 0); // (piloté : la traçante fine, la lourde passerait à un mètre de l'œil)
+  if (!from0) heavyNearMiss(me.owner, from, dir, eh ? eh.t : wt);
   sfxHeliGun(from, me); me.kick[i] = 1; me.shotAt = MATCH.time; // (on l'entend tirer : mechaThreat)
   if (!me.local) return;
   const dmg = from0 ? MECHA_P.dmg : F.dmg; // piloté : obus plus lourds
@@ -690,8 +691,8 @@ function mechaShoot(me, i, aim, from0) {
     eh.ent.lastForce = { dir: dir.clone(), mag: 4, lift: 2, part: eh.part };
     applyDamage(eh.ent, dmg * (eh.part === 'head' ? 1.5 : eh.part === 'legs' ? 0.8 : 1), me.owner, NET_WSPECIAL.mecha, eh.part === 'head', dir, me.pos, -1);
     if (me.pilot === PL.ent) hitFeedback(eh.part === 'head', !eh.ent.alive); // piloté : la croix de touche comme avec une arme
-  } else if (w && w.prop) propShot(w.prop, end, dir, dmg * 0.6);
-  else if (w) impactFx(end, _mfB.set(w.nx, w.ny, w.nz), w.m, false);
+  } else if (w && w.prop) propShot(w.prop, end, dir, dmg * 0.6, me.owner);
+  else if (w && !dmgWorldShot(w.box, end, dir, dmg, me.owner, 'heavy')) impactFx(end, _mfB.set(w.nx, w.ny, w.nz), w.m, true);
   if (from0 && !eh && w) mechaSplash(me, end, w); // piloté : l'obus éclate à l'impact
 }
 /* Éclat d'un obus du mecha piloté (MECHA_P.splash) : un soldat ennemi à moins de r m de l'impact, sans mur entre eux, prend jusqu'à dmg (moins en

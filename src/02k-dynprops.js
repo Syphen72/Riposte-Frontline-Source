@@ -111,6 +111,7 @@ function propSpawn(type, x, y, z, ry = 0, o = {}) {
   const d = propDef(type, o.a), V = propVariant(d), s = o.s || 1;
   const b = new PBody(d, V, s);
   if (o.tint) { b.tintRaw = o.tint; b.tint = [sl(o.tint[0]), sl(o.tint[1]), sl(o.tint[2])]; }
+  b.boom = propBoomOf(type, o); if (b.boom) b.hp = b.boom.hp; // baril rouge, bouteille de gaz, jerrican rouge : explosifs (04c-degats.js)
   const q = b.q; q.setFromEuler(_peul.set(o.rx || 0, ry, o.rz || 0, 'YXZ'));
   propRot(b);
   b.p.set(x + (b.R[0] * d.com[0] + b.R[1] * d.com[1] + b.R[2] * d.com[2]) * s, y + (b.R[3] * d.com[0] + b.R[4] * d.com[1] + b.R[5] * d.com[2]) * s, z + (b.R[6] * d.com[0] + b.R[7] * d.com[1] + b.R[8] * d.com[2]) * s);
@@ -278,7 +279,8 @@ propType('jar', { pf: () => PF.jar(1), shapes: [CYL(0, 0.32, 0, 0.22, 0.32)], ma
 
 /* Caisse en planches (PF.crate, côté s en argument : 0,55 à 1,2 m) : elle résiste à quelques balles, puis bouge et tombe de sa pile. Les grosses (0,9 m et plus)
    bloquent des passages : elles sont des obstacles fixes (fixed), posées comme un décor ordinaire que ni balle ni explosion ne déplace ; les petites restent des props */
-propType('crate', (a) => { const s = a[0] || 1.1; return { pf: () => PF.crate(s), shapes: [BOX(0, s / 2, 0, s / 2, s / 2, s / 2)], mass: 22 * s * s * s, mu: 0.6, e: 0.15, rr: 3, resp: 2.4, blast: 6, hold: 12 + 28 * s, stack: true, mat: 'wood', snd: 'wood', fixed: s >= 0.9 }; });
+propType('crate', (a) => { const s = a[0] || 1.1; return { pf: () => PF.crate(s), shapes: [BOX(0, s / 2, 0, s / 2, s / 2, s / 2)], mass: 22 * s * s * s, mu: 0.6, e: 0.15, rr: 3, resp: 2.4, blast: 6, hold: 12 + 28 * s, stack: true, mat: 'wood', snd: 'wood', fixed: s >= 0.9,
+  hp: s < 0.9 ? 60 + 90 * s : Infinity, brk: s < 0.9 ? 'wood' : undefined }; }); // Breachline : une caisse mobile vole en éclats (planches, échardes)
 /* Sac d'épices ouvert (48 x 41 cm), sac de sable bas (PF.sandbag), bouteille de bar (hauteur en argument, éclate dès la première balle).
    noNav : la navigation des bots ne pose aucun nœud sur le dessus (un mur de sacs écorné faisait une marche de 0,44 m, plus haute sur une
    dune, où les bots montaient sans pouvoir la franchir ; ils contournent les murs et enjambent un sac tombé) */

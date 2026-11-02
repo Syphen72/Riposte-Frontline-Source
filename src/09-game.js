@@ -84,7 +84,7 @@ function killEnt(v, a, weapon, head, dir, life) {
   if (v.isPlayer) {
     if (PILOT.d) fpvLeave(); // la vue revient au corps ; le drone tombe (fpvStep)
     PL.deathT = 0; PL.killer = a !== v ? a : null; PL.reload = null; dropCookedNade(); PL.nadeState = null; PL.knifeT = 0; PL.knifeOut = false; PL.knifeHold = 0; PL.knifeBtn = null; vmClearHeld();
-      KC.pending = a && a !== v && a.model && weapon !== NET_WSPECIAL.heli && weapon !== NET_WSPECIAL.drone && weapon !== NET_WSPECIAL.mecha && weapon !== NET_WSPECIAL.fall && weapon !== NET_WSPECIAL.zone ? a : null; KC.deathT = MATCH.time; // (le nom traduit : en anglais, 'Hélicoptère' ne correspondait jamais)
+      KC.pending = a && a !== v && a.model && weapon !== NET_WSPECIAL.heli && weapon !== NET_WSPECIAL.drone && weapon !== NET_WSPECIAL.mecha && weapon !== NET_WSPECIAL.fall && weapon !== NET_WSPECIAL.zone && !wsNoCam(weapon) ? a : null; KC.deathT = MATCH.time; // (le nom traduit : en anglais, 'Hélicoptère' ne correspondait jamais)
     if (KC.pending) KC.info = `<span class="enemy">${esc(a.name)}</span><i>${esc(weapon)}</i><i>${Math.round(a.pos.distanceTo(v.pos))} m</i>`;
     showDeathScreen(a, weapon, head);
   } else {
@@ -224,7 +224,7 @@ function showDeathScreen(a, weapon, head) {
   const d = $('death'), by = a && a !== PL.ent, W = NET_WSPECIAL;
   d.classList.add('show'); clearHitmarker();
   $('deathBy').innerHTML = by ? `<small>${_t('Éliminé par')}</small><b class="${teamCls(a)}">${esc(a.name)}</b>` : `<b>${weapon === W.fall ? _t('Tombé dans le vide') : weapon === W.zone ? _t('Perdu dans le désert') : _t('Vous vous êtes éliminé')}</b>`;
-  const far = by && weapon !== W.fall && weapon !== W.zone && weapon !== W.air && weapon !== W.heli && weapon !== W.drone && weapon !== W.mecha; // la distance n'a de sens que pour un tir ou un lancer
+  const far = by && weapon !== W.fall && weapon !== W.zone && weapon !== W.air && weapon !== W.heli && weapon !== W.drone && weapon !== W.mecha && !wsNoCam(weapon); // la distance n'a de sens que pour un tir ou un lancer
   $('deathWeap').innerHTML = (far ? esc(_t('{0} · {1} m', weapon, Math.round(a.pos.distanceTo(PL.ent.pos)))) : esc(weapon)) + (by && head ? ` <em>${_t('Tir en pleine tête')}</em>` : '');
   d.classList.toggle('kcnext', !!KC.pending); d.style.setProperty('--rs', modeDef().respawn + 's'); // killcam à suivre : pas de compte à rebours
   HUD.dMode = ''; deathPrompt();
@@ -491,7 +491,7 @@ function startMatch(opt = {}) {
   MATCH.limit = MATCH.online ? NET.cfg.limit : Settings[MODES[mode].key];
   SMOKES.length = 0; PL.flashT = 0; MATCH.score = [0, 0]; MATCH.time = 0; MATCH.timeLeft = (MATCH.online ? NET.cfg.time : Settings.minutes) * 60; MATCH.uav = [0, 0]; MATCH.uavPing = [null, null]; MATCH.sat = [0, 0]; MATCH.iem = [0, 0]; MATCH.events = []; MATCH.winner = -1;
   for (const n of NADES) scene.remove(n.mesh); NADES.length = 0; clearThrowKnives(); soundEvents.length = 0; clearAircraft(); clearDrops();
-  FX.holes.clear(); FX.splats.clear(); FX.scorch.clear(); propsReset();
+  FX.holes.clear(); FX.splats.clear(); FX.scorch.clear(); propsReset(); dmgReset();
   for (const e of entities) { e.kills = e.deaths = e.score = e.assists = e.streak = e.comboN = 0; e.comboT = -99; e.alive = false; e.lastShotT = -9; }
   MATCH.state = 'playing'; kcReset(); MATCH.finalPending = null; MATCH.lastKill = null; MATCH.fin = null; MATCH.finSoon = false; finClear(); MATCH.startAt = MATCH.time;
   modeStart(mode);
@@ -733,7 +733,7 @@ function matchTick(dt, bg) {
   pfrLap(3); updatePlayer(dt, t); pfrLap(0); // pfrLap : étapes de l'enregistreur de performances (09zo-perfs.js)
   botsTick(dt, t); pfrLap(1);
   updateNades(dt); updateThrowKnives(dt); updateSmokes(dt); updateDrops(dt); updateProps(dt); pfrLap(2);
-  updateKillstreak(dt); updateAircraft(dt);
+  updateKillstreak(dt); updateAircraft(dt); dmgTick(dt);
   if (!bg) { drawTacMap(); if (ESSAI || ESSAI_MECHA) essaiTick(dt); updateHud(dt); }
   if (!fin && MATCH.timeLeft <= 0) matchFinish();
   if (!bg && !(KC.active && KC.live)) kcRecord(); // relecture en ligne : tampon figé

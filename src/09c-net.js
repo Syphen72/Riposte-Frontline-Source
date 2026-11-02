@@ -14,13 +14,13 @@
    séries). Modèle « le tireur décide » : celui qui tire calcule ses touches
    et les adresse à la victime, qui applique les dégâts et annonce sa mort.
    ========================================================================== */
-const NET_PROTO = 10, NET_LOAD_WAIT = 45, NET_MAX = 8, NET_TEAM = 6, NET_PREFIX = 'cod-lc1-', NET_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const NET_WSPECIAL = { nade: _t('Grenade'), tknife: _t('Couteau de lancer'), air: _t('Frappe aérienne'), knife: _t('Couteau'), heli: _t('Hélicoptère'), drone: _t('Drone kamikaze'), mecha: _t('Mecha'), fall: _t('Chute'), zone: _t('Désert') }; // fall : chute dans le vide (voidDeath) ; zone : resté hors de la zone ronde (zoneDeath, 02-relief.js)
+const NET_PROTO = 11, NET_LOAD_WAIT = 45, NET_MAX = 8, NET_TEAM = 6, NET_PREFIX = 'cod-lc1-', NET_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const NET_WSPECIAL = { nade: _t('Grenade'), tknife: _t('Couteau de lancer'), air: _t('Frappe aérienne'), knife: _t('Couteau'), heli: _t('Hélicoptère'), drone: _t('Drone kamikaze'), mecha: _t('Mecha'), fall: _t('Chute'), zone: _t('Désert'), veh: _t('Véhicule'), boom: _t('Explosion') }; // fall : chute dans le vide (voidDeath) ; zone : resté hors de la zone ronde (zoneDeath, 02-relief.js)
 const NET = {
   role: 'off', peer: null, hostConn: null, me: '', code: '', joined: false, t0: 0, hostSeen: 0, hbT: 0, lastSend: 0,
   relay: null, relayConn: null, relayTimer: 0, tx: { p2p: 'off', relay: 'off' }, // voies de connexion : pair à pair et relais (wait, idle, ok, fail, off)
   players: new Map(), phase: 'lobby', cfg: { bots: 1, diff: 2, limit: 30, time: 10, map: 'sable', mode: 'tdm' },
-  on: false, team: 0, remotes: new Map(), seen: new Map(), seenT: new Map(), ak: new Map(), sent: [], held: [], hitQ: 0, rid: 0, lastPub: 0, shots: 0, nick: '', status: '',
+  on: false, team: 0, remotes: new Map(), seen: new Map(), seenT: new Map(), ak: new Map(), sent: [], held: [], hitQ: 0, rid: 0, lastPub: 0, lastWs: 0, shots: 0, nick: '', status: '',
   startT: 0, ldKey: '', ldT: 0, lobbyTimer: 0, // lancement : début de l'attente (hôte), dernière progression envoyée
   key: '', // clé de cette page, envoyée avec la présentation (voir netKey)
   muted: new Set(), // joueurs masqués par ce joueur (leurs messages ne s'affichent plus chez lui), le temps du salon
@@ -771,6 +771,7 @@ function netClientMsg(m) {
       for (const it of m.l) if (Array.isArray(it) && typeof it[0] === 'string') netApply(it[0], it[1]);
       if (typeof m.tl === 'number' && isFinite(m.tl)) { MATCH.timeLeft = m.tl; cdNetIn(m.cd); } // (tl : l'envoi de l'hôte lui-même, pas un état relayé)
       if (m.dm && MATCH.mode === 'dom') domNetApply(m.dm);
+      if (m.ws) dmgNetSnapIn(m.ws); // état du décor (04c-degats.js)
       break;
     case 'gone': if (typeof m.id === 'string') netRemoveById(m.id); break;
     case 'away': if (typeof m.id === 'string') netRemoteAway(m.id); break;
@@ -999,7 +1000,9 @@ function netEventIn(e, ev) {
     const h = KS.helis.find((x) => x.owner === e && x.state !== 'crash');
     if (h) { h.state = 'crash'; h.burst = null; h.vy = 0; h.spin = 0; heliMsg(h, 'down'); }
   } else if (ev.k === 'prop') {
-    propNetHit(ev);
+    propNetHit(ev, e);
+  } else if (DMG_EVENTS.has(ev.k)) {
+    dmgNetIn(e, ev); // décor abîmé (04c-degats.js)
   } else if (ev.k === 'hang') {
     hangNetHit(ev);
   } else if (ev.k === 'uav') {
@@ -1189,7 +1192,7 @@ function netUpdate(dt) {
     if (NET.role === 'host') {
       const l = [[NET.me, netPresence(PL.ent, now)]];
       for (const b of entities) if (b.netBot) l.push([b.netId, netPresence(b, now)]);
-      netBroadcast({ t: 'ps', l, tl: Math.round(MATCH.timeLeft * 100) / 100, cd: cdNetOut(), dm: MATCH.mode === 'dom' ? domNetState() : undefined }, true); // cd : décompte du départ (09y-decompte.js)
+      netBroadcast({ t: 'ps', l, tl: Math.round(MATCH.timeLeft * 100) / 100, cd: cdNetOut(), dm: MATCH.mode === 'dom' ? domNetState() : undefined, ws: MATCH.state === 'playing' ? dmgNetSnap((now - (NET.lastWs || now)) / 1000) : undefined }, true); NET.lastWs = now; // cd : décompte du départ (09y-decompte.js)
     } else netSend({ t: 'p', p: netPresence(PL.ent, now) });
   }
   const live = MATCH.state === 'playing' || MATCH.state === 'paused';

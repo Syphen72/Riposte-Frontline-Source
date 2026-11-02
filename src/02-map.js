@@ -228,14 +228,14 @@ function ceilingAbove(x, z, y, r) {
 /* Rayon contre la géométrie statique et les props physiques. Renvoie distance, normale, matière, et le prop touché s'il y en a un
    (RAYHIT.prop). mode : 0 visée et lignes de vue (les petits props, que les balles traversent, sont ignorés), 1 tir (tous les
    props), 2 la carte seule. Les boîtes de collision d'un prop (noRay) ne comptent pas : c'est sa forme qui répond. */
-const RAYHIT = { t: 0, nx: 0, ny: 0, nz: 0, m: 'concrete', prop: null }, _rn = [0, 1, 0];
+const RAYHIT = { t: 0, nx: 0, ny: 0, nz: 0, m: 'concrete', prop: null, box: null }, _rn = [0, 1, 0]; // box : la boîte de collision touchée (null : sol, eau, prop)
 function rayWorld(ox, oy, oz, dx, dy, dz, maxD, mode = 0) {
-  let best = maxD, bn = 0, bm = 'concrete', found = false, pb = null;
+  let best = maxD, bn = 0, bm = 'concrete', found = false, pb = null, bc = null;
   if (RELIEF.on && !VOID.on) {
     // relief (dunes) : dans toutes les directions ; au-dessus d'un bassin, la surface de l'eau
     const t = reliefRay(ox, oy, oz, dx, dy, dz, best);
     if (t >= 0) {
-      best = t; bm = 'ground'; bn = 9; found = true;
+      best = t; bm = 'ground'; bn = 9; found = true; bc = null;
       if (POOLS.length && dy < -1e-6) { const pl = poolAt(ox + dx * t, oz + dz * t); if (pl && oy > pl.wl) { const tw = (pl.wl - oy) / dy; if (tw < best) { best = tw; bm = 'water'; bn = 2; } } }
       if (HOLES.length && dy < -1e-6 && bm === 'ground') { // trou d'un puits dans le sable : le tir continue dans le conduit (voir plus bas, sur le sol plat)
         const hh = holeAt(ox + dx * t, oz + dz * t);
@@ -262,7 +262,7 @@ function rayWorld(ox, oy, oz, dx, dy, dz, maxD, mode = 0) {
         else { t += sf; gm = hh.m; }
       }
     }
-    if (t > 0 && t < best) { best = t; bn = gn; bm = gm; found = true; }
+    if (t > 0 && t < best) { best = t; bn = gn; bm = gm; found = true; bc = null; }
   }
   const ex = ox + dx * maxD, ez = oz + dz * maxD;
   const arr = queryBoxesRay(ox, oz, ex, ez);
@@ -279,12 +279,12 @@ function rayWorld(ox, oy, oz, dx, dy, dz, maxD, mode = 0) {
     a = Math.min(t1, t2); b = Math.max(t1, t2);
     if (a > tmin) { tmin = a; ax = 2; } if (b < tmax) tmax = b;
     if (tmax < Math.max(tmin, 0) || tmin > best || tmin < 0) continue;
-    best = tmin; bm = c.m; found = true;
+    best = tmin; bm = c.m; found = true; bc = c;
     bn = ax === 0 ? (dx > 0 ? -1 : 1) : ax === 1 ? (dy > 0 ? -2 : 2) : (dz > 0 ? -3 : 3);
   }
   if (PHYS.live && mode !== 2) { const h = propsRay(ox, oy, oz, dx, dy, dz, best, mode); if (h) { best = h.t; bm = h.b.d.mat; found = true; pb = h; } }
   if (!found) return null;
-  RAYHIT.t = best; RAYHIT.m = bm; RAYHIT.prop = pb ? pb.b : null;
+  RAYHIT.t = best; RAYHIT.m = bm; RAYHIT.prop = pb ? pb.b : null; RAYHIT.box = pb ? null : bc;
   if (pb) { RAYHIT.nx = pb.nx; RAYHIT.ny = pb.ny; RAYHIT.nz = pb.nz; return RAYHIT; }
   if (bn === 9) { const n = reliefNormal(ox + dx * best, oz + dz * best, _rn); RAYHIT.nx = n[0]; RAYHIT.ny = n[1]; RAYHIT.nz = n[2]; return RAYHIT; } // pente d'une dune
   RAYHIT.nx = Math.abs(bn) === 1 ? Math.sign(bn) : 0; RAYHIT.ny = Math.abs(bn) === 2 ? Math.sign(bn) : 0; RAYHIT.nz = Math.abs(bn) === 3 ? Math.sign(bn) : 0;

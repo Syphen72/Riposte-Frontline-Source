@@ -495,11 +495,21 @@ class Maker {
       const k = f.mat || 'canvas', t = o.tint ? (Array.isArray(o.tint) ? (pf.tintable ? (pf.tintable.includes(k) ? o.tint : null) : o.tint) : o.tint[k]) : null;
       this.fabric(t ? { ...f, lin: f.lin.map((c, i) => c * sl(t[i])) } : f);
     }
+    for (const q of pf.panes) this.paneAt(q.c, q.t, q.n, q.w, q.h);
     for (const d of pf.dyn) {
       // les props d'un prefab prennent la teinte de l'estampille quand ils n'ont pas la leur (fruits d'un cageot)
       const oo = { ...d.o }; if (d.tintFrom && !oo.tint && Array.isArray(o.tint)) oo.tint = o.tint;
       this.dyn(d.t, d.x, d.y, d.z, d.ry, oo);
     }
+    return this;
+  }
+  /* Vitre de façade (Breachline, 04c-degats.js) : centre (x, y, z) dans le repère courant, axe du mur +x, normale +z ; largeur w, hauteur h */
+  paneAdd(x, y, z, w, h) { return this.paneAt([x, y, z], [1, 0, 0], [0, 0, 1], w, h); }
+  paneAt(c, t, n, w, h) {
+    if (!this.T.pane) return this;
+    const e = this.m.elements, dir = (v) => [e[0] * v[0] + e[4] * v[1] + e[8] * v[2], e[1] * v[0] + e[5] * v[1] + e[9] * v[2], e[2] * v[0] + e[6] * v[1] + e[10] * v[2]];
+    const T = dir(t), N = dir(n), sx = hyp3(T[0], T[1], T[2]) || 1, sy = hyp3(e[4], e[5], e[6]) || 1;
+    this.T.pane([e[0] * c[0] + e[4] * c[1] + e[8] * c[2] + e[12], e[1] * c[0] + e[5] * c[1] + e[9] * c[2] + e[13], e[2] * c[0] + e[6] * c[1] + e[10] * c[2] + e[14]], T, N, w * sx, h * sy);
     return this;
   }
   /* Raccourci : prefab posé en (x, y, z), tourné de ry autour de la verticale */
@@ -555,7 +565,7 @@ function sagPath(a, b, sag, n = 12) {
 
 /* ---------- Prefabs ---------- */
 class Prefab {
-  constructor(name) { this.name = name; this.parts = new Map(); this.cols = []; this.occs = []; this.pcols = []; this.dyn = []; this.lamps = []; this.fabrics = []; this.tintable = null; }
+  constructor(name) { this.name = name; this.parts = new Map(); this.cols = []; this.occs = []; this.pcols = []; this.dyn = []; this.lamps = []; this.fabrics = []; this.panes = []; this.tintable = null; }
   buf(mat, cls) { const k = mat + '|' + cls; let p = this.parts.get(k); if (!p) this.parts.set(k, p = { mat, cls, g: new GeoBuf(256, 512, LIVING.has(mat)) }); return p.g; }
   col(b, m, ray, occ) { this.cols.push({ ...b, m, ray, occ }); }
   occ(b, k) { this.occs.push({ ...b, k }); }
@@ -563,6 +573,7 @@ class Prefab {
   dynAdd(d) { this.dyn.push({ t: d.t, x: d.x, y: d.y, z: d.z, ry: d.ry, o: d.o, tintFrom: !!d.o.tintFrom }); return null; }
   lamp(l) { this.lamps.push(l); }
   fabric(f) { this.fabrics.push(f); } // tissu en coordonnées du prefab : repris à chaque estampille (Maker.put)
+  pane(c, t, n, w, h) { this.panes.push({ c, t, n, w, h }); } // vitre de façade, reposée à chaque estampille (Breachline)
   tris() { let t = 0; for (const p of this.parts.values()) t += p.g.ni / 3; return t; }
 }
 const PREFABS = new Map();
@@ -580,7 +591,7 @@ const NEAR_SHADOW = new Set(['crate', 'plastic', 'steel', 'rubber', 'burlap', 'p
 /* Matières de la dispersion au sol qui projettent une ombre (les herbes n'en projettent pas) */
 const SCATTER_SHADOW = new Set(['rubble']);
 const WORLD = {
-  bufs: new Map(), force: null, meshes: [], fine: [], scatter: [],
+  bufs: new Map(), force: null, meshes: [], fine: [], scatter: [], win: [], // win : maillages des vitres de façade, gardés en mémoire vive (04c-degats.js)
   buf(mat, cls, x, y, z) {
     void y;
     const cs = cls === 3 ? CHUNK / 2 : CHUNK; // dispersion : tronçons plus petits, masqués plus finement
@@ -595,6 +606,7 @@ const WORLD = {
   dynAdd(d) { return propSpawn(d.t, d.x, d.y, d.z, d.ry, d.o); },
   lamp(l) { LAMPS.push(l); },
   fabric(f) { FABRICS.push(f); },
+  pane(c, t, n, w, h) { glassAdd(c, t, n, w, h); },
 };
 /* Volumes d'occlusion pour l'éclairage cuit (voir 02e-light.js) */
 const OCC = [];
@@ -635,8 +647,10 @@ function finalizeWorld() {
       if (b.cls > 0 || NEAR_SHADOW.has(b.mat) || LIVING.has(b.mat)) mesh.userData.noPrepass = true;
       if (b.cls === 2) WORLD.fine.push(mesh);
       if (b.cls === 3) WORLD.scatter.push(mesh);
-      // une fois la géométrie envoyée au GPU, sa copie en mémoire vive ne sert plus (collisions et culling ont les leurs)
-      for (const a of [...Object.values(mesh.geometry.attributes), mesh.geometry.index]) a.onUpload(freeArray);
+      // une fois la géométrie envoyée au GPU, sa copie en mémoire vive ne sert plus (collisions et culling ont les leurs) ; sauf celle des
+      // vitres de façade, dont une vitre brisée change la couleur des sommets (04c-degats.js)
+      if (b.mat === 'window') WORLD.win.push(mesh);
+      else for (const a of [...Object.values(mesh.geometry.attributes), mesh.geometry.index]) a.onUpload(freeArray);
       mapAdd(mesh); WORLD.meshes.push(mesh);
     }
   }

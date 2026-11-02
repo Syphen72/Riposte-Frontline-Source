@@ -1720,3 +1720,5 @@ Sprinter, retenir son souffle en lunette ⇒ Sprint, hold your breath when scope
 pour avancer. Poussé au-delà du cercle, il fait sprinter. ⇒ to move. Pushed past the circle, it sprints.
 Se déplacer (analogique). L3 (appui sur le bâton) pour sprinter, en lunette pour retenir son souffle ⇒ Move (analog). L3 (press the stick) to sprint, in a scope to hold your breath
 Aucun salon public pour le moment. Créez le vôtre, il apparaîtra ici. ⇒ No public lobby right now. Create yours and it will show up here.
+Véhicule ⇒ Vehicle
+Explosion ⇒ Explosion

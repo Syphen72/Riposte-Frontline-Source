@@ -259,16 +259,16 @@ function heliShoot(h, b) {
   const wt = w ? w.t : HELI.range + 20;
   const eh = b.local ? rayEntities(from, dir, wt, h.owner) : null;
   const endT = eh ? eh.t : wt, end = from.clone().addScaledVector(dir, endT);
-  FX.tracers.add(from, end);
-  FX.flash.spawn(from.x, from.y, from.z, 0, 0, 0, 0.04, 0.5, 0.3, 3, 2.2, 1.2, 1, 0);
-  sfxHeliGun(from, h);
+  FX.heavy.add(from, end, 300); // traçante lourde à chaque balle : d'où vient le feu se lit de loin (Breachline)
+  FX.flash.spawn(from.x, from.y, from.z, 0, 0, 0, 0.05, 0.9, 0.4, 3, 2.2, 1.2, 1, 0);
+  sfxHeliGun(from, h); heavyNearMiss(h.owner, from, dir, endT);
   if (eh) {
     bloodFx(end, dir, eh.part === 'head');
     const dmg = HELI.dmg * (eh.part === 'head' ? 1.6 : eh.part === 'legs' ? 0.8 : 1);
     eh.ent.lastForce = { dir: dir.clone(), mag: 4, lift: 2, part: eh.part };
     applyDamage(eh.ent, dmg, h.owner, _t('Hélicoptère'), eh.part === 'head', dir, h.pos);
-  } else if (w && w.prop) { propShot(w.prop, end, dir, HELI.dmg * 0.6); }
-  else if (w) { impactFx(end, new V3(w.nx, w.ny, w.nz), w.m, false); }
+  } else if (w && w.prop) { propShot(w.prop, end, dir, HELI.dmg * 0.6, h.owner); }
+  else if (w && !(b.local && dmgWorldShot(w.box, end, dir, HELI.dmg, h.owner, 'heavy'))) { impactFx(end, new V3(w.nx, w.ny, w.nz), w.m, true); }
 }
 
 /* ---------- Boucle ---------- */

@@ -313,7 +313,7 @@ function fireRay(shooter, origin, dir, def, muzzle, tracer, dmgMul = 1) {
     off += w.t + 0.04;
     w = rayWorld(origin.x + dir.x * off, origin.y + dir.y * off, origin.z + dir.z * off, dir.x, dir.y, dir.z, maxD - off, 1);
   }
-  const wt = w ? off + w.t : maxD, wm = w ? w.m : null, wn = w ? new V3(w.nx, w.ny, w.nz) : null, wp = w ? w.prop : null;
+  const wt = w ? off + w.t : maxD, wm = w ? w.m : null, wn = w ? new V3(w.nx, w.ny, w.nz) : null, wp = w ? w.prop : null, wb = w ? w.box : null;
   const eh0 = rayEntities(origin, dir, wt, shooter);
   // l'hélicoptère ennemi encaisse les balles qui le touchent avant tout le reste
   const hz = shooter.isRemote ? null : rayHelis(shooter, origin, dir, eh0 ? eh0.t : wt), eh = hz ? null : eh0;
@@ -349,7 +349,7 @@ function fireRay(shooter, origin, dir, def, muzzle, tracer, dmgMul = 1) {
     applyDamage(eh.ent, dmg, shooter, def.name, eh.part === 'head', dir);
   } else if (wp) {
     propShotLocal(wp, end, dir, propDamage(def, endT) * dmgMul, shooter);
-  } else if (w) {
+  } else if (w && !dmgWorldShot(wb, end, dir, propDamage(def, endT) * dmgMul, shooter, 'bullet')) { // (vitre, véhicule : 04c-degats.js)
     impactFx(end, wn, wm, def.fam === 'sniper');
     if (Math.random() < 0.3 || shooter.isPlayer) sfxImpact(end, wm);
   }
@@ -699,7 +699,8 @@ function explode(p, owner, weaponName, radius, maxDmg, life, roofK) {
   pfrEvent(0); // enregistreur de performances (09zo-perfs.js)
   const ws = waterSurfaceAt(p.x, p.z), wet = ws !== null && p.y < ws + 0.3; // sous l'eau : gerbe et coup sourd (explosionFx)
   explosionFx(p); if (wet) sfxPlunge(p, 1); else sfxExplosion(p); kcEvent('boom', { p: p.clone() });
-  propBlast(p, radius, maxDmg); // chaque pair rejoue l'explosion : le souffle sur les props est calculé chez tous
+  propBlast(p, radius, maxDmg, owner); // chaque pair rejoue l'explosion : le souffle sur les props est calculé chez tous
+  dmgBlast(p, radius, maxDmg, owner); // vitres, véhicules (04c-degats.js)
   hangBlast(p, radius);
   toilesBlast(p, radius); // les toiles tendues se gonflent (02me-toiles.js) ; chaque pair rejoue le souffle, comme sur les props
   const dc = p.distanceTo(camera.position);

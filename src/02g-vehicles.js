@@ -520,10 +520,12 @@ function offroadBuild(M, P, o) {
 PF.car = (model = 'sedan', o = {}) => {
   if (model === true || model === false) { o = { wreck: model }; model = 'sedan'; }
   const key = `car_${model}_${o.dust ? 1 : 0}${o.wreck ? 1 : 0}${o.rack ? 1 : 0}`;
-  return prefab(key, (M, P) => {
+  const pf = prefab(key, (M, P) => {
     if (model === 'offroad') offroadBuild(M, P, o); else carBuild(M, P, CAR_SPECS[model], o);
     P.vcols = vehCols(model, o);
   });
+  if (!o.wreck) pf.wreckOf = () => PF.car(model, Object.assign({}, o, { wreck: true })); // épave du même modèle (véhicule destructible, 04c-degats.js)
+  return pf;
 };
 /* Collisions d'un véhicule (repère du prefab) : [[x0, x1, y0, y1, z0, z1], ...]. Voitures : la caisse en trois tronçons (capot, ceinture,
    malle ou hayon), d'un pare-chocs à l'autre, puis l'habitacle en deux étages qui restent sous le vitrage incliné ; l'épave est plus basse (affaissée sur ses jantes) */
@@ -544,6 +546,9 @@ function vehCols(model, o = {}) {
 }
 /* Pose un véhicule et ses collisions (pf.vcols) au point (x, y, z), tourné de rot ; o : options de DECOR.place (tint...) */
 function vehicle(pf, x, y, z, rot, o) {
+  // Breachline : un véhicule intact (qui a une épave) devient destructible, avec ses propres maillages (04c-degats.js) ; sauf s'il porte une
+  // bâche simulée (le tissu resterait en l'air au-dessus de l'épave) ou qu'on le veut figé (o.fixed)
+  if (pf.wreckOf && pf.vcols && !(o && (o.nocol || o.fixed)) && !pf.fabrics.length) { vehReg(pf, x, y, z, rot, o); return; }
   DECOR.place(pf, x, y, z, rot, o);
   if (pf.vcols && !(o && o.nocol)) colShape(x, y, z, rot, pf.vcols, 'metal');
 }
@@ -872,10 +877,13 @@ function boxTruckBuild(M, P, o) {
    wreck }. Ancienne écriture : PF.truck() pour le militaire bâché. Les collisions du modèle sont dans pf.vcols */
 PF.truck = (model = 'army', o = {}) => {
   const key = `truck_${model}_${o.load || ''}_${o.reefer ? 1 : 0}${o.dust ? 1 : 0}${o.wreck ? 1 : 0}`;
-  return prefab(key, (M, P) => {
+  const pf = prefab(key, (M, P) => {
     if (model === 'cargo') cargoTruckBuild(M, P, o); else if (model === 'box') boxTruckBuild(M, P, o); else armyTruckBuild(M, P, o);
     P.vcols = truckCols(model, o, P.cargo);
   });
+  pf.truck = true;
+  if (!o.wreck) pf.wreckOf = () => PF.truck(model, Object.assign({}, o, { wreck: true }));
+  return pf;
 };
 /* Collisions d'un camion : pare-chocs, châssis et plancher, cabine, plateau (jusqu'au haut des ridelles, de la
    bâche ou du chargement) ; l'épave est plus basse */

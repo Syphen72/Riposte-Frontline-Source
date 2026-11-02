@@ -137,6 +137,7 @@ function windowJoinery(M, op, d, tint, o = {}) {
     const lit = o.glass === 'glassLit' || (o.glass !== 'glass' && fr(seed * 7.13) < ((CURMAP.def && CURMAP.def.atmo.winLit) || 0)) ? 1 : 0;
     M.tint = [seed, lit, Math.min(gh / Math.max(gw, 0.1), 3.9) / 8 + (o.door ? 0.5 : 0)];
     M.quad('window', ...gp, [0, 0, 1], { uv: [[0, 0], [1, 0], [1, 1], [0, 1]] });
+    M.paneAdd(cx, cy, z0 + 0.035, gw, gh); // vitre qui se brise (04c-degats.js)
   } else M.quad(o.glass, ...gp, [0, 0, 1]);
   // rideau intérieur, parfois
   if (o.curtain) { M.color(o.curtain); M.quad('canvas', [op.x0 + t, op.y0 + h * 0.35, z0 - 0.05], [op.x1 - t, op.y0 + h * 0.35, z0 - 0.05], [op.x1 - t, op.y1 - t, z0 - 0.05], [op.x0 + t, op.y1 - t, z0 - 0.05], [0, 0, 1]); }

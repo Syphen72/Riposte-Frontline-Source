@@ -960,6 +960,12 @@ function sfxProp(pos, kind, k = 1) {
 function sfxPropBreak(pos, kind) {
   if (!AU.ready) return; const d = pos.distanceTo(camera.position); if (d > 55) return;
   const t = AU.ctx.currentTime + Math.min(d / 343, 0.2), o = auOut(pos, 0.15, 1.2, 1, 5);
+  if (kind === 'wood') { // caisse qui vole en éclats (Breachline) : le choc du bois, puis les planches qui craquent et retombent
+    sfxPlay('i_wood', o, t, { gain: 0.9, rate: rand(0.8, 0.9) });
+    tn(o, t, 0.16, 160, 70, 'sine', 0.55, 0.002); nz(o, t, 0.05, 'bandpass', 900, 500, 1, 0.6, 0.001);
+    for (let i = 0; i < 6; i++) nz(o, t + rand(0.02, 0.35), 0.03, 'bandpass', rand(600, 1600), 800, 1.6, rand(0.12, 0.3), 0.001);
+    return;
+  }
   if (sfxPlay(kind === 'snow' ? 'o_break_snow' : kind === 'glass' ? 'o_break_glass' : 'o_break_clay', o, t, { gain: 0.7, rate: rand(0.94, 1.06) })) return;
   if (kind === 'snow') { nz(o, t, 0.25, 'lowpass', 800, 150, 1, 0.8); tn(o, t, 0.2, 90, 40, 'sine', 0.7, 0.001); nz(o, t + 0.04, 0.2, 'bandpass', 1500, 600, 1, 0.25); }
   else if (kind === 'glass') {

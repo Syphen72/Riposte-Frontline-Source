@@ -339,7 +339,8 @@ const WM_AO = `{
    fenêtre à la place de la teinte : r, graine ; g, lampe ; b, rapport hauteur sur largeur / 8, + 0,5 pour une porte-fenêtre. */
 const WIN_ROOM = `#include <emissivemap_fragment>
 {
-  float wSeed = vColor.r, wLit = vColor.g, wDoor = step(0.5, vColor.b), wAsp = mod(vColor.b, 0.5) * 8.0;
+  // vert : lampe allumée + 2 x vitre brisée (Breachline, 04c-degats.js)
+  float wSeed = vColor.r, wBrk = step(1.5, vColor.g), wLit = vColor.g - 2.0 * wBrk, wDoor = step(0.5, vColor.b), wAsp = mod(vColor.b, 0.5) * 8.0;
   vec3 wN = normalize(vWNor), wT = normalize(cross(vec3(0.0, 1.0, 0.0), wN)), wRd = normalize(vWPos - cameraPosition);
   vec3 wd = vec3(dot(wRd, wT), wRd.y, dot(wRd, wN)); wd = sign(wd) * max(abs(wd), vec3(1e-4));
   vec3 wo = vec3(vUv.x, vUv.y * wAsp, 0.0);
@@ -376,6 +377,16 @@ const WIN_ROOM = `#include <emissivemap_fragment>
   vec3 wL = vec3(0.5, yC - 0.3, -D * 0.55); float wDl = length(h - wL);
   wLight += wLit * vec3(1.0, 0.62, 0.3) * 1.5 / (1.0 + 2.5 * wDl * wDl);
   float wF = 0.04 + 0.96 * pow(1.0 - clamp(dot(wN, -wRd), 0.0, 1.0), 5.0);
+  // vitre brisée : des éclats restent pris dans le cadre (bord dentelé tiré de la graine), le reste est un trou sans reflet
+  if (wBrk > 0.5) {
+    float wEx = min(vUv.x, 1.0 - vUv.x), wEy = min(vUv.y, 1.0 - vUv.y) * wAsp, wE = min(wEx, wEy);
+    float wA = (atan(vUv.y * wAsp - wAsp * 0.5, vUv.x - 0.5) / 6.2832 + 0.5) * 11.0 + wSeed * 7.0, wI = floor(wA), wFa = fract(wA);
+    float wH0 = fract(sin(wI * 12.9898 + wSeed * 78.2) * 43758.5), wH1 = fract(sin((wI + 1.0) * 12.9898 + wSeed * 78.2) * 43758.5), wHm = mix(wH0, wH1, wFa);
+    float wThr = 0.015 + 0.17 * wHm * wHm + 0.035 * abs(fract(wA * 3.0) - 0.5);
+    float wHole = step(wThr, wE), wEdge = (1.0 - wHole) * (1.0 - smoothstep(0.0, 0.012, wThr - wE));
+    wF *= 1.0 - wHole; roughnessFactor = mix(roughnessFactor, 1.0, wHole);
+    totalEmissiveRadiance += vec3(0.22, 0.24, 0.25) * wEdge * (0.4 + wmVol.r) + vec3(0.025) * (1.0 - wHole);
+  }
   totalEmissiveRadiance += c * wLight * (1.0 - wF);
   diffuseColor.rgb = vec3(0.0);
 }`;

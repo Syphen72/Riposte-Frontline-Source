@@ -18,7 +18,7 @@ class PBody {
     this.p = new V3(); this.q = new THREE.Quaternion(); this.vel = new V3(); this.w = new V3();
     this.R = new Float64Array(9); this.iw = new Float64Array(9);
     this.cols = []; this.boxes = []; this.ramps = []; this.origin = null; this.pooled = false; this.tint = null; this.tintRaw = null;
-    this.hp = d.hp; this.shock = 0; this.ext = null; this.still = 0; this.t = 0; this.t0 = 0; this.sndT = 0; this.need = true; this.nc = 0; this.floor = 0; this.wet = false; this.ripT = 0; this.cb = 0; this.mg = 0; this.sleepNow = false; this.snap = new V3(); this.snapT = 0;
+    this.hp = d.hp; this.boom = null; this.lit = 0; this.shock = 0; this.ext = null; this.still = 0; this.t = 0; this.t0 = 0; this.sndT = 0; this.need = true; this.nc = 0; this.floor = 0; this.wet = false; this.ripT = 0; this.cb = 0; this.mg = 0; this.sleepNow = false; this.snap = new V3(); this.snapT = 0;
     this.setScale(s);
   }
   /* Échelle uniforme : la masse suit le volume, l'inertie la masse et le carré de la taille */
@@ -132,7 +132,7 @@ function propsReset() {
   PHYS.awake.length = 0; PHYS.slept.length = 0;
   for (const c of PHYS.pcols) if (c.o) { c.x0 = c.o[0]; c.x1 = c.o[1]; c.y0 = c.o[2]; c.y1 = c.o[3]; c.z0 = c.o[4]; c.z1 = c.o[5]; }
   for (const b of PHYS.bodies) {
-    b.vel.set(0, 0, 0); b.w.set(0, 0, 0); b.hp = b.d.hp; b.shock = 0; b.still = 0; b.sndT = 0; b.inSlept = false;
+    b.vel.set(0, 0, 0); b.w.set(0, 0, 0); b.hp = b.boom ? b.boom.hp : b.d.hp; b.lit = 0; b.shock = 0; b.still = 0; b.sndT = 0; b.inSlept = false;
     if (b.pooled) { b.state = 0; b.setScale(1); b.q.set(0, 0, 0, 1); propRot(b); b.p.set(0, 0, 0); }
     else {
       const o = b.origin; b.state = 1; b.q.setFromEuler(_peul.set(o.rx, o.ry, o.rz, 'YXZ')); propRot(b);
@@ -568,7 +568,7 @@ function propPush(b, P, jx, jy, jz) {
 /* Une balle touche le prop au point P, dans la direction dir, avec dmg points de dégâts. Réveille le corps, le pousse
    (Δv de référence du type pour 30 points de dégâts, réparti en impulsion au point d'impact : un tir décentré le fait tourner)
    et le casse quand ses points de vie sont épuisés. */
-function propShot(b, P, dir, dmg) {
+function propShot(b, P, dir, dmg, by) {
   const d = b.d; if (b.state === 0) return;
   const rest = b.state === 1;
   // un corps au repos qui résiste (sac de sable d'un mur, caisse d'une pile) encaisse les premiers coups sans bouger
@@ -588,6 +588,7 @@ function propShot(b, P, dir, dmg) {
   propHitFx(b, P, dir);
   b.hp -= dmg;
   if (b.hp <= 0 && d.brk) propBreak(b, P, dir, 1);
+  else if (b.hp <= 0 && b.boom) propBoomCheck(b, by); // percé : il flambe, puis explose (04c-degats.js)
 }
 /* Étincelles, éclats ou jus au point d'impact (pas de trou de balle : le prop bouge) */
 function propHitFx(b, P, dir) {
@@ -600,7 +601,7 @@ function propHitFx(b, P, dir) {
   if (Math.random() < 0.6) sfxImpact(P, d.mat === 'snow' ? 'snow' : d.snd === 'clay' ? 'concrete' : d.mat);
 }
 /* Explosion en p, rayon radius, dégâts maxDmg au centre : tous les props touchés sont soulevés, éloignés, parfois cassés */
-function propBlast(p, radius, maxDmg) {
+function propBlast(p, radius, maxDmg, by) {
   if (!PHYS.live) return;
   for (const b of PHYS.bodies) {
     if (b.state === 0) continue;
@@ -622,6 +623,7 @@ function propBlast(p, radius, maxDmg) {
     b.still = 0;
     b.hp -= maxDmg * f;
     if (b.hp <= 0 && b.d.brk) propBreak(b, b.p, _ph3.set(dx / L, 0.4, dz / L).normalize(), 1.6);
+    else if (b.hp <= 0 && b.boom) propBoomCheck(b, by);
   }
 }
 
@@ -664,6 +666,9 @@ function propBreak(b, P, dir, k) {
   } else if (d.brk === 'glass') {
     propBreakFx('glass', b.p, k);
     sfxPropBreak(b.p, 'glass');
+  } else if (d.brk === 'wood') { // caisse : échardes et planches, sans corps (Breachline)
+    propBreakFx('wood', b.p, k * Math.max(0.7, b.s));
+    sfxPropBreak(b.p, 'wood');
   } else if (d.brk === 'snowman') {
     const parts = [['snowball', [0, 0.32, 0], 0.4, 1.4], ['snowball', [0, 0.9, 0], 0.3, 2.4], ['snowball', [0, 1.33, 0], 0.2, 3.2], ['snowHat', [0, 1.43, 0], 1, 3.6], ['carrot', [0, 1.33, 0.1], 1, 3.4],
       ['scarf', [0, 1.1, 0], 1, 2.6], ['twig', [-0.45, 1.15, 0], 1, 3.2], ['twig', [0.45, 1.15, 0], 1, 3.2]];
@@ -676,6 +681,10 @@ function propBreakFx(kind, p, k) {
   if (kind === 'glass') { // éclats de verre : étincelles claires, pas de corps (une étagère de bouteilles en compterait des centaines)
     for (let i = 0; i < 10; i++) FX.add.spawn(p.x, p.y + 0.1, p.z, rand(-2.5, 2.5) * k, rand(0.5, 3), rand(-2.5, 2.5) * k, rand(0.2, 0.45), 0.03, 0.01, 2.2, 2.6, 2.8, 1, 0.2, 14, 1);
     FX.smoke.spawn(p.x, p.y + 0.1, p.z, 0, 0.3, 0, 0.7, 0.08, 0.4, 0.85, 0.9, 0.92, 0.25, 0, 0, 1.4, rand(-1, 1));
+  } else if (kind === 'wood') {
+    for (let i = 0; i < 12; i++) FX.smoke.spawn(p.x + rand(-0.25, 0.25), p.y + rand(0, 0.4), p.z + rand(-0.25, 0.25), rand(-3.5, 3.5) * k, rand(1, 4.5), rand(-3.5, 3.5) * k, rand(0.6, 1.2), rand(0.06, 0.14), 0.05, 0.55, 0.4, 0.26, 1, 0.9, 13, 0.4, rand(-6, 6)); // planches
+    for (let i = 0; i < 16; i++) FX.smoke.spawn(p.x, p.y + 0.2, p.z, rand(-4, 4) * k, rand(0.5, 4), rand(-4, 4) * k, rand(0.4, 0.8), 0.03, 0.015, 0.7, 0.55, 0.36, 1, 0.8, 12, 0.5); // échardes
+    FX.smoke.spawn(p.x, p.y + 0.2, p.z, 0, 0.4, 0, 1.2, 0.25, 1.1, 0.6, 0.52, 0.42, 0.45, 0, 0, 1.4, rand(-1, 1));
   } else if (kind === 'snow') {
     for (let i = 0; i < 14; i++) FX.smoke.spawn(p.x + rand(-0.3, 0.3), p.y + rand(0.2, 1.5), p.z + rand(-0.3, 0.3), rand(-2.5, 2.5), rand(0.5, 3), rand(-2.5, 2.5), rand(0.8, 1.6), 0.25, 1.2, 0.93, 0.95, 0.98, 0.7, 0, 0.3, 1.2, rand(-1, 1));
     for (let i = 0; i < 18; i++) FX.smoke.spawn(p.x, p.y + 0.9, p.z, rand(-4, 4), rand(0.5, 5), rand(-4, 4), rand(0.5, 1), 0.04, 0.02, 0.97, 0.98, 1, 1, 0.8, 9, 0.8);
@@ -689,18 +698,18 @@ function propBreakFx(kind, p, k) {
 /* ---------- Tirs : liaison avec fireRay et le réseau ---------- */
 /* Tir local sur un prop : effet immédiat, puis annonce aux autres joueurs (leur propre copie du prop reçoit le même coup) */
 function propShotLocal(b, P, dir, dmg, shooter) {
-  propShot(b, P, dir, dmg);
+  propShot(b, P, dir, dmg, shooter);
   if (MATCH.online && shooter && (shooter.isPlayer || shooter.netBot))
     netEvent({ k: 'prop', n: b.id, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), dx: +dir.x.toFixed(2), dy: +dir.y.toFixed(2), dz: +dir.z.toFixed(2), d: Math.round(dmg) }, shooter);
 }
 /* Coup annoncé par un autre joueur */
-function propNetHit(ev) {
+function propNetHit(ev, by) {
   const b = PHYS.bodies[ev.n | 0]; if (!b || b.state === 0 || !PHYS.ready) return;
   const P = new V3(clamp(+ev.x || 0, -200, 200), clamp(+ev.y || 0, -10, 60), clamp(+ev.z || 0, -200, 200)), dir = new V3(+ev.dx || 0, +ev.dy || 0, +ev.dz || 0);
   if (dir.lengthSq() < 1e-6) return;
   // le corps a pu s'écarter de sa place chez l'autre joueur : le coup compte quand même (points de vie, éclatement), au centre
   if (P.distanceTo(b.p) > b.rad + 1.5) P.copy(b.p);
-  propShot(b, P, dir.normalize(), clamp(+ev.d || 0, 1, 300));
+  propShot(b, P, dir.normalize(), clamp(+ev.d || 0, 1, 300), by);
 }
 
 /* ---------- Objets suspendus : pendules (le seau du puits de Meltem) ----------

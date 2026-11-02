@@ -118,10 +118,15 @@ class Decals {
   clear() { _m1.makeScale(0, 0, 0); for (let k = 0; k < this.max; k++) this.mesh.setMatrixAt(k, _m1); this.mesh.instanceMatrix.needsUpdate = true; }
 }
 
-/* Traçantes : quads étirés orientés vers la caméra */
+/* Traçantes : quads étirés orientés vers la caméra. o (Breachline) : un style par instance.
+   col : couleur HDR du trait ; core : part du cœur blanc chaud (0 : profil plat d'origine) ; w0 + wk * distance : demi-largeur ;
+   lenMax, lenK : longueur du trait (min(lenMax, d * lenK)) ; a : opacité. FX.tracers garde le style d'origine (armes des soldats),
+   FX.heavy celui des armes lourdes (hélicoptère, mecha, tourelle, chien robot) : plus épais, plus long, plus lent, lisible de loin. */
+const _trSide = new V3();
 class Tracers {
-  constructor(max) {
+  constructor(max, o = {}) {
     this.max = max; this.list = [];
+    this.w0 = o.w0 || 0.018; this.wk = o.wk || 0.0012; this.lenMax = o.lenMax || 6; this.lenK = o.lenK || 0.4; this.a = o.a || 0.9;
     const g = new THREE.BufferGeometry();
     this.pos = new Float32Array(max * 6 * 3); this.uvs = new Float32Array(max * 6 * 2); this.alp = new Float32Array(max * 6);
     g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
@@ -131,10 +136,13 @@ class Tracers {
       const u = [0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1];
       for (let k = 0; k < 12; k++) this.uvs[i * 12 + k] = u[k];
     }
+    const col = o.col || [4.0, 2.6, 1.2];
     this.mat = new THREE.ShaderMaterial({
+      uniforms: { uCol: { value: new THREE.Vector3(col[0], col[1], col[2]) }, uCore: { value: o.core || 0 } },
       vertexShader: `attribute float aA; varying vec2 vUv; varying float vA; void main(){ vUv=uv; vA=aA; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-      fragmentShader: `varying vec2 vUv; varying float vA; void main(){ float e = 1.0-abs(vUv.y-0.5)*2.0; float l = smoothstep(0.0,0.35,vUv.x)*smoothstep(1.0,0.9,vUv.x);
-        gl_FragColor = vec4(vec3(4.0,2.6,1.2)*e*l*vA, 1.0); }`,
+      fragmentShader: `uniform vec3 uCol; uniform float uCore; varying vec2 vUv; varying float vA; void main(){ float e = 1.0-abs(vUv.y-0.5)*2.0; float l = smoothstep(0.0,0.35,vUv.x)*smoothstep(1.0,0.9,vUv.x);
+        vec3 c = uCol*mix(e, e*e*0.45, uCore) + vec3(5.0,4.2,3.2)*pow(e,6.0)*uCore*smoothstep(0.55,1.0,vUv.x);
+        gl_FragColor = vec4(c*l*vA, 1.0); }`,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     });
     this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.renderOrder = 4;
@@ -142,23 +150,31 @@ class Tracers {
   }
   add(a, b, speed = 380) {
     const d = a.distanceTo(b); if (d < 1.5) return;
-    if (this.list.length >= this.max) this.list.shift();
-    this.list.push({ a: a.clone(), dir: _v1.subVectors(b, a).normalize().clone(), d, t: 0, speed, len: Math.min(6, d * 0.4) });
+    const tr = this.list.length >= this.max ? this.list.shift() : { a: new V3(), dir: new V3(), d: 0, t: 0, speed: 0, len: 0 };
+    tr.a.copy(a); tr.dir.subVectors(b, a).normalize(); tr.d = d; tr.t = 0; tr.speed = speed; tr.len = Math.min(this.lenMax, d * this.lenK);
+    this.list.push(tr);
   }
   update(dt) {
-    const cam = camera.position; let k = 0;
-    this.list = this.list.filter((tr) => { tr.t += dt * tr.speed; return tr.t - tr.len < tr.d; });
+    const cam = camera.position, P = this.pos; let k = 0;
+    for (const tr of this.list) tr.t += dt * tr.speed;
+    this.list = this.list.filter((tr) => tr.t - tr.len < tr.d);
     for (const tr of this.list) {
       const h = Math.min(tr.t, tr.d), tl = Math.max(0, tr.t - tr.len);
       const A = _v1.copy(tr.a).addScaledVector(tr.dir, tl), Bp = _v2.copy(tr.a).addScaledVector(tr.dir, h);
       const mid = _v3.addVectors(A, Bp).multiplyScalar(0.5);
       const view = _v4.subVectors(cam, mid).normalize();
-      const side = new V3().crossVectors(tr.dir, view).normalize().multiplyScalar(0.018 + mid.distanceTo(cam) * 0.0012);
-      const quad = [A.clone().sub(side), Bp.clone().sub(side), Bp.clone().add(side), A.clone().sub(side), Bp.clone().add(side), A.clone().add(side)];
-      for (let q = 0; q < 6; q++) { this.pos[k * 18 + q * 3] = quad[q].x; this.pos[k * 18 + q * 3 + 1] = quad[q].y; this.pos[k * 18 + q * 3 + 2] = quad[q].z; this.alp[k * 6 + q] = 0.9; }
+      const sd = _trSide.crossVectors(tr.dir, view).normalize().multiplyScalar(this.w0 + mid.distanceTo(cam) * this.wk);
+      const o = k * 18;
+      P[o] = A.x - sd.x; P[o + 1] = A.y - sd.y; P[o + 2] = A.z - sd.z;
+      P[o + 3] = Bp.x - sd.x; P[o + 4] = Bp.y - sd.y; P[o + 5] = Bp.z - sd.z;
+      P[o + 6] = Bp.x + sd.x; P[o + 7] = Bp.y + sd.y; P[o + 8] = Bp.z + sd.z;
+      P[o + 9] = A.x - sd.x; P[o + 10] = A.y - sd.y; P[o + 11] = A.z - sd.z;
+      P[o + 12] = Bp.x + sd.x; P[o + 13] = Bp.y + sd.y; P[o + 14] = Bp.z + sd.z;
+      P[o + 15] = A.x + sd.x; P[o + 16] = A.y + sd.y; P[o + 17] = A.z + sd.z;
+      for (let q = 0; q < 6; q++) this.alp[k * 6 + q] = this.a;
       k++;
     }
-    for (let q = k * 18; q < this.max * 18; q++) this.pos[q] = 0;
+    for (let q = k * 18; q < this.max * 18; q++) P[q] = 0;
     this.mesh.geometry.attributes.position.needsUpdate = true; this.mesh.geometry.attributes.aA.needsUpdate = true;
     this.mesh.geometry.setDrawRange(0, k * 6);
   }
@@ -176,6 +192,7 @@ function initFx() {
     splats: new Decals(60, FXT.blood, 0.6, { k: 3.2 }), // le sang : rouge sombre, éclairci pour rester rouge une fois multiplié
     scorch: new Decals(20, FXT.scorch, 4.2, { life: 40, fade: 12 }), // une brûlure s'efface en douze secondes, une demi-minute après l'explosion
     tracers: new Tracers(48),
+    heavy: new Tracers(96, { col: [6.5, 2.4, 0.7], core: 1, w0: 0.045, wk: 0.0024, lenMax: 9, lenK: 0.5, a: 1 }), // armes lourdes (Breachline)
     dust: null, rings: [],
   };
   const rt = canvasTex(128, (g, sz) => { const r = g.createRadialGradient(sz / 2, sz / 2, 0, sz / 2, sz / 2, sz / 2); r.addColorStop(0, 'rgba(255,255,255,0)'); r.addColorStop(0.72, 'rgba(255,255,255,0)'); r.addColorStop(0.88, 'rgba(255,255,255,0.9)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, sz, sz); }, false);
@@ -226,7 +243,7 @@ function onResizeFx() {
 }
 function updateFx(dt) {
   DECAL_U.uNow.value += dt;
-  FX.add.update(dt); FX.flash.update(dt); FX.muzzle.update(dt); FX.smoke.update(dt); FX.blood.update(dt); FX.tracers.update(dt); updateRings(dt);
+  FX.add.update(dt); FX.flash.update(dt); FX.muzzle.update(dt); FX.smoke.update(dt); FX.blood.update(dt); FX.tracers.update(dt); FX.heavy.update(dt); updateRings(dt);
   const p = FX.dust.geometry.attributes.position.array, t = performance.now() * 0.0003, c = camera.position;
   for (let i = 0; i < p.length; i += 3) {
     p[i] += Math.sin(t + i) * 0.002; p[i + 1] += Math.cos(t * 1.3 + i) * 0.0015;
