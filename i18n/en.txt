@@ -684,6 +684,8 @@ Ces conditions sont régies par le droit français. Elles peuvent changer : la d
 Éditeur ⇒ Publisher
 Contact : {0} ⇒ Contact: {0}
 Hébergement ⇒ Hosting
+Crédits sonores ⇒ Sound credits
+Les sons et voix ci-dessous demandent que leur auteur soit cité ; tous les autres sons du jeu sont sous licence CC0. ⇒ The sounds and voices below require crediting their author; every other sound in the game is under the CC0 license.
 1. Qui est responsable de vos données ? ⇒ 1. Who is responsible for your data?
 {0}, {1}. Contact pour toute question ou demande : {2}. ⇒ {0}, {1}. Contact for any question or request: {2}.
 2. Quelles données, pour quoi, sur quelle base ? ⇒ 2. What data, for what purpose, on what basis?

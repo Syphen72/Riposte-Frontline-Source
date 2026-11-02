@@ -630,12 +630,22 @@ function clack(o, t, f, gain, dur = 0.06, body = 0) {
   nz(o, t, 0.012, 'bandpass', fc * 1.6, fc * 1.2, 1.2, gain * 0.25, 0.0004);
   if (body) tn(o, t, 0.06, body, body * 0.5, 'sine', gain * 0.8, 0.0008);
 }
-/* Échantillon de touche : un « bwop » très bref (47 ms), grave et saturé, qui se fait entendre au milieu des rafales.
-   Enregistré à 48 kHz, 8 bits, mono (2,2 ko, voir README « Crédits et licences ») ; c'est la seule donnée sonore du jeu. */
-const HIT_SAMPLE = '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';
+/* Son de touche : un « bwop » très bref (47 ms), grave et saturé, qui se fait entendre au milieu des rafales. Breachline : synthétisé au
+   démarrage du son (l'échantillon d'origine venait de flashkit.com, sous les conditions de son auteur) : sinus qui chute de 330 à 115 Hz avec
+   sa deuxième harmonique, claquement de bruit sur les 3 premières millisecondes, le tout saturé (tanh) puis ramené à 1. */
 function hitSampleBuild() {
-  const bin = atob(HIT_SAMPLE), n = bin.length, buf = AU.ctx.createBuffer(1, n, 48000), d = buf.getChannelData(0);
-  for (let i = 0; i < n; i++) { const v = bin.charCodeAt(i); d[i] = (v > 127 ? v - 256 : v) / 127; }
+  const sr = 48000, n = Math.round(sr * 0.047), buf = AU.ctx.createBuffer(1, n, sr), d = buf.getChannelData(0);
+  let ph = 0, peak = 0, seed = 7;
+  for (let i = 0; i < n; i++) {
+    const t = i / sr, k = t / 0.047;
+    ph += 2 * Math.PI * (115 + 215 * Math.exp(-t * 70)) / sr;
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    const click = t < 0.003 ? (seed / 0x3fffffff - 1) * (1 - t / 0.003) * 0.6 : 0;
+    const env = Math.min(1, t / 0.0015) * Math.pow(1 - k, 1.6);
+    d[i] = Math.tanh(3.2 * (env * (Math.sin(ph) + 0.35 * Math.sin(2 * ph)) + click));
+    peak = Math.max(peak, Math.abs(d[i]));
+  }
+  for (let i = 0; i < n; i++) d[i] /= peak || 1;
   AU.hitBuf = buf;
 }
 function hitSample(o, t, rate, gain) {
@@ -787,16 +797,8 @@ function sfxJet() {
 }
 /* Annonce de fin de partie (09l-fin.js) : une montée, puis l'impact quand le mot s'abat (0,42 s), et une harmonie qui dit le résultat :
    accord majeur qui s'ouvre (victoire), accord mineur grave qui s'affaisse (défaite), quinte nue (égalité) */
-/* Musique de fin de partie, au moment de l'annonce Victoire / Défaite (09l-fin.js) : les morceaux du propriétaire (paquet fin, chargé avec les sons
-   de la partie). Victory_Riff (4 s, -13,8 LUFS) et Mourning_Defeat (7,2 s, -18,4 LUFS) sont ramenés à peu près au même niveau, montés de 6 dB en 3.1.0
-   (« à rehausser », retour du propriétaire ; avant : 0,85 et 1,35), comme la fanfare de montée de niveau (rankUpSound) : au niveau de la synthèse
-   d'égalité, voir README « Niveaux » ; le réglage Musique les baisse sous la moitié et les coupe à zéro. Elle passe par les sons directs de la partie :
-   coupée net si l'on quitte pour les menus (sfxGate). Égalité, ou paquet absent : la synthèse d'origine. */
-const END_MUSIC = { win: ['m_victory', 1.7], loss: ['m_defeat', 2.7] };
 function sfxMatchEnd(result) {
-  if (!AU.ready) return;
-  const m = END_MUSIC[result];
-  if (m && sfxHas(m[0])) { sfxPlay(m[0], uiOut(m[1] * Math.min(1, Settings.music * 2)), AU.ctx.currentTime + 0.03); return; }
+  if (!AU.ready) return; // Breachline : la synthèse seule (les musiques de fin d'origine, créées avec Suno, ne sont plus livrées)
   const t = AU.ctx.currentTime + 0.03, h = t + 0.42, o = uiOut(1.1);
   nz(o, t, 0.4, 'bandpass', 300, 2600, 1.4, 0.35, 0.3);
   tn(o, h, 1.3, 88, 27, 'sine', 1.5, 0.003); tn(o, h, 0.4, 150, 48, 'triangle', 0.5);

@@ -13,7 +13,7 @@
    Variantes : « id-1 », « id-2 »... forment la banque « id », dont on tire une prise sans répéter la précédente.
    ========================================================================== */
 const SFX_PACKS = /*__SFX_PACKS__*/ {};
-const SFX_GAME = ['armes', 'foley', 'impacts', 'series', 'fin', 'mecha'];
+const SFX_GAME = ['armes', 'foley', 'impacts', 'series', 'mecha'];
 // bank : id → [{ b : AudioBuffer, o : début du son dans le tampon (s), d : durée (s), pk : instant de la crête (s) }]
 // state : paquet → { s : 'loading' | 'ready' | 'failed', p : promesse } ; of : paquet → banques qu'il a remplies
 const SFX = { bank: new Map(), last: new Map(), state: new Map(), cb: new Map(), of: new Map(), dec: new Map() };

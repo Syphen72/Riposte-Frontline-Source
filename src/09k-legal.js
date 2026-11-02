@@ -14,6 +14,8 @@ const LEGAL = {
   dbRegion: '[région de la base Neon : Francfort recommandée]',
   tab: 'privacy',
 };
+/* Sources sonores dont la licence demande de citer l'auteur (CC BY, MIT) : tirées de assets/sfx/credits.json par build.py, montrées dans les mentions légales */
+const SND_CREDITS = /*__SND_CREDITS__*/ [];
 function legalGo(tab) { LEGAL.tab = tab; uiGo('legal'); }
 function legalRender() {
   const body = $('lgBody'); if (!body) return;
@@ -34,7 +36,8 @@ function legalRender() {
   }
   if (LEGAL.tab === 'notice') {
     body.innerHTML = `<h4>${_t('Éditeur')}</h4><p>${L.name}<br>${L.address}<br>${_t('Contact : {0}', L.email)}</p>
-<h4>${_t('Hébergement')}</h4><p>${_t('Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (jeu et fonctions en ligne, exécutées en Europe). Base de données : Neon ({0}). Serveur de jeu (salons en ligne) : Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Allemagne (serveur en Allemagne).', L.db)}</p>`;
+<h4>${_t('Hébergement')}</h4><p>${_t('Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (jeu et fonctions en ligne, exécutées en Europe). Base de données : Neon ({0}). Serveur de jeu (salons en ligne) : Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Allemagne (serveur en Allemagne).', L.db)}</p>
+<h4>${_t('Crédits sonores')}</h4><p>${_t('Les sons et voix ci-dessous demandent que leur auteur soit cité ; tous les autres sons du jeu sont sous licence CC0.')}</p><ul>${SND_CREDITS.map((c) => `<li>${esc(c.nom)}, ${esc(c.auteur)} (${esc(c.licence)})${c.url ? ` : <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url.replace(/^https?:\/\//, ''))}</a>` : ''}</li>`).join('')}</ul>`;
     return;
   }
   body.innerHTML = `<h4>${_t('1. Qui est responsable de vos données ?')}</h4><p>${_t('{0}, {1}. Contact pour toute question ou demande : {2}.', L.name, L.address, L.email)}</p>

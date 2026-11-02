@@ -74,8 +74,8 @@ for f in sorted(glob.glob("assets/vendor/hdri/*.exr")):
 # src/09w-fond.js), l'usure des armes (grain : assets/arme/surface.webp, python3 tools/build_armes.py, lue par src/06-weapons.js), les
 # scans de tissu des tenues (tissus et teinte : assets/tenue/, python3 tools/build_tenues.py, lus par src/06e-gear.js), les animations
 # cuites (anim : assets/anim/clips.bin et clips.json, node tools/dev/anim/cuire.mjs depuis le pack Mixamo hors dépôt, lues par
-# src/06ab-anim.js) et la fanfare de montée de niveau (rankup, assets/rankup.mp3, src/05b-rankup-sound.js). Absent (réseau coupé) : le jeu
-# démarre sans eux, avec ses replis.
+# src/06ab-anim.js). Absent (réseau coupé) : le jeu démarre sans eux, avec ses replis. Breachline : la fanfare de montée de niveau n'est
+# plus livrée ici (elle est synthétisée, src/05b-rankup-sound.js).
 grain="assets/arme/surface.webp"
 anim=None
 if os.path.exists("assets/anim/clips.json"):
@@ -89,8 +89,7 @@ def socle_js(key,body):
     socle[key]=name
 socle_js("socle-ui","(function(s){s.setProperty('--key-art',"+json.dumps("url("+data_uri("assets/menu-bg.webp")+")")+");s.setProperty('--logo',"+json.dumps("url("+data_uri("assets/logo.webp")+")")+")})(document.documentElement.style);\n")
 tissus={k:data_uri(f"assets/tenue/{k}.webp") if os.path.exists(f"assets/tenue/{k}.webp") else "" for k in ("tissus","teinte")}
-socle_js("socle","window.SOCLE="+json.dumps({"depth":data_uri("assets/menu-depth.webp"),"grain":data_uri(grain) if os.path.exists(grain) else "",**tissus,"anim":anim,
-    "rankup":base64.b64encode(open("assets/rankup.mp3","rb").read()).decode("ascii")},separators=(",",":"))+";\n")
+socle_js("socle","window.SOCLE="+json.dumps({"depth":data_uri("assets/menu-depth.webp"),"grain":data_uri(grain) if os.path.exists(grain) else "",**tissus,"anim":anim},separators=(",",":"))+";\n")
 # three.js r147 et ses modules d'exemples (assets/vendor/three-r147.js, tools/vendor.py) : même emballage, chargé juste avant le code du jeu
 three=open("assets/vendor/three-r147.js",encoding="utf-8").read()
 if "</script" in three.lower(): raise SystemExit("assets/vendor/three-r147.js contient </script")
@@ -136,7 +135,11 @@ print("illustrations des cartes :",", ".join(f"{k} ({os.path.getsize('dist/'+v)/
 en_dict,en_errs=i18n.load_en()
 if en_errs: raise SystemExit("i18n/en.txt :\n  "+"\n  ".join(en_errs))
 print("dictionnaire anglais :",len(en_dict),"entrées")
-for mark,val in (("/*__I18N_EN__*/ {}",json.dumps(en_dict,ensure_ascii=False,separators=(",",":")).replace("<","\\u003c")),("/*__TEX_PACKS__*/ {}",json.dumps(packs)),("/*__SFX_PACKS__*/ {}",json.dumps(sfx)),("/*__MAP_ART__*/ {}",json.dumps(art))):
+# Crédits sonores des mentions légales (src/09k-legal.js) : les sources de assets/sfx/credits.json qui ne sont ni CC0 ni du domaine public
+snd_credits=[{k:v.get(k,"") for k in ("nom","auteur","licence","url")} for v in json.load(open("assets/sfx/credits.json",encoding="utf-8"))["sources"].values()
+    if "CC0" not in v.get("licence","") and "omaine public" not in v.get("licence","")]
+for mark,val in (("/*__I18N_EN__*/ {}",json.dumps(en_dict,ensure_ascii=False,separators=(",",":")).replace("<","\\u003c")),("/*__TEX_PACKS__*/ {}",json.dumps(packs)),("/*__SFX_PACKS__*/ {}",json.dumps(sfx)),("/*__MAP_ART__*/ {}",json.dumps(art)),
+                 ("/*__SND_CREDITS__*/ []",json.dumps(snd_credits,ensure_ascii=False,separators=(",",":")).replace("<","\\u003c"))):
     if js.count(mark)!=1: raise SystemExit("marqueur introuvable ou en double dans src/ : "+mark)
     js=js.replace(mark,val)
 # Syntaxe du script assemblé (node --check) : une erreur de syntaxe passait sans bruit, et la page restait blanche au chargement (les outils
