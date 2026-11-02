@@ -2,14 +2,14 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Ce5OSCiY3acdEH1SsClKxtTPxBo8TJlApXRymTEHpeo=' 'sha256-rbTaSdDD+Sd+K8IZ66VS79bdI78bN8AwXXyN0/lD5fY=' https://cdn.jsdelivr.net/npm/peerjs@1.5.5/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://*.peerjs.com wss://*.peerjs.com stun: turn:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-xjw2yKzuOi0+f0olgot6V8P5GnzbKkCFhhdD2CE6nMs=' 'sha256-rbTaSdDD+Sd+K8IZ66VS79bdI78bN8AwXXyN0/lD5fY=' https://cdn.jsdelivr.net/npm/peerjs@1.5.5/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://*.peerjs.com wss://*.peerjs.com stun: turn:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Breachline">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="cod-relay" content="">
-<meta name="cod-build" content="f8a7c6b9179d">
+<meta name="cod-build" content="0a2ea11c1627">
 <meta name="menu-music" content="">
 <title>Breachline, FPS gratuit dans le navigateur</title>
 <!-- Aperçu d'un lien partagé (Discord, WhatsApp, réseaux) et adresse de référence : adresse et image posées par build.py (SITE, assets/apercu.jpg).
@@ -5094,6 +5094,7 @@ function propBoomTick(f,dt){const b=f.b;f.t-=dt;if(b.state===0)return true;dmgFl
 function dmgFlame(p,k){FX.add.spawn(p.x+rand(-0.12,0.12)*k,p.y,p.z+rand(-0.12,0.12)*k,rand(-0.25,0.25),rand(1.2,2.4)*(0.6+k*0.4),rand(-0.25,0.25),rand(0.3,0.6),0.32*k+0.12,0.06,4.6,1.9,0.5,1,0,-1.5,0.6);if(Math.random()<0.35)FX.add.spawn(p.x,p.y+0.1,p.z,rand(-0.1,0.1),rand(0.6,1.2),rand(-0.1,0.1),rand(0.2,0.35),0.55*k+0.15,0.2,2.6,0.9,0.2,0.7,0,0,1.2);}
 function dmgDebrisFx(p,k){for(let i=0;i<18*k;i++)FX.add.spawn(p.x,p.y,p.z,rand(-6,6)*k,rand(3,9)*k,rand(-6,6)*k,rand(0.6,1.3),0.08,0.03,3,1.4,0.4,1,0.4,14,0.4);for(let i=0;i<14*k;i++)FX.smoke.spawn(p.x,p.y,p.z,rand(-5,5)*k,rand(2,7)*k,rand(-5,5)*k,rand(0.7,1.4),0.07,0.05,0.08,0.07,0.06,1,0.8,14,0.5);for(let i=0;i<6;i++)FX.smoke.spawn(p.x+rand(-1,1),p.y+rand(0,1.5),p.z+rand(-1,1),rand(-0.5,0.5),rand(1.5,3),rand(-0.5,0.5),rand(3,5),1,4.5,0.06,0.06,0.06,0.7,0,0,0.6,rand(-1,1));}
 function dmgCrackle(p,dt,k){if(!AU.ready||Math.random()>dt*9*k)return;const d=p.distanceTo(camera.position);if(d>32)return;const t=AU.ctx.currentTime,o=auOut(p,0.2,0.55*k,1,4);nz(o,t,rand(0.015,0.04),'bandpass',rand(700,2600),rand(500,1500),1.4,rand(0.25,0.6),0.001);if(Math.random()<0.3)nz(o,t,0.3,'lowpass',400,160,0.7,0.25,0.05);}
+function heavyNearMiss(owner,origin,dir,endT){if(!PL.ent.alive||!owner||owner===PL.ent||allied(owner,PL.ent))return;const ph=entHead(PL.ent,_dgB),t=clamp((ph.x-origin.x)*dir.x+(ph.y-origin.y)*dir.y+(ph.z-origin.z)*dir.z,0,endT);const cp=_dgC.set(origin.x+dir.x*t,origin.y+dir.y*t,origin.z+dir.z*t);if(t>3&&cp.distanceTo(ph)<2.2){if(Math.random()<0.55)sfxWhiz(cp);PL.suppress=Math.min(1,PL.suppress+0.3);}}
 function dmgWorldShot(box,end,dir,dmg,shooter,type='bullet'){if(box&&box.veh){vehShot(box.veh,dmg*(type==='heavy'?DMG_VEH.heavy:DMG_VEH.bullet),shooter);return false;}
 if(DMG.panes.length&&(!box||!box.prop)){if(dir.x*dir.x+dir.z*dir.z<1e-4)return false;const p=glassAt(end.x,end.y,end.z,0.05,0.75,0.01);if(p&&dir.x*p.n.x+dir.y*p.n.y+dir.z*p.n.z<0){glassShot(p,end,dir,shooter);return true;}}
 return false;}

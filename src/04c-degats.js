@@ -292,6 +292,15 @@ function dmgCrackle(p, dt, k) {
   if (Math.random() < 0.3) nz(o, t, 0.3, 'lowpass', 400, 160, 0.7, 0.25, 0.05); // souffle du feu
 }
 
+/* Balle lourde qui frôle le joueur local (hélicoptère, mecha, tourelle, chien robot) : sifflement, et la visée se trouble (PL.suppress),
+   comme sous les balles des bots (fireRay) ; de quoi savoir d'où vient le feu même sans voir la traçante */
+function heavyNearMiss(owner, origin, dir, endT) {
+  if (!PL.ent.alive || !owner || owner === PL.ent || allied(owner, PL.ent)) return;
+  const ph = entHead(PL.ent, _dgB), t = clamp((ph.x - origin.x) * dir.x + (ph.y - origin.y) * dir.y + (ph.z - origin.z) * dir.z, 0, endT);
+  const cp = _dgC.set(origin.x + dir.x * t, origin.y + dir.y * t, origin.z + dir.z * t);
+  if (t > 3 && cp.distanceTo(ph) < 2.2) { if (Math.random() < 0.55) sfxWhiz(cp); PL.suppress = Math.min(1, PL.suppress + 0.3); }
+}
+
 /* ---------- Liaison avec les tirs, les explosions et la partie ---------- */
 /* Une balle touche le décor (box : la boîte de collision touchée, RAYHIT.box ; end : point touché). Renvoie vrai si l'impact est pris en
    charge ici (vitre : pas de trou de balle sur la façade), faux si le tireur doit jouer son effet d'impact habituel */
