@@ -177,6 +177,7 @@ function inspectWeapon() {
 const NADE_ANIM = { pin: 0.24, pull: 0.42, release: 0.12, raise: 0.19, throw: 0.38 };
 function cookNade() {
   if (PL.nades <= 0 || PL.nadeState || PL.knifeT > 0 || PL.switching > 0 || !PL.ent.alive || KS.mode || playHold()) return;
+  if (NADE_TYPES[PL.nadeType] && NADE_TYPES[PL.nadeType].place) { minePlaceStart(); return; } // mine, claymore : posée devant soi (08i-mines.js)
   PL.nadeState = 'pull'; PL.nadeT = 0; PL.cookT = 0; PL.nadeQueued = false; PL.nadePin = false; PL.nadeFuse = false; PL.nadeThrown = false;
   if (PL.nadeType === 'knife') { PL.nadeT = NADE_ANIM.pin + 0.01; PL.nadePin = true; } // couteau de lancer : pas de goupille, il est en main tout de suite
   // l'arme plonge hors champ pendant que la grenade monte (un peu moins vite qu'un changement d'arme)
@@ -402,6 +403,9 @@ function updatePlayer(dt, now) {
         if (PL.nadeQueued) startThrow();
         else { PL.nadeState = 'cook'; PL.nadeT = 0; if (NADE_TYPES[PL.nadeType].cook) { PL.nadeFuse = true; sfxMech('spoon'); vmSpoon(); } } // flash, fumigène : la cuillère reste, la mèche ne part qu'au lancer
       }
+    } else if (PL.nadeState === 'place') { // mine : la main descend vers le sol, la mine part à mi-geste
+      if (!PL.nadeThrown && PL.nadeT >= 0.3) { PL.nadeThrown = true; minePlaceNow(e); }
+      if (PL.nadeT >= 0.55) { PL.nadeState = null; VM.lowerTarget = PL.knifeOut ? 1 : 0; VM.lowerRate = 16; }
     } else if (PL.nadeState === 'throw') {
       if (!PL.nadeThrown && PL.nadeT >= NADE_ANIM.release) { PL.nadeThrown = true; throwNadeNow(); }
       if (PL.nadeT >= NADE_ANIM.raise) VM.lowerTarget = PL.knifeOut ? 1 : 0;

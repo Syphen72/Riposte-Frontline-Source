@@ -1727,3 +1727,18 @@ Lance-roquettes ⇒ Rocket launcher
 Roquette antichar. Elle s'arme après six mètres, perce les véhicules et ouvre les murs. ⇒ Anti-tank rocket. It arms after six meters, punches through vehicles and opens walls.
 Démolition ⇒ Demolition
 Un lance-roquettes pour les engins et les murs, un pistolet-mitrailleur pour le reste. ⇒ A rocket launcher for vehicles and walls, a submachine gun for the rest.
+Mine ⇒ Mine
+Mine bondissante ⇒ Bounding mine
+Posée au sol, elle s'arme en deux secondes et bondit quand un ennemi approche. Une balle la détruit, sa diode rouge la trahit. ⇒ Placed on the ground, it arms in two seconds and leaps up when an enemy comes close. A bullet destroys it, and its red light gives it away.
+Claymore ⇒ Claymore
+Mine directionnelle ⇒ Directional mine
+Posée devant vous, elle couvre un cône de trois mètres et projette ses billes vers l'avant. Ses faisceaux rouges se voient. ⇒ Placed in front of you, it covers a three-meter cone and blasts its pellets forward. Its red beams can be seen.
+{0} mine bondissante ⇒ {0} bounding mine
+{0} mines bondissantes ⇒ {0} bounding mines
+{0} claymore ⇒ {0} claymore
+{0} claymores ⇒ {0} claymores
+Armement ⇒ Arming
+Déclenchement ⇒ Trigger
+{0} m autour ⇒ {0} m around
+{0} m devant ⇒ {0} m ahead
+Impossible de poser ici ⇒ Can't place here

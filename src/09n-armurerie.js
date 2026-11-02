@@ -79,7 +79,9 @@ function renderArsNadeList() {
 function renderArsNadePanel() {
   const c = CLASSES[ARSUI.cls], id = NADE_TYPES[ARSUI.nadeSee] ? ARSUI.nadeSee : c.nade, N = NADE_TYPES[id];
   const num = (v) => v.toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US');
-  const facts = id === 'knife' ? [[_t('Par vie'), String(NADE_COUNT)], [_t('Effet'), _t('Élimine d\u0027un coup')], [_t('Vitesse'), _t('{0} m/s', THROW_KNIFE.speed)], [_t('Au sol'), _t('Se ramasse')]]
+  const facts = id === 'mine' || id === 'claymore' ? [[_t('Par vie'), String(NADE_COUNT)], [_t('Armement'), _t('{0} s', num(MINE.arm))],
+      [_t('Déclenchement'), id === 'mine' ? _t('{0} m autour', num(MINE.r)) : _t('{0} m devant', num(CLAY.range))], [_t('Effet'), _t('Jusqu\u0027à {0} de dégâts', id === 'mine' ? MINE.dmg : CLAY.dmg)]]
+    : id === 'knife' ? [[_t('Par vie'), String(NADE_COUNT)], [_t('Effet'), _t('Élimine d\u0027un coup')], [_t('Vitesse'), _t('{0} m/s', THROW_KNIFE.speed)], [_t('Au sol'), _t('Se ramasse')]]
     : [[_t('Mèche'), _t('{0} s', num(N.fuse))], [_t('Par vie'), String(NADE_COUNT)]].concat(
     id === 'flash' ? [[_t('Effet'), _t('Aveugle jusqu\u0027à {0} s', num(FLASH.max))], [_t('Portée'), _t('{0} m', FLASH.r)]]
     : id === 'smoke' ? [[_t('Effet'), _t('Nuage de {0} s', SMOKE.life)], [_t('Largeur'), _t('{0} m', num(Math.round(SMOKE.r * 2)))]]

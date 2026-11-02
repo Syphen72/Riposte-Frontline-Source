@@ -38,7 +38,7 @@ function unitDamage(u, dmg, by, type = 'bullet') {
   if (u.dead || !(dmg > 0)) return;
   const K = UNIT_KINDS[u.kind]; if (type !== 'raw' && K.dmgK) dmg *= K.dmgK(type); // raw : déjà pesé par le pair qui l'annonce
   if (!u.local) { if (MATCH.online && by && (by === PL.ent || by.netBot)) netEvent({ k: 'uh', to: netIdOf(u.owner), u: u.uid, d: Math.round(dmg) }, by); return; }
-  u.hp -= dmg; u.last = MATCH.time; if (by) u.by = by;
+  u.hp -= dmg; u.last = MATCH.time; u.lastType = type; if (by) u.by = by;
   if (u.hp <= 0) unitKill(u);
 }
 function unitKill(u) {

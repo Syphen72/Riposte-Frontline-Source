@@ -58,6 +58,10 @@ function buildGrenadeModel(M, type = 'frag') {
     throwKnifeBuild(g, throwKnifeSteel(), M.rubber);
     g.userData.spoon = new THREE.Object3D(); g.userData.ring = new THREE.Object3D(); g.add(g.userData.ring); // (ni cuillère ni anneau)
     return g;
+  } else if (type === 'mine' || type === 'claymore') { // mines (08i-mines.js) : réduites en main, sans cuillère ni anneau
+    mineBuild(g, M, type, 0.6); g.children.forEach((c) => { c.position.y -= 0.03; });
+    g.userData.spoon = new THREE.Object3D(); g.userData.ring = new THREE.Object3D(); g.add(g.userData.ring);
+    return g;
   } else part(g, new THREE.SphereGeometry(1, 18, 14), body, 0, 0, 0, 0.032, 0.037, 0.032);
   cy(g, M.metal, 0, 0.038, 0, 0.011, 0.018, 0);
   const spoon = rb(g, M.metal, 0.02, 0.018, 0, 0.008, 0.07, 0.016, 0.003, 0, 0, 0.35); g.userData.spoon = spoon;

@@ -15,7 +15,7 @@
    et les adresse à la victime, qui applique les dégâts et annonce sa mort.
    ========================================================================== */
 const NET_PROTO = 11, NET_LOAD_WAIT = 45, NET_MAX = 8, NET_TEAM = 6, NET_PREFIX = 'cod-lc1-', NET_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const NET_WSPECIAL = { nade: _t('Grenade'), tknife: _t('Couteau de lancer'), air: _t('Frappe aérienne'), knife: _t('Couteau'), heli: _t('Hélicoptère'), drone: _t('Drone kamikaze'), mecha: _t('Mecha'), fall: _t('Chute'), zone: _t('Désert'), veh: _t('Véhicule'), boom: _t('Explosion') }; // fall : chute dans le vide (voidDeath) ; zone : resté hors de la zone ronde (zoneDeath, 02-relief.js)
+const NET_WSPECIAL = { nade: _t('Grenade'), tknife: _t('Couteau de lancer'), air: _t('Frappe aérienne'), knife: _t('Couteau'), heli: _t('Hélicoptère'), drone: _t('Drone kamikaze'), mecha: _t('Mecha'), fall: _t('Chute'), zone: _t('Désert'), veh: _t('Véhicule'), boom: _t('Explosion'), mine: _t('Mine'), claymore: _t('Claymore') }; // fall : chute dans le vide (voidDeath) ; zone : resté hors de la zone ronde (zoneDeath, 02-relief.js)
 const NET = {
   role: 'off', peer: null, hostConn: null, me: '', code: '', joined: false, t0: 0, hostSeen: 0, hbT: 0, lastSend: 0,
   relay: null, relayConn: null, relayTimer: 0, tx: { p2p: 'off', relay: 'off' }, // voies de connexion : pair à pair et relais (wait, idle, ok, fail, off)
@@ -920,6 +920,7 @@ function netApply(id, P) {
   e.kills = P.k | 0; e.deaths = P.d | 0; e.assists = P.a | 0; e.score = P.sc | 0;
   if (P.dr) fpvNet(e, P.dr);
   if (P.mk) mechaNet(e, P.mk);
+  if (P.u) unitsNet(e, P.u); // unités posées : mines, tourelle, chien robot (08h-unites.js)
   if (alive && !e.alive) {
     if (e.pred && MATCH.time - e.predT < NET_PRED_HOLD) { /* mort prédite pas encore confirmée : cet état est parti avant la touche */ }
     else if (e.pred) { e.pred = false; e.alive = true; e.model.rag = null; e.lastForce = null; e.model.root.visible = true; netSentDrop(e); } // la victime a survécu : elle se relève
@@ -1005,6 +1006,8 @@ function netEventIn(e, ev) {
     rocketNetIn(e, ev);
   } else if (ev.k === 'rkx') {
     rocketNetEnd(e, ev);
+  } else if (ev.k === 'mt') {
+    mineNetBoom(e, ev);
   } else if (ev.k === 'uh' || ev.k === 'ux') {
     unitsNetIn(e, ev);
   } else if (DMG_EVENTS.has(ev.k)) {
@@ -1178,6 +1181,7 @@ function netPresence(e, now) {
     e.crouch ? ((e.slideT || 0) > 0 ? 2 : 1) : 0, e.sprinting ? 1 : 0, e.alive ? 1 : 0, (me ? VM.ads : e.arms.adsW) > 0.5 ? 1 : 0, Math.max(0, Math.round(e.health))];
   const p = { ts: Math.round(now), n: me ? NET.nick : e.name, t: e.team, w: me ? curW().def.id : armsW(e).def.id, g: me ? curW().def.key : armsW(e).def.key, s, f: me ? NET.shots : e.arms.shots, k: e.kills, d: e.deaths, a: e.assists, sc: e.score, sk: skinOf(e), ev: netEvList(e, now) };
   const dr = fpvPub(e); if (dr) p.dr = dr; // drone kamikaze en vol (08e-fpv.js)
+  const un = unitsPub(e); if (un) p.u = un;
   const mk = mechaPub(e); if (mk) p.mk = mk; // mecha posé (08f-mecha.js)
   if (!me) p.b = 1;
   else { // accusé (netPredHealth, netTradeOpen) : dernier événement appliqué de chaque expéditeur des 3 dernières secondes, avant une touche en attente

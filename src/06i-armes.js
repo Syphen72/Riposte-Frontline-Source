@@ -152,12 +152,18 @@ const NADE_TYPES = {
   // couteau de lancer : pas de mèche ni d'explosion, il file presque droit et tue d'un coup (THROW_KNIFE, 07-bots.js), puis reste planté et se ramasse
   knife: { fuse: 0, name: _t('Couteau'), long: _t('Couteau de lancer'), icon: '<path d="M12 2.5l2.2 4.2-1 8.3h-2.4l-1-8.3z"/><path d="M10.4 15h3.2v6.5h-3.2zM10.4 17.2h3.2M10.4 19.3h3.2"/>',
     desc: _t('Il part presque droit et tue d\u0027un coup s\u0027il touche. Il se ramasse en passant dessus.') },
+  // Breachline : mines posées au sol (08i-mines.js), unités du poseur ; place : posée devant soi, pas lancée
+  mine: { fuse: 0, place: true, name: _t('Mine'), long: _t('Mine bondissante'), icon: '<ellipse cx="12" cy="16" rx="8" ry="3.5"/><path d="M4 16v-2.5c0-1.9 3.6-3.5 8-3.5s8 1.6 8 3.5V16M12 10V7M10 6.5l2 .5 2-.5"/>',
+    desc: _t('Posée au sol, elle s\u0027arme en deux secondes et bondit quand un ennemi approche. Une balle la détruit, sa diode rouge la trahit.') },
+  claymore: { fuse: 0, place: true, name: _t('Claymore'), long: _t('Mine directionnelle'), icon: '<path d="M4 9c5-2.4 11-2.4 16 0v6H4z"/><path d="M6 15l-2 5M9 15l1 5M15 15l-1 5M18 15l2 5"/>',
+    desc: _t('Posée devant vous, elle couvre un cône de trois mètres et projette ses billes vers l\u0027avant. Ses faisceaux rouges se voient.') },
 };
 const NADE_IDS = Object.keys(NADE_TYPES);
 /* « 2 grenades incapacitantes » : le nombre et le type, pour le détail d'une classe */
 function nadeCount(id, n) {
   return id === 'flash' ? _tn(n, '{0} grenade incapacitante', '{0} grenades incapacitantes') : id === 'smoke' ? _tn(n, '{0} grenade fumigène', '{0} grenades fumigènes')
     : id === 'knife' ? _tn(n, '{0} couteau de lancer', '{0} couteaux de lancer')
+    : id === 'mine' ? _tn(n, '{0} mine bondissante', '{0} mines bondissantes') : id === 'claymore' ? _tn(n, '{0} claymore', '{0} claymores')
     : _tn(n, '{0} grenade à fragmentation', '{0} grenades à fragmentation');
 }
 const nadeSvg = (id) => `<svg viewBox="0 0 24 24" aria-hidden="true">${(NADE_TYPES[id] || NADE_TYPES.frag).icon}</svg>`;
@@ -169,7 +175,7 @@ const CLASSES = [
   { name: _t('Tireur d\u0027élite'), desc: _t('Une balle au torse suffit. En visée, retenez votre souffle pour stabiliser la lunette.'), primary: 'l96', secondary: 'm9', nades: NADE_COUNT, nade: 'smoke' },
   { name: _t('Brèche'), desc: _t('Dévastateur en intérieur, inoffensif au-delà de vingt mètres.'), primary: 'm1014', secondary: 'm9', nades: NADE_COUNT, nade: 'frag' },
   // Breachline : la classe des explosifs (les classes personnalisées suivent : l'indice enregistré des anciennes est décalé, 01-core.js)
-  { name: _t('Démolition'), desc: _t('Un lance-roquettes pour les engins et les murs, un pistolet-mitrailleur pour le reste.'), primary: 'mp5', secondary: 'rpg7', nades: NADE_COUNT, nade: 'frag' },
+  { name: _t('Démolition'), desc: _t('Un lance-roquettes pour les engins et les murs, un pistolet-mitrailleur pour le reste.'), primary: 'mp5', secondary: 'rpg7', nades: NADE_COUNT, nade: 'mine' },
 ];
 /* Séries d'éliminations au choix : chaque classe en porte trois (c.ks), à trois seuils différents, rangées par seuil ; ce sont les emplacements 1, 2 et 3
    (touches 4, 5 et 6, actions ks1 à ks3 ; boutons tactiles et de la manette de même). n : éliminations d'affilée sans mourir ; short : libellé du bouton
