@@ -75,7 +75,7 @@ async function mapBuild(id) {
     await step(_t('Éclairage cuit de la carte'), 0.48);
     bakeLightStart();
     await step(_t('Calcul des itinéraires des bots'), 0.52);
-    buildNav(); buildCovers(); mnavBuild(); // (le réseau du mecha, 08f-mecha.js, se tire de celui des bots)
+    breachNavOpen(); buildNav(); breachNavGate(); buildCovers(); mnavBuild(); // (brèches : le réseau construit pans ouverts, leurs nœuds fermés ensuite, 04d-breches.js) // (le réseau du mecha, 08f-mecha.js, se tire de celui des bots)
     await step(_t('Éclairage cuit de la carte'), 0.62);
     await LIGHT.ready;
     // éclairage HDRI de la carte (sinon son ciel procédural), voir mapEnvironment

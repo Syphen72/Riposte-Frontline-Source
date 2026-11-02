@@ -371,9 +371,10 @@ function half(s) {
     const zop = (a, b) => { const [p, q] = zr(a, b); return { a0: p, a1: q }; };
     // murs du rez-de-chaussée montés jusqu'au plancher de l'étage (SL) : arrêtés à G, ils laissaient une bande de 30 cm ouverte sur tout le
     // tour, sous l'étage, par où l'on voyait le jour depuis la cage d'escalier (retour du propriétaire, octobre 2026)
+    // (Breachline : un pan à brèche dans le mur ouest, sur le Long, entre la fenêtre et la porte ; le mur nord n'en a pas, des caisses l'encombrent de part et d'autre)
     wallOpen('plaster', 'x', wN, t, X0, X1, 0, SL, [{ a0: -18.2, a1: -16.6, b0: 0, b1: 2.6 }], { tint });
     wallOpen('plaster', 'x', wS, t, X0, X1, 0, SL, [], { tint });
-    wallOpen('plaster', 'z', X0 + t / 2, t, zA + t, zB - t, 0, SL, [{ ...zop(26.8, 28.8), b0: 0, b1: 2.6 }, { ...zop(20.5, 22.5), b0: 1.0, b1: 2.3 }], { tint });
+    wallOpen('plaster', 'z', X0 + t / 2, t, zA + t, zB - t, 0, SL, [{ ...zop(26.8, 28.8), b0: 0, b1: 2.6 }, { ...zop(20.5, 22.5), b0: 1.0, b1: 2.3 }], { tint, breach: [{ ...zop(23.4, 25.4), b1: 2.6 }] });
     wallOpen('plaster', 'z', X1 - t / 2, t, zA + t, zB - t, 0, SL, [], { tint });
     // escalier le long du mur est, plein jusqu'au mur du fond : la première marche est à 1,8 m du mur d'en face (1 m jusqu'en octobre
     // 2026, on y tournait à l'étroit), et le dessous du palier est maçonné (il était creux, comblé de caisses : une impasse)
@@ -454,8 +455,9 @@ function half(s) {
   {
     const [zA, zB] = zr(20, 34), H = 6.5, tint = [0.72, 0.74, 0.7];
     const zBase = Z(34) + (s > 0 ? -0.15 : 0.15), zMid = Z(20) + (s > 0 ? 0.15 : -0.15);
-    wallOpen('metal', 'x', zBase, 0.3, 20, 36, 0, H, [{ a0: 25, a1: 31, b0: 0, b1: 4.5 }], { tint, frames: false });
-    wallOpen('metal', 'x', zMid, 0.3, 20, 36, 0, H, [{ a0: 21, a1: 24, b0: 0, b1: 3 }, { a0: 32, a1: 35, b0: 0, b1: 3 }], { tint, frames: false });
+    // (Breachline : un pan à brèche dans chaque long mur du hangar)
+    wallOpen('metal', 'x', zBase, 0.3, 20, 36, 0, H, [{ a0: 25, a1: 31, b0: 0, b1: 4.5 }], { tint, frames: false, breach: [{ a0: 32.3, a1: 34.5, b1: 2.8 }] });
+    wallOpen('metal', 'x', zMid, 0.3, 20, 36, 0, H, [{ a0: 21, a1: 24, b0: 0, b1: 3 }, { a0: 32, a1: 35, b0: 0, b1: 3 }], { tint, frames: false, breach: [{ a0: 26.9, a1: 29.1, b1: 2.8 }] });
     box('metal', 20, 20.3, 0, H, zA + 0.3, zB - 0.3, { tint });
     box('metal', 35.7, 36, 0, H, zA + 0.3, zB - 0.3, { tint });
     hangarRoof(20, 36, zA, zB, H, s);
@@ -690,9 +692,11 @@ function center() {
     // entrées côté rue : arc de 2,5 à 3 m (jusqu'en octobre 2026, de 1,6 à 2 m, à hauteur de tête : retour du propriétaire), sous le tablier
     // le mur ouest monte à SOUK_W (arase à hauteur de l'imposte de l'arche, hors de portée d'un saut depuis le tablier) ; son chaperon et ses
     // pignons sont posés par passerelleArch ; les deux angles, qui restent à H, le rejoignent par un bloc
-    wallOpen('plaster', 'z', 6 + t / 2, t, -7.7, 7.7, 0, SOUK_W, [{ a0: -5, a1: -2.2, b0: 0, b1: 3.0, arch: 0.5 }, { a0: 2.2, a1: 5, b0: 0, b1: 3.0, arch: 0.5 }], { tint });
+    // (Breachline : un pan à brèche à un bout de chaque mur du souk, entre l'arche et l'angle, là où les deux côtés sont libres : le milieu du mur ouest donne sur
+    // l'escalier de la passerelle, celui du mur est sur un conteneur, les autres bouts sur des étals)
+    wallOpen('plaster', 'z', 6 + t / 2, t, -7.7, 7.7, 0, SOUK_W, [{ a0: -5, a1: -2.2, b0: 0, b1: 3.0, arch: 0.5 }, { a0: 2.2, a1: 5, b0: 0, b1: 3.0, arch: 0.5 }], { tint, breach: [{ a0: 5.3, a1: 7.3, b1: 2.6 }] });
     box('plaster', 6, 6 + t, H, SOUK_W, 7.7, 8, { tint }); box('plaster', 6, 6 + t, H, SOUK_W, -8, -7.7, { tint });
-    wallOpen('plaster', 'z', 20 - t / 2, t, -7.7, 7.7, 0, H, [{ a0: -5.6, a1: -3.0, b0: 0, b1: 2.8, arch: 0.6 }, { a0: 3.0, a1: 5.6, b0: 0, b1: 2.8, arch: 0.6 }], { tint });
+    wallOpen('plaster', 'z', 20 - t / 2, t, -7.7, 7.7, 0, H, [{ a0: -5.6, a1: -3.0, b0: 0, b1: 2.8, arch: 0.6 }, { a0: 3.0, a1: 5.6, b0: 0, b1: 2.8, arch: 0.6 }], { tint, breach: [{ a0: -7.5, a1: -5.75, b1: 2.6 }] });
     box('plaster', 6, 20, 0, H, 7.7, 8, { tint }); box('plaster', 6, 20, 0, H, -8, -7.7, { tint });
     soukRoof(H);
     box('tiles', 6.3, 19.7, 0, 0.03, -7.7, 7.7, { collide: false, ao: false });

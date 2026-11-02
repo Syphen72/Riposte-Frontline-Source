@@ -684,7 +684,9 @@ function plainWall(face, x0, x1, z0, z1, h, mat, tint, round) {
    quand une dalle ou un dallage posé au même niveau la recouvre ; les deux faces dans le même plan scintillaient). Chambranles des
    portes : o.frameTint, o.frameMat (bois peint par défaut, 'ashlar' : encadrement de pierre), o.frameW (largeur). */
 function wallOpen(key, axis, fixed, t, a0, a1, y0, h, ops, o = {}) {
-  ops = ops.slice().sort((p, q) => p.a0 - q.a0);
+  // o.breach (Breachline) : pans de mur à brèche [{ a0, a1, b1 }] : une ouverture du mur que ferme un pan à part (04d-breches.js)
+  const brs = (o.breach || []).map((b) => ({ a0: b.a0, a1: b.a1, b0: 0, b1: b.b1, breach: true }));
+  ops = ops.concat(brs).sort((p, q) => p.a0 - q.a0);
   const k = LEGACY_KEY[key] || key, kind = matKind(key);
   const col = (s0, s1, yb, yt) => {
     if (s1 - s0 < 0.01 || yt - yb < 0.01) return;
@@ -707,13 +709,13 @@ function wallOpen(key, axis, fixed, t, a0, a1, y0, h, ops, o = {}) {
     if (axis === 'x') { if (side > 0) M.move(a0, 0, fixed + t / 2); else M.move(a1, 0, fixed - t / 2).rotY(Math.PI); }
     else { if (side > 0) M.move(fixed + t / 2, 0, a1).rotY(Math.PI / 2); else M.move(fixed - t / 2, 0, a0).rotY(-Math.PI / 2); }
     const L = a1 - a0, map = (a) => (axis === 'x' ? (side > 0 ? a - a0 : a1 - a) : (side > 0 ? a1 - a : a - a0));
-    const lops = ops.map((p) => { const u0 = map(p.a0), u1 = map(p.a1); return { x0: Math.min(u0, u1), x1: Math.max(u0, u1), y0: y0 + p.b0, y1: y0 + Math.min(p.b1, h), rise: p.arch ? Math.min(p.arch, (p.a1 - p.a0) / 2) : 0 }; });
+    const lops = ops.map((p) => { const u0 = map(p.a0), u1 = map(p.a1); return { x0: Math.min(u0, u1), x1: Math.max(u0, u1), y0: y0 + p.b0, y1: y0 + Math.min(p.b1, h), rise: p.arch ? Math.min(p.arch, (p.a1 - p.a0) / 2) : 0, breach: !!p.breach }; });
     M.color(tint).world(1);
     M.aoFn = (x, y) => lerp(0.72, 1, smoothstep(y0, y0 + 1.2, y));
     // embrasures sur la moitié de l'épaisseur de chaque côté (les deux moitiés se rejoignent au milieu)
     wallPierced(M, k, L, y0, h, lops.map((p) => ({ ...p, depth: t / 2 })), { floorY: o.floorY !== undefined ? o.floorY : y0, aoFn: M.aoFn });
     M.aoFn = null;
-    if (o.frames !== false) for (const p of lops) if (p.y1 - p.y0 > 1.6 && p.y0 <= y0 + 0.05) casing(M, p, o.frameTint || [0.5, 0.42, 0.34], o.frameMat || 'paintwood', o.frameW || 0.09);
+    if (o.frames !== false) for (const p of lops) if (!p.breach && p.y1 - p.y0 > 1.6 && p.y0 <= y0 + 0.05) casing(M, p, o.frameTint || [0.5, 0.42, 0.34], o.frameMat || 'paintwood', o.frameW || 0.09);
     // o.dress(M, L, lops, side) : habillage de chaque parement dans son repère (soubassement, corniche, appliques...), après les embrasures
     if (o.dress) { M.save(); o.dress(M, L, lops, side); M.restore(); }
     if (side > 0) { // arase du mur et extrémités
@@ -724,6 +726,7 @@ function wallOpen(key, axis, fixed, t, a0, a1, y0, h, ops, o = {}) {
     }
     M.restore();
   }
+  for (const b of brs) breachReg({ axis, fixed, t, a0: b.a0, a1: b.a1, y0, b1: b.b1, key: k, tint, kind: o.m || kind });
 }
 
 /* ---------- Arrière-plan ---------- */

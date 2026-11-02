@@ -97,6 +97,7 @@ function rocketBoom(rk, p, hit, armed, d) {
     else if (hit.mecha) mechaDamage(hit.mecha, ROCKET.mecha, own);
     else if (hit.unit) unitDamage(hit.unit, ROCKET.veh, own, 'blast');
     else if (hit.world && hit.world.box && hit.world.box.veh) vehShot(hit.world.box.veh, ROCKET.veh, own);
+    else if (hit.world && hit.world.box && hit.world.box.brch) breachDamage(hit.world.box.brch, BREACH.rocket, own, true); // coup direct sur un pan : la brèche
     else if (hit.world && hit.world.prop) propShotLocal(hit.world.prop, p, d, 200, own);
   }
   explode(p, own, name, ROCKET.r, ROCKET.dmg, rk.life);

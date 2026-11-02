@@ -305,6 +305,7 @@ function heavyNearMiss(owner, origin, dir, endT) {
 /* Une balle touche le décor (box : la boîte de collision touchée, RAYHIT.box ; end : point touché). Renvoie vrai si l'impact est pris en
    charge ici (vitre : pas de trou de balle sur la façade), faux si le tireur doit jouer son effet d'impact habituel */
 function dmgWorldShot(box, end, dir, dmg, shooter, type = 'bullet') {
+  if (box && box.brch) { if (type === 'heavy') breachDamage(box.brch, dmg * BREACH.heavy, shooter, shooter === PL.ent || !!(shooter && shooter.netBot)); return false; } // pan à brèche (04d-breches.js)
   if (box && box.veh) { vehShot(box.veh, dmg * (type === 'heavy' ? DMG_VEH.heavy : DMG_VEH.bullet), shooter); return false; }
   if (DMG.panes.length && (!box || !box.prop)) {
     if (dir.x * dir.x + dir.z * dir.z < 1e-4) return false;
@@ -317,6 +318,7 @@ function dmgWorldShot(box, end, dir, dmg, shooter, type = 'bullet') {
 function dmgBlast(p, r, maxDmg, owner) {
   glassBlast(p, r * 1.6);
   vehBlast(p, r, maxDmg, owner);
+  breachBlast(p, r, maxDmg, owner);
 }
 /* Une image de partie */
 function dmgTick(dt) {
@@ -336,15 +338,17 @@ function dmgReset() {
   for (const p of DMG.panes) glassSet(p, false);
   glassFlush();
   for (const rec of DMG.veh) vehReset(rec);
+  breachReset();
   DMG.fires.length = 0; DMG.gbOut.length = 0; DMG.wsT = 0;
 }
 /* Carte déchargée (ses maillages partent avec la racine de la carte) */
 function dmgClear() {
+  breachClear();
   DMG.panes.length = 0; DMG.pgrid.clear(); WORLD.win.length = 0; DMG.veh.length = 0; DMG.fires.length = 0; DMG.gbOut.length = 0;
 }
 
 /* ---------- Réseau ---------- */
-const DMG_EVENTS = new Set(['gb', 'vh', 'vb', 'bx']);
+const DMG_EVENTS = new Set(['gb', 'vh', 'vb', 'bx', 'wb', 'wh']);
 function dmgNetIn(e, ev) {
   if (ev.k === 'gb' && Array.isArray(ev.n)) {
     let fx = 0;
@@ -353,6 +357,10 @@ function dmgNetIn(e, ev) {
     const rec = DMG.veh[ev.n | 0]; if (rec) vehDamage(rec, clamp(+ev.d || 0, 0, 400), e);
   } else if (ev.k === 'vb') {
     const rec = DMG.veh[ev.n | 0]; if (rec) vehIgnite(rec, (ev.by && netEntity(ev.by)) || null);
+  } else if (ev.k === 'wb') {
+    const b = BRCH.list[ev.n | 0]; if (b) breachSet(b, true, true);
+  } else if (ev.k === 'wh') {
+    const b = BRCH.list[ev.n | 0]; if (b && dmgAuth()) breachDamage(b, clamp(+ev.d || 0, 0, 400), e, false);
   } else if (ev.k === 'bx') {
     const b = PHYS.bodies[ev.n | 0]; if (b && b.boom) propIgnite(b, (ev.by && netEntity(ev.by)) || null);
   }
@@ -366,7 +374,8 @@ function dmgNetSnap(dt) {
   let s = ''; if (any) for (let i = 0; i < g.length; i++) s += String.fromCharCode(g[i]);
   const v = DMG.veh.map((r) => r.state).join(''), x = [];
   for (const b of PHYS.bodies) if (b.boom && b.lit && b.state === 0) x.push(b.id);
-  return { g: any ? btoa(s) : '', v, x };
+  const br = BRCH.list.filter((b) => b.open).map((b) => b.id);
+  return { g: any ? btoa(s) : '', v, x, b: br };
 }
 /* Chez un invité : ce que l'hôte montre et qui manque ici est appliqué sans effet (ce qui s'est passé avant l'arrivée) */
 function dmgNetSnapIn(ws) {
@@ -380,6 +389,7 @@ function dmgNetSnapIn(ws) {
     if (st === 2 && rec.state === 0) { rec.state = 2; rec.hp = 0; rec.fireT = 0; rec.g.visible = false; rec.w.visible = true; dmgColsOn(rec.cols, false); dmgColsOn(rec.wcols, true); }
     else if (st >= 1 && rec.state === 0) vehIgnite(rec, null);
   }
+  if (Array.isArray(ws.b)) for (const n of ws.b.slice(0, 64)) { const b = BRCH.list[n | 0]; if (b) breachSet(b, true, false); }
   if (Array.isArray(ws.x)) for (const n of ws.x.slice(0, 200)) { const b = PHYS.bodies[n | 0]; if (b && b.boom && !b.lit && b.state !== 0) { b.lit = MATCH.time; propHide(b); } }
 }
 

@@ -1,7 +1,7 @@
 /* ==========================================================================
    NAVIGATION : grille 1 m multi-niveaux générée depuis les collisions
    ========================================================================== */
-const NAV = { x0: MAP.x0, z0: MAP.z0, W: MAP.x1 - MAP.x0, H: MAP.z1 - MAP.z0, cells: null, nx: null, ny: null, nz: null, adjStart: null, adj: null, adjCost: null, count: 0 };
+const NAV = { x0: MAP.x0, z0: MAP.z0, W: MAP.x1 - MAP.x0, H: MAP.z1 - MAP.z0, cells: null, nx: null, ny: null, nz: null, adjStart: null, adj: null, adjCost: null, count: 0, gate: null }; // gate : nœuds fermés par une brèche (04d-breches.js)
 const NAV_DH = 0.62, NAV_R = 0.42;
 
 function navClear(x, z, h) {
@@ -230,7 +230,7 @@ function navLeaps() {
 
 /* Déchargement de la carte */
 function navUnload() {
-  for (const k of ['cells', 'nx', 'ny', 'nz', 'adjStart', 'adj', 'adjCost', 'adjKind', 'adjLead', 'kind', 'lead', 'g', 'f', 'from', 'stamp', 'closed', 'comp']) NAV[k] = null;
+  for (const k of ['cells', 'nx', 'ny', 'nz', 'adjStart', 'adj', 'adjCost', 'adjKind', 'adjLead', 'kind', 'lead', 'g', 'f', 'from', 'stamp', 'closed', 'comp', 'gate']) NAV[k] = null;
   NAV.count = 0;
 }
 /* Composantes connexes : sert à éviter les nœuds isolés (dessus de caisses) */
@@ -259,7 +259,7 @@ function navNode(x, y, z) {
       const cx = cx0 + dx, cz = cz0 + dz;
       if (cx < 0 || cz < 0 || cx >= NAV.W || cz >= NAV.H) continue;
       for (const id of NAV.cells[cz * NAV.W + cx]) {
-        if (NAV.comp[id] !== NAV.mainComp) continue;
+        if (NAV.comp[id] !== NAV.mainComp || (NAV.gate && navGated(id))) continue; // (nœud d'une brèche encore fermée : 04d-breches.js)
         const dy = NAV.ny[id] - y;
         if (dy > 0.9) continue;
         const d = Math.abs(dy) * 3 + hyp(NAV.nx[id] - x, NAV.nz[id] - z);
@@ -298,7 +298,7 @@ function findPath(from, to, sid = -1) {
     if (cl[n] === gen) continue; cl[n] = gen;
     if (n === e) { found = true; break; }
     for (let j = NAV.adjStart[n]; j < NAV.adjStart[n + 1]; j++) {
-      const m = NAV.adj[j]; if (cl[m] === gen) continue;
+      const m = NAV.adj[j]; if (cl[m] === gen || (NAV.gate && navGated(m))) continue;
       const ng = g[n] + NAV.adjCost[j];
       if (st[m] !== gen || ng < g[m]) {
         st[m] = gen; g[m] = ng; fr[m] = n; kd[m] = NAV.adjKind[j]; NAV.lead[m] = NAV.adjLead[j];
@@ -322,7 +322,7 @@ function navWalkable(a, b) {
     const cx = Math.floor(x - NAV.x0), cz = Math.floor(z - NAV.z0);
     if (cx < 0 || cz < 0 || cx >= NAV.W || cz >= NAV.H) return false;
     let ok = false;
-    for (const id of NAV.cells[cz * NAV.W + cx]) { if (Math.abs(NAV.ny[id] - h) <= 0.5) { h = NAV.ny[id]; ok = true; break; } }
+    for (const id of NAV.cells[cz * NAV.W + cx]) { if (Math.abs(NAV.ny[id] - h) <= 0.5 && !(NAV.gate && navGated(id))) { h = NAV.ny[id]; ok = true; break; } } // (un raccourci ne traverse pas une brèche fermée)
     if (!ok) return false;
     if (VOID.on && groundHeight(x, z, h + 0.05, 0.3) <= VOID.floor + 1) return false; // un raccourci ne passe pas au-dessus du vide (coin d'une case du bord)
   }
