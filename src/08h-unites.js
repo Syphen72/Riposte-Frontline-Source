@@ -45,7 +45,7 @@ function unitKill(u) {
   if (u.dead) return;
   u.dead = true; u.state = 'dead';
   UNIT_KINDS[u.kind].die(u);
-  if (u.local && MATCH.online && (u.owner === PL.ent || u.owner.netBot)) netEvent({ k: 'ux', u: u.uid }, u.owner);
+  if (u.local && MATCH.online && (u.owner === PL.ent || u.owner.netBot)) netEvent({ k: 'ux', u: u.uid, q: u.expired ? 1 : 0 }, u.owner); // q : fin de service, sans éclat
 }
 /* Souffle d'une explosion : chez le propriétaire de chaque unité seulement (les autres pairs rejouent l'explosion pour les effets) */
 function unitsBlast(p, r, maxDmg, owner) {
@@ -122,5 +122,5 @@ function unitsNet(owner, list) {
 function unitsNetGone() { for (const u of UNITS) if (!u.local && !u.dead && u.seen !== undefined && MATCH.time - u.seen > 1.5) { u.dead = true; UNIT_KINDS[u.kind].die(u, true); } }
 function unitsNetIn(e, ev) {
   if (ev.k === 'uh') { if (netLocal(ev.to)) { const u = UNITS.find((x) => x.uid === (ev.u | 0) && x.local); if (u) unitDamage(u, clamp(+ev.d || 0, 0, 500), e, 'raw'); } }
-  else if (ev.k === 'ux') { const u = UNITS.find((x) => x.owner === e && x.uid === (ev.u | 0) && !x.local); if (u) unitKill(u); }
+  else if (ev.k === 'ux') { const u = UNITS.find((x) => x.owner === e && x.uid === (ev.u | 0) && !x.local); if (u) { u.expired = !!ev.q; unitKill(u); } }
 }

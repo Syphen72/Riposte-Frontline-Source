@@ -201,6 +201,10 @@ const KSDEF = {
   sat: { n: 10, name: _t('Satellite'), short: _t('Satellite'), icon: '<rect x="9" y="9.5" width="6" height="5" rx="1"/><path d="M2.5 9.5h4.5v5H2.5zM17 9.5h4.5v5H17zM7 12h2M15 12h2M12 9.5V6.5M9.8 4.8a3.2 3.2 0 0 1 4.4 0"/>',
     desc: _t('Pendant 30 secondes, la mini-carte montre les ennemis en direct et où ils regardent. Seule une IEM le coupe.'),
     use: () => usePhoneKs('sat'), bot: (b) => satFire(b) },
+  // Breachline : chien robot armé qui suit et défend (08l-chien.js)
+  dog: { n: 9, name: _t('Chien robot'), short: _t('Chien'), icon: '<path d="M5 11h11l2-2h2v3l-2 1v2H6l-1 2v3M8 15v5M15 15v5M18 15l1 5M9 11V8h4v3"/><path d="M13 9.5h3"/>',
+    desc: _t('Un chien robot armé vous suit et attaque les ennemis qu\u0027il voit pendant 50 secondes. À bout de forces, il s\u0027autodétruit.'),
+    use: () => useDog(), bot: (b) => botDog(b) },
   mecha: { n: 13, name: _t('Mecha'), short: _t('Mecha'), icon: '<path d="M7 5.5h10l1.5 3.5-1.5 3H7L5.5 9zM3 7.5h2.5M18.5 7.5H21M9 12l-1.5 4 1.5 3.5M15 12l1.5 4-1.5 3.5M6.5 19.5h3.5M14 19.5h3.5"/>',
     desc: _t('Un mecha tombe sur la zone choisie et défend sa position. Montez à bord pour le piloter. Il finit par exploser, sortez avant.'),
     use: () => useMecha(), bot: (b) => botMecha(b) },

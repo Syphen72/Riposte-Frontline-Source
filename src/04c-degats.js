@@ -20,7 +20,7 @@ const DMG_VEH = { car: 300, truck: 520, bullet: 0.45, heavy: 1, blast: 1.6, burn
 const DMG_NOBODY = { team: -2, isRemote: true, name: '', pos: new V3(), alive: false };
 function dmgAuth() { return !MATCH.online || NET.role === 'host'; }
 /* Morts sans killcam ni distance à l'écran de mort (l'auteur n'a pas tiré lui-même) : explosions du décor, engins de Breachline */
-function wsNoCam(w) { const W = NET_WSPECIAL; return w === W.veh || w === W.boom || w === W.mine || w === W.claymore || w === W.turret; }
+function wsNoCam(w) { const W = NET_WSPECIAL; return w === W.veh || w === W.boom || w === W.mine || w === W.claymore || w === W.turret || w === W.dog; }
 function dmgLocal(e) { return !!e && !e.isRemote; }
 const _dgA = new V3(), _dgB = new V3(), _dgC = new V3(), _dgM = new THREE.Matrix4();
 
