@@ -2,14 +2,14 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-SuLaa5pk+vyA7tI5XNjUphOilzvE1XQKOWyjdQQLMSo=' 'sha256-rbTaSdDD+Sd+K8IZ66VS79bdI78bN8AwXXyN0/lD5fY=' https://cdn.jsdelivr.net/npm/peerjs@1.5.5/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://*.peerjs.com wss://*.peerjs.com stun: turn:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-l291WvwB1RZHo4ek5ghWh6Zvz2LHRlkSzpoY4i6l9hg=' 'sha256-rbTaSdDD+Sd+K8IZ66VS79bdI78bN8AwXXyN0/lD5fY=' https://cdn.jsdelivr.net/npm/peerjs@1.5.5/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://*.peerjs.com wss://*.peerjs.com stun: turn:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Breachline">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="cod-relay" content="">
-<meta name="cod-build" content="87667d37c7a9">
+<meta name="cod-build" content="e6597260d0a1">
 <meta name="menu-music" content="">
 <title>Breachline, FPS gratuit dans le navigateur</title>
 <!-- Aperçu d'un lien partagé (Discord, WhatsApp, réseaux) et adresse de référence : adresse et image posées par build.py (SITE, assets/apercu.jpg).
@@ -7359,7 +7359,7 @@ function grappleTry(){const e=PL.ent;if(GR.st){grappleRelease(false);return;}
 if(!e.alive||MECHA_P.me||PILOT.d||KS.mode||KS.map.open||playHold()||PL.nadeState)return;if(GR.charges<=0){sfxMech('empty');return;}
 const f=camFwd(_grB),aim=grappleAim(grappleEye(_grC),f,e.pos.y);if(!aim){sfxMech('empty');hudMsg(_t('Rien où accrocher le grappin'));return;}
 GR.charges--;if(GR.cd<=0)GR.cd=GRAP.recharge;GR.st='fly';GR.t=0;GR.a.copy(aim.p);GR.land.copy(aim.land);GR.top=aim.top;GR.n.set(aim.nx,0,aim.nz);GR.to.copy(aim.to);GR.clear=aim.clear;grappleHand(GR.from);GR.flyD=GR.from.distanceTo(GR.a);GR.spd=Math.max(4,hyp(e.vel.x,e.vel.z));GR.best=1e9;GR.bestT=0;sfxGrapple('fire',e.pos);PL.vpP+=0.25;VM.rec.vy-=0.3;}
-function grappleRelease(jump){const e=PL.ent;if(!GR.st)return;if(jump&&GR.st==='pull'){e.vy=Math.max(e.vy,0)+5.5;e.onGround=false;sfxJump(surfaceAt(e.pos));}
+function grappleRelease(jump){const e=PL.ent;if(!GR.st)return;if(jump&&GR.st==='pull'){e.vy=Math.min(Math.max(e.vy,0),6)+4.5;e.onGround=false;sfxJump(surfaceAt(e.pos));}
 GR.st=null;if(GR.rope)GR.rope.visible=false;if(GR.hook)GR.hook.visible=false;sfxGrapple('off',e.pos);}
 function grappleHand(out){const f=camFwd(_grD),r=_grA.crossVectors(f,UP).normalize();return out.copy(camera.position).addScaledVector(f,0.45).addScaledVector(r,-0.22).add(_grB.set(0,-0.2,0));}
 function grappleBefore(e,dt,I){if(GR.charges<GRAP.charges){GR.cd-=dt;if(GR.cd<=0){GR.charges++;GR.cd=GR.charges<GRAP.charges?GRAP.recharge:0;}}

@@ -55,7 +55,8 @@ function grappleTry() {
 }
 function grappleRelease(jump) {
   const e = PL.ent; if (!GR.st) return;
-  if (jump && GR.st === 'pull') { e.vy = Math.min(Math.max(e.vy, 0), 6) + 4.5; // (élan vertical plafonné : un bond, pas une catapulte) e.onGround = false; sfxJump(surfaceAt(e.pos)); }
+  // (élan vertical plafonné : un bond, pas une catapulte)
+  if (jump && GR.st === 'pull') { e.vy = Math.min(Math.max(e.vy, 0), 6) + 4.5; e.onGround = false; sfxJump(surfaceAt(e.pos)); }
   GR.st = null; if (GR.rope) GR.rope.visible = false; if (GR.hook) GR.hook.visible = false;
   sfxGrapple('off', e.pos);
 }
