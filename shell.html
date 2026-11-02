@@ -1440,6 +1440,11 @@ body.touch .fpv-bat { right: 50%; transform: translateX(50%); } /* au doigt, le 
 #nades i::before { left: 28%; top: calc(-3.5 * var(--hu)); width: 44%; height: calc(4 * var(--hu)); border-radius: 1px 1px 0 0; }
 #nades i::after { right: calc(-2 * var(--hu)); top: calc(-2.5 * var(--hu)); width: max(1.5px, calc(1.8 * var(--hu))); height: calc(8.5 * var(--hu)); border-radius: 1px; transform: rotate(12deg); }
 #nades i.off { background: rgba(242,238,227,.2); }
+/* grappin (08k-grappin.js) : la touche puis une encoche par charge ; le réticule s'ouvre sur un point d'accroche */
+#nades .grap { display: inline-flex; align-items: center; gap: calc(3 * var(--hu)); margin-left: calc(10 * var(--hu)); }
+#nades .grap b { width: calc(4 * var(--hu)); height: calc(12 * var(--hu)); border-radius: 1px; background: var(--paper); transform: skewX(-16deg); }
+#nades .grap b.off { background: rgba(242,238,227,.2); }
+#xhair.grap i.c { box-shadow: 0 0 0 calc(5 * var(--hu)) rgba(120,230,160,.0), 0 0 0 calc(6.5 * var(--hu)) rgba(120,230,160,.85); }
 #nades i.flash { width: calc(8 * var(--hu)); height: calc(14 * var(--hu)); border-radius: 2px; } #nades i.smoke { width: calc(10 * var(--hu)); height: calc(14 * var(--hu)); border-radius: 2px 2px 3px 3px; } /* flash (cylindre), fumigène (boîte) */
 #nades i.knife { width: calc(4.5 * var(--hu)); height: calc(16 * var(--hu)); margin-top: calc(2 * var(--hu)); border-radius: 50% 50% 1px 1px / 35% 35% 1px 1px; } /* couteau de lancer : lame pointue, garde en travers */
 #nades i.mine { width: calc(15 * var(--hu)); height: calc(6 * var(--hu)); margin-top: calc(9 * var(--hu)); border-radius: 50% / 60%; } #nades i.mine::after { display: none; } #nades i.mine::before { left: 42%; width: 16%; top: calc(-3 * var(--hu)); } /* mine bondissante : disque et fusée */
@@ -1854,6 +1859,7 @@ body.touch #game { touch-action: none; }
 .tc-reload { --s: 10.5; --x: 37; --y: 2; }
 .tc-swap { --s: 10; --x: 37; --y: 14.5; }
 .tc-nade { --s: 11; --x: 23; --y: 30; }
+.tc-grapple { --s: 10; --x: 23; --y: 43; }
 .tc-knife { --s: 10; --x: 37; --y: 26.5; }
 .tc-breath { --s: 12; --x: 3; --y: 40; }
 .tc-pick { --s: 11; --x: 0; --y: 14; right: auto; left: calc(50% - 5.5 * var(--u)); }

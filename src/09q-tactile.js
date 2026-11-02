@@ -26,7 +26,7 @@ const TC_MINU = 6, TC_MAXU = 26;
 /* Disposition d'origine : celle du joueur qui a réglé les boutons sur son Pixel (2.23.1) ; les boutons absents (séries, ramassage, pause, scores, discussion, joystick)
    gardent leur place par défaut de shell.html. Le dernier nombre d'une entrée : 1 = retiré. */
 const TC_DEFAULT_LAY = {
-  run: [0.2321, 0.7788, 11, 1], fireL: [0.1016, 0.5981, 13, 1], fire: [0.8033, 0.671, 20, 0], knife: [0.6482, 0.8913, 10, 0], nade: [0.9509, 0.4836, 11, 0],
+  run: [0.2321, 0.7788, 11, 1], fireL: [0.1016, 0.5981, 13, 1], fire: [0.8033, 0.671, 20, 0], knife: [0.6482, 0.8913, 10, 0], nade: [0.9509, 0.4836, 11, 0], grapple: [0.9509, 0.35, 10, 0],
   breath: [0.3424, 0.8944, 12, 1], ads: [0.8729, 0.5006, 14, 0], crouch: [0.8188, 0.9048, 11, 0], swap: [0.8987, 0.8797, 10, 0], jump: [0.9089, 0.7206, 13, 0], reload: [0.7333, 0.8559, 10.5, 0],
 };
 /* Une unité « u » du HUD tactile : 1 % de la hauteur de l'écran, bornée comme --u dans shell.html ; le joystick en dépend */
@@ -75,6 +75,7 @@ const TC_ICONS = {
   swap: '<path d="M6 8h12l-3-3.2M18 16H6l3 3.2"/>',
   nade: '<circle cx="12" cy="14.5" r="6"/><path d="M9.5 8.5V4.5h4.5l1.5 2.5"/>',
   knife: '<path d="M20 4c-.6 5-4 9-9 10l-1-1c1-5 5-8.4 10-9z"/><path d="M8.2 12.2l3.6 3.6M10.5 14.5L5 20"/>',
+  grapple: '<path d="M5 19L16 8"/><path d="M16 8l3.5-4M16 8l4.5 1M16 8l.5-4.5"/><circle cx="5" cy="19" r="2"/>',
   pick: '<path d="M12 3.5v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/>',
   pause: '<path d="M8.5 5.5v13M15.5 5.5v13"/>',
   board: '<path d="M5 7h14M5 12h14M5 17h9"/>',
@@ -95,6 +96,7 @@ const TC_BTNS = [
   ['reload', 'tc-reload', 'reload', _t('Recharger'), 'tap', () => startReload()],
   ['swap', 'tc-swap', 'swap', _t('Changer d\u0027arme'), 'tap', () => quickSwap()],
   ['nade', 'tc-nade', 'nade', _t('Grenade'), 'hold', (d) => { if (d) cookNade(); else releaseNade(); }],
+  ['grapple', 'tc-grapple', 'grapple', _t('Grappin'), 'tap', () => grappleTry()], // (08k-grappin.js)
   ['knife', 'tc-knife', 'knife', _t('Couteau'), 'hold', (d) => knifeButton(d)], // appui bref : un coup ; maintenu : couteau en main (08-player.js)
   ['pick', 'tc-pick', 'pick', _t('Ramasser'), 'tap', () => { if (!mechaUse()) swapWithDrop(); }], // à portée de son mecha, ou à bord : monter, descendre (08g-mecha-pilote.js)
   ['breath', 'tc-breath', 'breath', _t('Retenir son souffle'), 'hold', (d) => { KEYS.ShiftLeft = d; }],

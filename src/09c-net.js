@@ -921,6 +921,7 @@ function netApply(id, P) {
   if (P.dr) fpvNet(e, P.dr);
   if (P.mk) mechaNet(e, P.mk);
   if (P.u) unitsNet(e, P.u); // unités posées : mines, tourelle, chien robot (08h-unites.js)
+  if (P.gr) grappleNet(e, P.gr);
   if (alive && !e.alive) {
     if (e.pred && MATCH.time - e.predT < NET_PRED_HOLD) { /* mort prédite pas encore confirmée : cet état est parti avant la touche */ }
     else if (e.pred) { e.pred = false; e.alive = true; e.model.rag = null; e.lastForce = null; e.model.root.visible = true; netSentDrop(e); } // la victime a survécu : elle se relève
@@ -1182,6 +1183,7 @@ function netPresence(e, now) {
   const p = { ts: Math.round(now), n: me ? NET.nick : e.name, t: e.team, w: me ? curW().def.id : armsW(e).def.id, g: me ? curW().def.key : armsW(e).def.key, s, f: me ? NET.shots : e.arms.shots, k: e.kills, d: e.deaths, a: e.assists, sc: e.score, sk: skinOf(e), ev: netEvList(e, now) };
   const dr = fpvPub(e); if (dr) p.dr = dr; // drone kamikaze en vol (08e-fpv.js)
   const un = unitsPub(e); if (un) p.u = un;
+  if (e === PL.ent) { const gr = grapplePub(); if (gr) p.gr = gr; } // câble de grappin (08k-grappin.js)
   const mk = mechaPub(e); if (mk) p.mk = mk; // mecha posé (08f-mecha.js)
   if (!me) p.b = 1;
   else { // accusé (netPredHealth, netTradeOpen) : dernier événement appliqué de chaque expéditeur des 3 dernières secondes, avant une touche en attente

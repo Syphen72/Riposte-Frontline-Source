@@ -324,7 +324,7 @@ function updateHud(dt) {
   if (MATCH.mode === 'ffa' && (HUD.rkT -= dt) <= 0) { HUD.rkT = 0.25; hudText($('scLim'), `${_t('Premier à {0} · vous êtes {1}', MATCH.limit, ordinal(ffaRank()))}`); }
   domHud(dt); ringHud(e);
   const kn = PL.knifeOut; // couteau en main : son nom à la place de l'arme, ni chargeur ni réserve (la place des chiffres reste, rien ne bouge en bas à droite)
-  const ammo = `${kn ? 'k' : w.mag + '|' + w.reserve + '|' + d.name}|${PL.nades}${PL.nadeType}|${mode}`;
+  const ammo = `${kn ? 'k' : w.mag + '|' + w.reserve + '|' + d.name}|${PL.nades}${PL.nadeType}|${GR.charges}|${mode}`;
   if (ammo !== HUD.lastAmmo) {
     HUD.lastAmmo = ammo;
     $('mag').textContent = w.mag; $('reserve').textContent = w.reserve; $('wname').textContent = kn ? _t('Couteau') : d.name;
@@ -332,7 +332,7 @@ function updateHud(dt) {
     $('mag').classList.toggle('low', !kn && w.mag <= Math.ceil(d.mag * 0.25));
     // grenades : la touche qui les lance (rien au doigt) puis une icône par grenade, pleine ou vide, à la forme du type de la classe
     const nn = Math.max(PL.nades, CLASSES[PL.classIdx].nades), ty = PL.nadeType === 'frag' ? '' : ` ${PL.nadeType}`;
-    $('nades').innerHTML = (nn ? actGlyph('nade') : '') + Array.from({ length: nn }, (x, i) => `<i class="${i < PL.nades ? '' : 'off'}${ty}"></i>`).join('');
+    $('nades').innerHTML = (nn ? actGlyph('nade') : '') + Array.from({ length: nn }, (x, i) => `<i class="${i < PL.nades ? '' : 'off'}${ty}"></i>`).join('') + grappleHud();
     const pips = $('pips'); const n = kn ? 0 : Math.min(d.mag, 40);
     if (pips.children.length !== n) { pips.innerHTML = ''; for (let i = 0; i < n; i++) pips.appendChild(document.createElement('i')); }
     for (let i = 0; i < n; i++) pips.children[i].className = i < w.mag ? '' : 'spent';
@@ -354,6 +354,7 @@ function updateHud(dt) {
   const xh = $('xhair'), gap = HUD.xhairGap + HUD.kick;
   hudStyle(xh, 'opacity', !e.alive || ads > 0.6 || PL.sprinting || PL.knifeT > 0 || PL.knifeOut || KS.mode || playHold() ? '0' : '0.9'); // (décompte : l'anneau prend sa place)
   hudVar(xh, '--gap', (Math.round(gap * 2) / 2).toFixed(1) + 'px'); // demi-pixel : pas de nouveau style pour un écart invisible
+  hudCls(xh, 'grap', grappleAimTick(dt)); // point d'accroche du grappin sous le réticule (08k-grappin.js)
   const scoped = !!(d.scope && ads > 0.92 && e.alive);
   $('scope').classList.toggle('on', scoped);
   if (scoped) {
@@ -491,7 +492,7 @@ function startMatch(opt = {}) {
   MATCH.limit = MATCH.online ? NET.cfg.limit : Settings[MODES[mode].key];
   SMOKES.length = 0; PL.flashT = 0; MATCH.score = [0, 0]; MATCH.time = 0; MATCH.timeLeft = (MATCH.online ? NET.cfg.time : Settings.minutes) * 60; MATCH.uav = [0, 0]; MATCH.uavPing = [null, null]; MATCH.sat = [0, 0]; MATCH.iem = [0, 0]; MATCH.events = []; MATCH.winner = -1;
   for (const n of NADES) scene.remove(n.mesh); NADES.length = 0; clearThrowKnives(); soundEvents.length = 0; clearAircraft(); clearDrops(); clearRockets(); clearUnits();
-  FX.holes.clear(); FX.splats.clear(); FX.scorch.clear(); propsReset(); dmgReset();
+  FX.holes.clear(); FX.splats.clear(); FX.scorch.clear(); propsReset(); dmgReset(); grappleReset();
   for (const e of entities) { e.kills = e.deaths = e.score = e.assists = e.streak = e.comboN = 0; e.comboT = -99; e.alive = false; e.lastShotT = -9; }
   MATCH.state = 'playing'; kcReset(); MATCH.finalPending = null; MATCH.lastKill = null; MATCH.fin = null; MATCH.finSoon = false; finClear(); MATCH.startAt = MATCH.time;
   modeStart(mode);
@@ -822,6 +823,7 @@ function frame(now) {
   updateFx(dt); updateFlashLights(dt);
   updateListener();
   allyMarksUpdate(); // marqueurs d'alliés (09m-marqueurs.js) : la caméra est définitive
+  grappleDraw(); // câbles de grappin (08k-grappin.js)
   updateSoldierLods(); clothUpdate(dt); updateMapDetail(); grassUpdate(now / 1000); // clothUpdate : tissus des soldats (06gb-tissu.js), après le choix des modèles détaillés
   pfrLap(4); updateShadows(); pfrLap(5);
   if (GPUT) GPUT.begin();

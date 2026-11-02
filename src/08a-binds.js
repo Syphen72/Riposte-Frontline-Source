@@ -14,7 +14,7 @@ const BIND_DEFS = [
   ['crouch', 'ControlLeft', _t('S\u0027accroupir (maintenu), glisser en sprintant')], ['crouchT', 'KeyC', _t('S\u0027accroupir (bascule), glisser en sprintant')],
   ['reload', 'KeyR', _t('Recharger')], ['w1', 'Digit1', _t('Arme principale')], ['w2', 'Digit2', _t('Arme secondaire')], ['swap', 'KeyQ', _t('Changer d\u0027arme')],
   ['knife', 'KeyF', _t('Couteau (maintenir pour le garder en main)')], ['nade', 'KeyG', _t('Grenade (maintenir pour la garder en main)')], ['use', 'KeyE', _t('Ramasser l\u0027arme au sol')], ['inspect', 'KeyI', _t('Inspecter l\u0027arme')],
-  ['ks1', 'Digit4', _t('Première série')], ['ks2', 'Digit5', _t('Deuxième série')], ['ks3', 'Digit6', _t('Troisième série')], ['board', 'Tab', _t('Tableau des scores')],
+  ['grapple', 'KeyV', _t('Grappin')], ['ks1', 'Digit4', _t('Première série')], ['ks2', 'Digit5', _t('Deuxième série')], ['ks3', 'Digit6', _t('Troisième série')], ['board', 'Tab', _t('Tableau des scores')],
 ];
 const BIND_RESERVED = new Set(['Escape', 'KeyP', 'KeyT', 'Enter', 'NumpadEnter', 'MetaLeft', 'MetaRight', 'ContextMenu', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 const BIND = { rev: new Map(), dead: new Set(), layout: null, capture: null };

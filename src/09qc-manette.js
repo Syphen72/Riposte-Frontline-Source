@@ -24,9 +24,9 @@ const PAD = {
 };
 /* Dispositions : numéro de bouton (norme Standard Gamepad) vers action. Les bâtons, RT et LT ne sont pas des boutons à réaffecter. */
 const PAD_LAYOUTS = {
-  default: { 0: 'jump', 1: 'crouch', 2: 'reload', 3: 'swap', 5: 'nade', 10: 'sprint', 11: 'knife', 12: 'ks1', 13: 'ks3', 14: 'inspect', 15: 'ks2' },
-  southpaw: { 0: 'jump', 1: 'crouch', 2: 'reload', 3: 'swap', 5: 'nade', 10: 'knife', 11: 'sprint', 12: 'ks1', 13: 'ks3', 14: 'inspect', 15: 'ks2' },
-  bumper: { 0: 'crouch', 2: 'reload', 3: 'swap', 4: 'jump', 5: 'nade', 10: 'sprint', 11: 'knife', 12: 'ks1', 13: 'ks3', 14: 'inspect', 15: 'ks2' },
+  default: { 0: 'jump', 1: 'crouch', 2: 'reload', 3: 'swap', 4: 'grapple', 5: 'nade', 10: 'sprint', 11: 'knife', 12: 'ks1', 13: 'ks3', 14: 'inspect', 15: 'ks2' },
+  southpaw: { 0: 'jump', 1: 'crouch', 2: 'reload', 3: 'swap', 4: 'grapple', 5: 'nade', 10: 'knife', 11: 'sprint', 12: 'ks1', 13: 'ks3', 14: 'inspect', 15: 'ks2' },
+  bumper: { 0: 'crouch', 1: 'grapple', 2: 'reload', 3: 'swap', 4: 'jump', 5: 'nade', 10: 'sprint', 11: 'knife', 12: 'ks1', 13: 'ks3', 14: 'inspect', 15: 'ks2' },
 };
 const PAD_KEYS = new Set(['padSens', 'padAdsMul', 'padDead', 'padCurve', 'padAccel', 'padRun', 'padLay', 'padVib']); // réglages montrés dans les Options une fois une manette détectée
 /* Réponse du bâton du regard : la déflexion v (0 à 1, après la zone morte) donne la part de la vitesse maximale. Réactive (par défaut) : une part linéaire pour
@@ -47,7 +47,7 @@ const PAD_HOLD = 0.3; // secondes de X tenu pour ramasser une arme au sol (un ap
 const PAD_TRIG = { on: 0.25, off: 0.15 }; // gâchettes : seuils d'appui et de relâchement (LT, RT), assez bas pour tirer au tout début de la course
 const PAD_HELP = [
   [_t('Bâton gauche'), _t('Se déplacer (analogique). L3 (appui sur le bâton) pour sprinter, en lunette pour retenir son souffle')], [_t('Bâton droit'), _t('Regarder. R3 (appui sur le bâton) pour le couteau, maintenu pour le garder en main')],
-  ['RT / LT', _t('Tirer / viser (maintenu)')], ['RB', _t('Grenade (maintenir pour la garder en main)')],
+  ['RT / LT', _t('Tirer / viser (maintenu)')], ['RB', _t('Grenade (maintenir pour la garder en main)')], ['LB', _t('Grappin')],
   ['A', _t('Sauter')], ['B', _t('S\u0027accroupir (glissade en sprintant)')], ['X', _t('Recharger, maintenir pour ramasser l\u0027arme au sol')], ['Y', _t('Changer d\u0027arme')],
   [_t('Croix directionnelle'), _t('Haut : UAV, droite : frappe aérienne, bas : hélicoptère, gauche : inspecter l\u0027arme')],
   [_t('Retour'), _t('Tableau des scores')], ['Menu', _t('Pause')], [_t('Dans les menus'), _t('Croix ou bâton gauche pour naviguer, A valider, B revenir, LB et RB changer d\u0027onglet')],
@@ -103,6 +103,7 @@ function padAction(act, down) {
   else if (act === 'ks2') useKs(1);
   else if (act === 'ks3') useKs(2);
   else if (act === 'inspect') inspectWeapon();
+  else if (act === 'grapple') grappleTry();
 }
 
 /* X : recharger (appui bref) ou ramasser l'arme au sol qui est à portée (maintenu PAD_HOLD s), comme dans les Call of Duty. Sans arme à portée, le rechargement part

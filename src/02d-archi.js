@@ -567,6 +567,8 @@ function flatRoof(x0, x1, z0, z1, y, tint, R) {
   M.color(tint).world(1);
   M.boxB('plaster', x0, x1, y, y + ph, z0, z0 + t, { skip: 'y' }); M.boxB('plaster', x0, x1, y, y + ph, z1 - t, z1, { skip: 'y' });
   M.boxB('plaster', x0, x0 + t, y, y + ph, z0 + t, z1 - t, { skip: 'yzZ' }); M.boxB('plaster', x1 - t, x1, y, y + ph, z0 + t, z1 - t, { skip: 'yzZ' });
+  // (Breachline) l'acrotère arrête les soldats et les balles : on peut tenir un toit plat et s'y mettre à couvert (grappin, 08k-grappin.js) ; sans volume d'occlusion, l'éclairage cuit ne change pas
+  for (const b of [[x0, x1, z0, z0 + t], [x0, x1, z1 - t, z1], [x0, x0 + t, z0 + t, z1 - t], [x1 - t, x1, z0 + t, z1 - t]]) WORLD.col({ x0: b[0], x1: b[1], y0: y, y1: y + ph + 0.06, z0: b[2], z1: b[3] }, 'concrete', false, false);
   // couvertine en béton, légèrement débordante
   M.color([0.86, 0.84, 0.8]).local(1);
   M.boxB('concrete', x0 - 0.03, x1 + 0.03, y + ph, y + ph + 0.06, z0 - 0.03, z0 + t + 0.03, { bevel: 0.012 });
@@ -583,12 +585,12 @@ function flatRoof(x0, x1, z0, z1, y, tint, R) {
   const w = x1 - x0, d = z1 - z0, n = Math.floor((w * d) / 55) + 1;
   for (let i = 0; i < n; i++) {
     const px = x0 + 1.2 + R() * (w - 2.4), pz = z0 + 1.2 + R() * (d - 2.4), r = R(), ry = Math.round(R() * 4) * (Math.PI / 2);
-    if (r < 0.32) M.place(PF.waterTank(), px, y + 0.06, pz, R() * TAU, { tint: { plastic: R.pick([[0.9, 0.9, 0.86], [0.2, 0.2, 0.22], [0.25, 0.4, 0.6]]) }, nocol: true });
-    else if (r < 0.5) M.place(PF.acUnit(), px, y + 0.06, pz, ry, { nocol: true });
+    if (r < 0.32) M.place(PF.waterTank(), px, y + 0.06, pz, R() * TAU, { tint: { plastic: R.pick([[0.9, 0.9, 0.86], [0.2, 0.2, 0.22], [0.25, 0.4, 0.6]]) } }); // (Breachline : équipements solides, on monte sur le toit)
+    else if (r < 0.5) M.place(PF.acUnit(), px, y + 0.06, pz, ry);
     else if (r < 0.68) M.place(PF.dish(), px, y + 0.06, pz, R() * TAU, { nocol: true, cls: 1 });
-    else if (r < 0.8) M.place(PF.solarHeater(), px, y + 0.06, pz, ry, { nocol: true });
+    else if (r < 0.8) M.place(PF.solarHeater(), px, y + 0.06, pz, ry);
     else if (r < 0.9) M.place(PF.antenna(), px, y + 0.06, pz, R() * TAU, { nocol: true, cls: 1 });
-    else if (w * d > 60) M.place(PF.roofHut(), px, y + 0.06, pz, ry, { nocol: true });
+    else if (w * d > 60) M.place(PF.roofHut(), px, y + 0.06, pz, ry);
   }
 }
 /* Toit à deux pans en tuiles : débords, rives, faîtage en tuiles rondes, gouttières, pignons enduits */
@@ -653,7 +655,7 @@ function building(x0, x1, z0, z1, h, o = {}) {
   let mat = o.key || 'plaster';
   if (mat === 'plaster' && R() < 0.3) mat = 'plaster2';
   const style = o.style || (R() < 0.45 ? 'maghreb' : 'colonial');
-  DECOR.col(x0, x1, 0, h, z0, z1, 'concrete');
+  DECOR.col(x0, x1, 0, h, z0, z1, 'concrete'); const block = COL[COL.length - 1];
   const faces = o.faces || 'nsew';
   const kit = {
     mat, tint, style, rng: R, skipGround: o.skipGround, noGround: o.noGround,
@@ -668,6 +670,7 @@ function building(x0, x1, z0, z1, h, o = {}) {
   }
   const pitched = o.pitched !== undefined ? o.pitched : style === 'colonial' && R() < 0.6;
   if (pitched) pitchedRoof(x0, x1, z0, z1, h, tint, R); else flatRoof(x0, x1, z0, z1, h, tint, R);
+  if (pitched) block.noTop = true; // (Breachline) le dessus du bloc est sous les tuiles : le grappin n'y pose personne (08k-grappin.js)
 }
 function plainWall(face, x0, x1, z0, z1, h, mat, tint, round) {
   const F = facadeFrame(face, x0, x1, z0, z1);

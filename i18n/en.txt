@@ -1746,3 +1746,5 @@ Tourelle ⇒ Sentry
 Une tourelle automatique posée devant vous tire sur les ennemis à portée pendant 75 secondes. On peut la détruire. ⇒ An automatic turret placed in front of you fires at enemies in range for 75 seconds. It can be destroyed.
 Tourelle à court ⇒ Sentry out of ammo
 Tourelle détruite ⇒ Sentry destroyed
+Grappin ⇒ Grapple
+Rien où accrocher le grappin ⇒ Nothing to hook onto

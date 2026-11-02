@@ -64,6 +64,7 @@ function onKey(e, down) {
   else if (c === 'Digit5') useKs(1);
   else if (c === 'Digit6') useKs(2);
   else if (c === 'KeyI') inspectWeapon();
+  else if (c === 'KeyV') grappleTry();
 }
 /* Vitesse du regard en visée par rapport à la hanche : mul = 1 ne change rien, 0,6 donne 60 % de la vitesse sans zoom. Le facteur suit la visée (VM.ads, 0 à 1) pour
    que le passage de l'une à l'autre soit progressif. S'ajoute à la réduction due au champ de vision (0,35 + 0,65 x zoom), commune à la souris et à la manette. */
@@ -334,6 +335,7 @@ function updatePlayer(dt, now) {
   if (hold) PL.queued = false; // un tir demandé pendant le décompte ne part pas au départ (une gâchette tenue, si)
   e.busy = busy(); e.blockSprint = !!PL.nadeState; e.sprintBusyOk = KS_PHONE.has(KS.mode);
   e.yaw = PL.yaw; e.pitch = PL.pitch;
+  grappleBefore(e, dt, I); // grappin : le câble tire le soldat (08k-grappin.js)
   const mv = ctlMove(e, dt);
   if (voidCheck(e) || ringCheck(e, dt)) return; // tombé dans le vide (îles flottantes), ou resté trop longtemps hors de la zone ronde
   // fin d'une glissade au sol (hors saut) : le joueur reste accroupi ; Maj en avançant, saut ou C le relèvent
