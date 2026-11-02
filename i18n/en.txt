@@ -1752,3 +1752,4 @@ Chien robot ⇒ Robot dog
 Chien ⇒ Dog
 Chien robot détruit ⇒ Robot dog destroyed
 Un chien robot armé vous suit et attaque les ennemis qu'il voit pendant 50 secondes. À bout de forces, il s'autodétruit. ⇒ An armed robot dog follows you and attacks the enemies it sees for 50 seconds. When it is about to break, it self-destructs.
+Votre hélicoptère est en perdition ⇒ Your helicopter is going down

@@ -1000,7 +1000,9 @@ function netEventIn(e, ev) {
     const own = netLocal(ev.to); if (own) heliHitFrom(own, ev.d, e);
   } else if (ev.k === 'hx') {
     const h = KS.helis.find((x) => x.owner === e && x.state !== 'crash');
-    if (h) { h.state = 'crash'; h.burst = null; h.vy = 0; h.spin = 0; heliMsg(h, 'down'); }
+    if (h) { h.state = 'crash'; h.burst = null; h.vy = 0; h.spin = 0; h.lastAtt = (ev.by && netEntity(ev.by)) || null; heliMsg(h, 'down'); }
+  } else if (ev.k === 'hs') {
+    const h = KS.helis.find((x) => x.owner === e && x.state !== 'crash'); if (h) h.stage = clamp(ev.s | 0, 0, 2); // dégâts de l'hélicoptère : fumée, feu (08d-heli.js)
   } else if (ev.k === 'prop') {
     propNetHit(ev, e);
   } else if (ev.k === 'rk') {
@@ -1172,7 +1174,7 @@ function netAirstrike(target, yaw, owner) {
 function netHeliCall(owner) { if (owner === PL.ent) PL.actT = MATCH.time; if (MATCH.online && netIsLocal(owner)) netEvent({ k: 'heli' }, owner); }
 function netHeliFire(h, aim, target) { if (MATCH.online && netIsLocal(h.owner)) netEvent({ k: 'hf', x: +aim.x.toFixed(1), y: +aim.y.toFixed(1), z: +aim.z.toFixed(1), to: netIdOf(target) }, h.owner); }
 function netHeliHit(h, dmg, shooter) { if (MATCH.online && netIsLocal(shooter)) netEvent({ k: 'hh', to: netIdOf(h.owner), d: Math.round(dmg) }, shooter); }
-function netHeliDown(h) { if (MATCH.online && netIsLocal(h.owner)) netEvent({ k: 'hx' }, h.owner); }
+function netHeliDown(h) { if (MATCH.online && netIsLocal(h.owner)) netEvent({ k: 'hx', by: h.lastAtt ? netIdOf(h.lastAtt) : '' }, h.owner); } // by : qui l'a abattu (son écrasement blesse pour son compte, 08d-heli.js)
 function netUav(owner) { if (MATCH.online && netIsLocal(owner)) netEvent({ k: 'uav' }, owner); }
 function netSat(owner) { if (MATCH.online && netIsLocal(owner)) netEvent({ k: 'sat' }, owner); }
 function netIem(owner) { if (MATCH.online && netIsLocal(owner)) netEvent({ k: 'iem' }, owner); }

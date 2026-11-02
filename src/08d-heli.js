@@ -276,7 +276,7 @@ function updateHelis(dt) {
   for (let i = KS.helis.length - 1; i >= 0; i--) {
     const h = KS.helis[i];
     if (h.state === 'crash') { heliCrash(h, dt); heliSoundUpdate(h); if (h.dead) { heliSoundStop(h); scene.remove(h.mesh); KS.helis.splice(i, 1); } continue; }
-    h.t += dt; heliPose(h, dt);
+    h.t += dt; heliPose(h, dt); heliStageFx(h, dt);
     if (h.t >= HELI.arrive + HELI.life) { h.state = 'gone'; heliSoundStop(h); scene.remove(h.mesh); KS.helis.splice(i, 1); heliMsg(h, 'leave'); continue; }
     heliApplyMesh(h, dt);
     heliSoundUpdate(h);
@@ -350,8 +350,32 @@ function rayHelis(shooter, o, d, maxT) {
 function heliDamage(h, dmg, shooter) {
   if (h.state === 'crash' || !shooter || shooter.isRemote) return;
   if (shooter.isPlayer) hitFeedback(false, false);
-  if (h.local) { h.hp -= dmg; h.lastAtt = shooter; if (h.hp <= 0) heliDown(h); }
+  if (h.local) { h.hp -= dmg; h.lastAtt = shooter; heliStage(h); if (h.hp <= 0) heliDown(h); }
   else netHeliHit(h, dmg, shooter);
+}
+/* Souffle d'une explosion sur un hélicoptère ennemi (explode, chez son auteur) : distance à la coque (2 m de rayon) */
+function heliBlast(p, owner, r, maxDmg) {
+  for (const h of KS.helis) {
+    if (h.state !== 'fly' || allied(h.owner, owner)) continue;
+    const d = Math.max(0, p.distanceTo(h.pos) - 2), R = r * 1.2;
+    if (d < R) heliDamage(h, maxDmg * 1.2 * Math.pow(1 - d / R, 0.8), owner);
+  }
+}
+/* Étapes de dégâts (Breachline) : 0 intact, 1 touché (fumée claire), 2 en perdition (fumée noire, flammes, alarme) ; annoncées par le propriétaire */
+function heliStage(h) {
+  const s = h.hp < HELI.hp * 0.3 ? 2 : h.hp < HELI.hp * 0.6 ? 1 : 0;
+  if (s <= (h.stage || 0)) return;
+  h.stage = s;
+  if (MATCH.online && netIsLocal(h.owner)) netEvent({ k: 'hs', s }, h.owner);
+  if (s === 2 && h.owner === PL.ent) hudMsg(_t('Votre hélicoptère est en perdition'), 'enemy', 2);
+}
+function heliStageFx(h, dt) {
+  const s = h.stage || 0; if (!s) return;
+  h.dmgT = (h.dmgT || 0) - dt; if (h.dmgT > 0) return;
+  h.dmgT = s === 2 ? 0.05 : 0.12;
+  const p = _hlA.set(0, 0.9, 1.2).applyEuler(h.mesh.rotation).add(h.pos), g = s === 2 ? 0.1 : 0.5;
+  FX.smoke.spawn(p.x, p.y, p.z, rand(-0.4, 0.4), rand(0.3, 1), rand(-0.4, 0.4), rand(2, 3.2), 0.4, s === 2 ? 2.8 : 1.8, g, g, g * 0.97, s === 2 ? 0.65 : 0.4, 0, 0, 0.35, rand(-1, 1));
+  if (s === 2) { dmgFlame(p, 0.7); if (Math.random() < 0.15) for (let i = 0; i < 4; i++) FX.add.spawn(p.x, p.y, p.z, rand(-3, 3), rand(-1, 2), rand(-3, 3), rand(0.2, 0.5), 0.03, 0.01, 3, 1.8, 0.6, 1, 0, 12, 0.4); }
 }
 /* Dégâts reçus d'un joueur distant : c'est le propriétaire qui les applique */
 function heliHitFrom(ownerEnt, dmg, from) {
@@ -371,17 +395,41 @@ function heliDown(h) {
   heliMsg(h, 'down');
   netHeliDown(h);
 }
+/* Écrasement (Breachline) : vrille de plus en plus vite, chute, dérive ; il s'arrête contre un mur ou un toit autant qu'au sol ; l'impact explose
+   (8 m, 170) pour le compte de celui qui l'a abattu (chaque pair rejoue l'écrasement, seul l'auteur blesse) et laisse une épave qui brûle 14 s */
 function heliCrash(h, dt) {
-  h.vy -= 14 * dt; h.pos.y += h.vy * dt; h.spin += dt * 4; h.pos.x += Math.cos(h.yaw) * dt * 2;
+  if (h.wreckT !== undefined) { heliWreck(h, dt); return; }
+  h.crashT = (h.crashT || 0) + dt;
+  const ox = h.pos.x, oy = h.pos.y, oz = h.pos.z;
+  h.vy -= 12 * dt; h.pos.y += h.vy * dt; h.spin += dt * (3 + h.crashT * 3.5); h.pos.x += Math.cos(h.yaw) * dt * 3; h.pos.z -= Math.sin(h.yaw) * dt * 1.5;
   heliApplyMesh(h, dt);
+  const dx = h.pos.x - ox, dy = h.pos.y - oy, dz = h.pos.z - oz, dl = Math.hypot(dx, dy, dz);
+  const hit = dl > 1e-4 ? rayWorld(ox, oy - 0.8, oz, dx / dl, dy / dl, dz / dl, dl + 1.2, 2) : null;
+  if (hit && hit.t < dl + 1.2) { h.pos.set(ox + (dx / dl) * Math.max(0, hit.t - 1.2), oy + (dy / dl) * Math.max(0, hit.t - 1.2), oz + (dz / dl) * Math.max(0, hit.t - 1.2)); heliImpact(h, Math.max(0, groundHeight(h.pos.x, h.pos.z, h.pos.y + 0.5, 0.5))); return; } // (contre un mur : l'épave glisse au pied)
   h.smokeT = (h.smokeT || 0) - dt;
   if (h.smokeT <= 0) { h.smokeT = 0.04; FX.smoke.spawn(h.pos.x, h.pos.y, h.pos.z, rand(-0.6, 0.6), rand(0.2, 1), rand(-0.6, 0.6), 1.6, 0.8, 3, 0.15, 0.14, 0.13, 0.6, 0, 0, 0.5); FX.add.spawn(h.pos.x, h.pos.y, h.pos.z, 0, 0.4, 0, 0.1, 1.4, 0.6, 5, 2.4, 0.9, 0.8, 0); }
   const g = groundHeight(h.pos.x, h.pos.z, h.pos.y, 0.5);
-  if (h.pos.y <= g + 1.2 || h.pos.y < 0) {
-    h.dead = true; const p = new V3(h.pos.x, Math.max(g, 0), h.pos.z);
-    explosionFx(p); sfxExplosion(p); kcEvent('boom', { p: p.clone() });
-    const dc = p.distanceTo(camera.position); PL.shake = Math.max(PL.shake, clamp(1 - dc / 40, 0, 1) * 1.5);
-  }
+  if (h.pos.y <= g + 1.2 || h.pos.y < 0) heliImpact(h, Math.max(g, 0));
+}
+let HELI_CHAR = null;
+function heliImpact(h, gy) {
+  const p = new V3(h.pos.x, gy + 0.6, h.pos.z);
+  explode(p, h.lastAtt || DMG_NOBODY, NET_WSPECIAL.heli, 8, 170, -1);
+  dmgDebrisFx(p, 1.5); flashLight(p, 10, 26, 0.6, 0xffa040);
+  const dc = p.distanceTo(camera.position); PL.shake = Math.max(PL.shake, clamp(1 - dc / 40, 0, 1) * 1.6);
+  // épave : couchée sur le flanc, rotors arrêtés, peinture calcinée
+  h.wreckT = 14; h.pos.copy(p); h.pos.y = gy + 0.75;
+  const m = h.mesh; m.position.copy(h.pos); m.rotation.set(0.25, h.yaw + h.spin, 1.15);
+  if (!HELI_CHAR) HELI_CHAR = csmMaterial(new THREE.MeshStandardMaterial({ color: 0x1b1916, roughness: 0.92, metalness: 0.15 }));
+  m.traverse((o) => { if (o.isMesh && !(o.material && o.material.transparent)) o.material = HELI_CHAR; });
+  heliSoundStop(h);
+}
+function heliWreck(h, dt) {
+  h.wreckT -= dt; const k = clamp(h.wreckT / 14, 0, 1);
+  if (Math.random() < 0.3 + 0.6 * k) dmgFlame(_hlA.set(h.pos.x + rand(-1.5, 1.5), h.pos.y + rand(-0.4, 0.4), h.pos.z + rand(-1.5, 1.5)), 0.6 + k);
+  if (Math.random() < 0.3 + 0.4 * k) FX.smoke.spawn(h.pos.x + rand(-1, 1), h.pos.y + 0.6, h.pos.z + rand(-1, 1), rand(-0.3, 0.3), rand(1, 2), rand(-0.3, 0.3), rand(3, 5), 0.6, 3.5, 0.07, 0.07, 0.07, 0.6 * k + 0.15, 0, 0, 0.25, rand(-1, 1));
+  dmgCrackle(h.pos, dt, k);
+  if (h.wreckT <= 0) h.dead = true;
 }
 function heliMsg(h, what) {
   const ally = h.team === PL.ent.team, mine = h.owner === PL.ent;

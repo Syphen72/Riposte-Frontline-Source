@@ -15,7 +15,7 @@ const MAP = process.env.MAP || 'sable', OUT = process.argv[2] || '';
     // vitres : combien, et combien rattachées à leurs sommets
     const P = DMG.panes, mapped = P.filter((p) => p.mesh && p.vi.length >= 4);
     out.vitres = { n: P.length, rattachees: mapped.length, maillages: WORLD.win.length };
-    if (!P.length) fail('aucune vitre enregistrée');
+    if (!P.length && WORLD.win.length) fail('aucune vitre enregistrée'); // (une carte sans fenêtres de façade, Simoun : rien à vérifier)
     if (P.length && mapped.length < P.length * 0.8) fail(`vitres sans sommets : ${P.length - mapped.length} sur ${P.length}`);
     // une balle tirée de la rue dans une vitre la brise ; dmgReset la répare
     let shotOk = 0, shotTry = 0;
@@ -43,7 +43,10 @@ const MAP = process.env.MAP || 'sable', OUT = process.argv[2] || '';
     out.vehicules.n = DMG.veh.length;
     for (const rec of DMG.veh.slice(0, 3)) {
       const name = rec.kind + rec.id, r = { hp0: rec.hp };
-      const o = rec.c.clone().add(new V3(rec.r + 5, 0.3, 0.4)), d = rec.c.clone().sub(o).normalize();
+      // d'un côté dégagé (le premier rayon qui touche bien le véhicule)
+      let o = null, d = null;
+      for (const [sx, sz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7], [-0.7, -0.7]]) { const q = rec.c.clone().add(new V3(sx * (rec.r + 5), 0.3, sz * (rec.r + 5))), dd = rec.c.clone().sub(q).normalize(), w = rayWorld(q.x, q.y, q.z, dd.x, dd.y, dd.z, rec.r + 6, 1); if (w && w.box && w.box.veh === rec) { o = q; d = dd; break; } }
+      if (!o) { r.tir = 'aucun côté dégagé'; out.vehicules[name] = r; continue; }
       for (let i = 0; i < 12; i++) fireRay(PL.ent, o, d, WEAPONS.m4, null, false);
       r.balles = Math.round(rec.hp);
       if (!(rec.hp < rec.hpMax)) fail(name + " : les balles ne l'abîment pas");

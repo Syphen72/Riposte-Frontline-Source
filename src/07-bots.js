@@ -715,6 +715,7 @@ function explode(p, owner, weaponName, radius, maxDmg, life, roofK) {
   if (dc < 14) FinalShader.uniforms.uFlash.value = Math.max(FinalShader.uniforms.uFlash.value, (1 - dc / 14) * 0.45);
   if (owner && owner.isRemote) return; // grenade d'un joueur distant : c'est son lanceur qui calcule les dégâts
   if (MECHAS.length && owner) mechaBlast(p, owner, radius, maxDmg); // le blindage d'un mecha ennemi (08f-mecha.js)
+  if (KS.helis.length && owner) heliBlast(p, owner, radius, maxDmg); // un hélicoptère ennemi à portée du souffle (Breachline : roquette, grenade sur un hélicoptère bas)
   const c = new V3(p.x, p.y + 0.35, p.z), open = roofK !== undefined && !roofAbove(p.x, p.y + 0.5, p.z, 30);
   for (const e of entities) {
     if (!e.alive) continue;

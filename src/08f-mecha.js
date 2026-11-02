@@ -904,7 +904,8 @@ function mechaOverheat(me, send = me.local) {
   shockRing(p, 22, 0.7); flashLight(p, 40, 40, 0.3, 0xffd7a0);
   const dc = p.distanceTo(camera.position); PL.shake = Math.max(PL.shake, clamp(1 - dc / 60, 0, 1) * 2.4);
   if (dc < 18) FinalShader.uniforms.uFlash.value = Math.max(FinalShader.uniforms.uFlash.value, (1 - dc / 18) * 0.6);
-  propBlast(p, H.r, H.dmg); hangBlast(p, H.r); toilesBlast(p, H.r);
+  propBlast(p, H.r, H.dmg, me.owner); hangBlast(p, H.r); toilesBlast(p, H.r);
+  dmgBlast(p, H.r, H.dmg, me.owner); unitsBlast(p, H.r, H.dmg, me.owner); // (Breachline : vitres, véhicules, brèches, unités posées)
   if (send && MATCH.online && netIsLocal(me.owner)) netEvent({ k: 'mx' }, me.owner);
   const mine = me.owner === PL.ent, ally = !mine && allied(me.owner, PL.ent);
   hudMsg(mine ? _t('Votre mecha a explosé') : ally ? _t('Mecha allié détruit') : _t('Mecha ennemi détruit'), mine || ally ? 'enemy' : 'ally', 2.4);
@@ -921,16 +922,20 @@ function mechaOverheat(me, send = me.local) {
   }
   mechaBlast(p, o, H.r, H.dmg);
 }
-/* Épave : elle s'affaisse sur un genou et bascule, fumée noire et flammes, puis disparaît après 6 s */
+/* Épave : elle s'affaisse sur un genou et bascule, fumée noire et flammes ; trois explosions secondaires (des munitions qui partent, effets
+   seulement) et des gerbes d'étincelles dans la première seconde et demie (Breachline), puis elle disparaît après 9 s */
+const MECHA_POPS = [0.55, 1.25, 2.1];
 function mechaWreck(me, dt) {
-  me.deadT += dt; const k = smoothstep(0, 0.9, me.deadT), m = me.m;
+  const t0 = me.deadT; me.deadT += dt; const k = smoothstep(0, 0.9, me.deadT), m = me.m;
+  for (const tp of MECHA_POPS) if (t0 < tp && me.deadT >= tp) { const q = new V3(me.pos.x + rand(-0.8, 0.8), me.pos.y + rand(1, 2.2), me.pos.z + rand(-0.8, 0.8)); explosionFx(q, 0.55); sfxExplosion(q, 0.55); for (let i = 0; i < 12; i++) FX.add.spawn(q.x, q.y, q.z, rand(-4, 4), rand(1, 6), rand(-4, 4), rand(0.3, 0.8), 0.04, 0.01, 3.5, 2.2, 0.8, 1, 0, 12, 0.4); }
+  if (me.deadT < 1.5 && Math.random() < 0.4) { const q = _mwA.set(me.pos.x + rand(-0.6, 0.6), me.pos.y + rand(0.8, 2.4), me.pos.z + rand(-0.6, 0.6)); for (let i = 0; i < 5; i++) FX.add.spawn(q.x, q.y, q.z, rand(-3, 3), rand(0, 3), rand(-3, 3), rand(0.1, 0.3), 0.025, 0.008, 3.5, 2.6, 1.2, 1, 0, 10, 0.4); }
   mechaPose(m, { h: lerp(MECHA.stand, 1.15, k), feet: [[0.4, 0, 0.3], [-0.5, 0, -0.2]], roll: 0.18 * k, pitch: 0.22 * k, yaw: me.turret || 0, aim: lerp(me.aimPitch || 0, -0.5, k) });
   if ((me.fireT = (me.fireT || 0) - dt) <= 0) {
     me.fireT = 0.09; const x = me.pos.x + rand(-0.5, 0.5), y = me.pos.y + 1.3 + rand(0, 0.5), z = me.pos.z + rand(-0.5, 0.5);
     FX.smoke.spawn(x, y, z, rand(-0.3, 0.3), rand(1.2, 2.2), rand(-0.3, 0.3), rand(2.5, 4), 0.8, 3.2, 0.12, 0.11, 0.1, 0.7, 0, -0.4, 0.8, rand(-0.5, 0.5));
     FX.add.spawn(x, y - 0.2, z, rand(-0.4, 0.4), rand(0.8, 1.6), rand(-0.4, 0.4), rand(0.3, 0.6), 0.6, 0.2, 2.4, 1.0, 0.25, 0.8, 0, -1.5, 1.5, rand(-1, 1));
   }
-  if (me.deadT > 6) me.gone = true;
+  if (me.deadT > 9) me.gone = true;
 }
 
 /* ---------- En ligne ----------
