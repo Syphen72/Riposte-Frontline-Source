@@ -1,5 +1,5 @@
 /* Simulation accélérée d'une partie entre bots (le joueur reste invulnérable dans sa base) : vérifie que les bots se
-   déplacent et combattent sur la carte. node bots.js [secondes=90] [page=dist/riposte-frontline.html] ; MAP=givre : autre carte.
+   déplacent et combattent sur la carte. node bots.js [secondes=90] [page=dist/breachline.html] ; MAP=givre : autre carte.
    Rapporte aussi les zones où les bots passent le plus de temps et les éliminations par zone, et ce que la simulation a fait
    aux props physiques (délogés, brisés, nombre maximal en mouvement), et, sur une carte d'îles flottantes, les bots tombés dans le vide.
    Mesure aussi les murs : part du temps vivant où le décor reprend plus de la moitié du déplacement voulu (`murs.partDuTemps`), nombre de

@@ -1,4 +1,4 @@
-/* Contrôle du mode pavé tactile (src/09qe-pavetactile.js) : node pavetactile.js [page=dist/riposte-frontline.html]
+/* Contrôle du mode pavé tactile (src/09qe-pavetactile.js) : node pavetactile.js [page=dist/breachline.html]
    Évènements synthétiques (molette, clics) envoyés à la fenêtre, comme le navigateur le ferait ; partie solo réelle, rendu 3D coupé.
    - détection : des crans de molette ne posent rien ; deux gestes de pavé (salve de petits pas fractionnaires qui s'éteint) posent Settings.tpSeen et la
      classe du corps ; deux crans de souris l'enlèvent ; la molette d'une souris sous un zoom (pas fractionnaires) ne pose rien ; un clic gauche tenu en

@@ -23,7 +23,7 @@ const ok = (c, msg) => { if (!c) { fails++; console.log('ECHEC :', msg); } else 
 const hits = {};
 const srv = http.createServer((req, res) => {
   const u = decodeURIComponent(req.url.split('?')[0]); hits[u] = (hits[u] || 0) + 1;
-  const f = path.join(DIST, u === '/' ? 'riposte-frontline.html' : u);
+  const f = path.join(DIST, u === '/' ? 'breachline.html' : u);
   if (!f.startsWith(DIST) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream', 'Cache-Control': 'no-cache' }); fs.createReadStream(f).pipe(res);
 });
@@ -33,7 +33,7 @@ const announce = (page) => page.evaluate(() => { const e = new Event('beforeinst
 const wait = (page, cond, ms) => page.waitForFunction(cond, null, { timeout: ms || 15000, polling: 100 }).then(() => true, () => false);
 let base = '';
 const open = async (o) => {
-  const g = await openGame(Object.assign({ mobile: true, pwa: !!(o && o.gate), dpr: 1, url: `${base}/riposte-frontline.html`, settings: { quality: 'low', lang: 'fr', touch: 'on' }, noHdri: true, noMap: true }, o || {})); // sans o.gate : dérogation déjà accordée (le jeu démarre) ; o.gate : le jeu attend derrière la fenêtre d'installation
+  const g = await openGame(Object.assign({ mobile: true, pwa: !!(o && o.gate), dpr: 1, url: `${base}/breachline.html`, settings: { quality: 'low', lang: 'fr', touch: 'on' }, noHdri: true, noMap: true }, o || {})); // sans o.gate : dérogation déjà accordée (le jeu démarre) ; o.gate : le jeu attend derrière la fenêtre d'installation
   return g;
 };
 const shot = async (g, name) => { if (out) { await g.page.waitForTimeout(400); await g.page.screenshot({ path: path.join(out, `pwa-${name}.png`) }); } };
@@ -69,8 +69,8 @@ const txt = (page, id) => page.evaluate((i) => document.getElementById(i).textCo
     ok(cached.keys.length === 1 && cached.has, `fichier à empreinte en cache (${icon})`);
     ok(cached.others.length === 0, "rien d'autre en cache : ni page, ni API, ni version.json");
     const before = hits[icon] || 0; await fetchTwice(); ok((hits[icon] || 0) === before, 'le second chargement du fichier à empreinte ne passe pas par le réseau');
-    const pageHits = hits['/riposte-frontline.html'] || 0; await page.reload(); await page.waitForFunction(MENU, null, { timeout: 120000 });
-    ok((hits['/riposte-frontline.html'] || 0) > pageHits, 'la page, elle, est toujours demandée au réseau (mise à jour automatique intacte)');
+    const pageHits = hits['/breachline.html'] || 0; await page.reload(); await page.waitForFunction(MENU, null, { timeout: 120000 });
+    ok((hits['/breachline.html'] || 0) > pageHits, 'la page, elle, est toujours demandée au réseau (mise à jour automatique intacte)');
     await g.browser.close();
   }
 
@@ -174,10 +174,10 @@ const txt = (page, id) => page.evaluate((i) => document.getElementById(i).textCo
 
   // 7. liens : vérification de compte (aucune fenêtre), invitation à un salon (retenue pour l'application)
   {
-    const g = await open({ gate: true, url: `${base}/riposte-frontline.html?verif=abc123` }), { page } = g;
+    const g = await open({ gate: true, url: `${base}/breachline.html?verif=abc123` }), { page } = g;
     ok(await wait(page, MENU, 120000) && !(await gateOpen(page)), 'lien de vérification de compte : pas de fenêtre, le jeu démarre');
     await g.browser.close();
-    const g2 = await open({ gate: true, url: `${base}/riposte-frontline.html?salon=ABCDE` });
+    const g2 = await open({ gate: true, url: `${base}/breachline.html?salon=ABCDE` });
     ok(await gateOpen(g2.page), "invitation à un salon dans le navigateur : fenêtre d'installation");
     const kept = await g2.page.evaluate(() => JSON.parse(localStorage.getItem('dc_salon') || 'null'));
     ok(kept && kept.c === 'ABCDE', `le code du salon est retenu pour l'application (${kept && kept.c})`);
@@ -189,7 +189,7 @@ const txt = (page, id) => page.evaluate((i) => document.getElementById(i).textCo
 
   // 8. ordinateur : jamais
   {
-    const g = await openGame({ url: `${base}/riposte-frontline.html`, w: 960, h: 540, settings: { quality: 'low', lang: 'fr' }, noHdri: true, noMap: true }), { page } = g;
+    const g = await openGame({ url: `${base}/breachline.html`, w: 960, h: 540, settings: { quality: 'low', lang: 'fr' }, noHdri: true, noMap: true }), { page } = g;
     await announce(page); await page.waitForTimeout(3000);
     ok(!(await gateOpen(page)) && !(await shown(page, 'pwaCard')), "ordinateur : ni fenêtre ni carte, même si le navigateur annonce l'installation");
     await g.browser.close();

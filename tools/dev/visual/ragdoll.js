@@ -4,7 +4,7 @@
    - géométrie de la carte : contre un mur, sur une caisse, sur une rampe, en chute libre, explosion contre un mur ;
    - tirage aléatoire : des centaines de morts (arme, angle, vitesse, lieu) pour traquer ce qui bugge : corps qui ne
      s'endort pas, qui glisse après le repos, qui traverse un mur, valeurs aberrantes (NaN), os étirés.
-   node ragdoll.js [page=dist/riposte-frontline.html] ; MAP=givre pour l'autre carte ; N=300 : nombre de tirages ;
+   node ragdoll.js [page=dist/breachline.html] ; MAP=givre pour l'autre carte ; N=300 : nombre de tirages ;
    DETAIL=1 : trace seconde par seconde de la série plate ; TRACE=nom T=t0,t1 : trace image par image d'un cas ;
    RAGSET='{"iters":4}' : réglages de RAG essayés sans reconstruire ; SEED=n : graine du hasard (rejoue les mêmes cas) ; REP=20 : répète la série plate 20 fois (graines différentes). Code de sortie 1 si un défaut est trouvé. */
 const { openGame } = require('./common');

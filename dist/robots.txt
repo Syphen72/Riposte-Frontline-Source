@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://www.playriposte.com/sitemap.xml
+Sitemap: https://breachline.brightsidestrategyllc.com/sitemap.xml

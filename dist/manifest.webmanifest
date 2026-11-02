@@ -1,7 +1,7 @@
 {
  "id": "/",
- "name": "Riposte: Frontline",
- "short_name": "Riposte",
+ "name": "Breachline",
+ "short_name": "Breachline",
  "description": "FPS en ligne dans le navigateur : solo contre des bots ou en ligne entre amis.",
  "start_url": "./",
  "scope": "./",
@@ -19,25 +19,25 @@
  "prefer_related_applications": false,
  "icons": [
   {
-   "src": "icons/icon-192.06921713.png",
+   "src": "icons/icon-192.d72958b8.png",
    "sizes": "192x192",
    "type": "image/png",
    "purpose": "any"
   },
   {
-   "src": "icons/icon-512.98d6b94c.png",
+   "src": "icons/icon-512.71e9b557.png",
    "sizes": "512x512",
    "type": "image/png",
    "purpose": "any"
   },
   {
-   "src": "icons/maskable-192.bdc37157.png",
+   "src": "icons/maskable-192.13129058.png",
    "sizes": "192x192",
    "type": "image/png",
    "purpose": "maskable"
   },
   {
-   "src": "icons/maskable-512.571536d3.png",
+   "src": "icons/maskable-512.11e586df.png",
    "sizes": "512x512",
    "type": "image/png",
    "purpose": "maskable"

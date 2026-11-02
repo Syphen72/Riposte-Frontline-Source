@@ -1,4 +1,4 @@
-/* Contrôle du recul de la visée (src/07ca-recul.js) : node recul.js [page=dist/riposte-frontline.html] ; ARMES=m4,ak47 pour en limiter le nombre.
+/* Contrôle du recul de la visée (src/07ca-recul.js) : node recul.js [page=dist/breachline.html] ; ARMES=m4,ak47 pour en limiter le nombre.
    Un tableau par arme du relèvement de la visée (en degrés) sans que le joueur la reprenne, à la hanche : après 1, 5, 10 coups et un chargeur, avec le
    rapport à l'ancien recul ; puis ce qui le change (épaule, accroupi, en courant, à la manette, au doigt) ; puis le retour de la visée quand on lâche, avec et
    sans reprise à la main. Contrôles :

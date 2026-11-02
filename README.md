@@ -1,13 +1,10 @@
-<h1 align="center"><img src="assets/logo.webp" alt="Riposte: Frontline" width="640"></h1>
+<h1 align="center"><img src="assets/logo.webp" alt="Breachline" width="640"></h1>
 
-**Riposte: Frontline** is a free first-person shooter played in the browser, on desktop and on phones, in the spirit of modern
-Call of Duty games: https://www.playriposte.com
+**Breachline** is a free first-person shooter played in the browser, on desktop and on phones.
 
-This repository is a snapshot of the game's source code, version 5.6.0. It is updated from time to time, not with every
-release of the game. You can read it,
-download it and use it for your own games under the MIT License (`LICENSE`), except for the items listed in `NOTICE.md` (name and
-logo, music, soldier animations, some sounds). Development happens elsewhere, so pull requests are not merged. To report a problem,
-use the Community space in the game.
+It is built on the open-source code of Riposte: Frontline by BenDBSS (https://github.com/BenDBSS/Riposte-Frontline-Source),
+version 5.6.0, used under the MIT License (`LICENSE`). Breachline has its own name, logo and icons; `NOTICE.md` lists the other
+items of the original that are not under the MIT License (music, soldier animations, some sounds) and their terms.
 
 ## What is inside
 
@@ -26,8 +23,8 @@ Nothing to install, Python 3 is enough:
 python3 build.py
 ```
 
-The script assembles `dist/riposte-frontline.html`, the game page, along with `dist/tex/` and `dist/sfx/` (textures and sounds,
-loaded when a map starts). Open `dist/riposte-frontline.html` in a recent browser (Chrome, Edge, Firefox) with those folders next to
+The script assembles `dist/breachline.html`, the game page, along with `dist/tex/` and `dist/sfx/` (textures and sounds,
+loaded when a map starts). Open `dist/breachline.html` in a recent browser (Chrome, Edge, Firefox) with those folders next to
 it. The `dist/` folder of this repository is already built.
 
 ## How the code is organized

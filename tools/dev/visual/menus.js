@@ -68,7 +68,7 @@ function netMock(role, pane) {
   CHAT.log.length = 0; for (const x of ['Salut', 'On lance quand tout le monde est là ?', 'Oui, un instant']) CHAT.log.push({ n: 'Fantôme', t: 0, x, at: performance.now() });
   CHAT.unread = 2; netRender(); chatRender(); chatUnread();
   if (pane === 'player') lmPush(LM.scr.multi, 'player', 'f'); else if (pane === 'leave') netLeaveAsk(); else if (pane) lmPush(LM.scr.multi, pane); // un sous-menu du salon, ouvert à droite du menu
-  document.getElementById('netLink').value = 'https://www.playriposte.com/?salon=AB12C';
+  document.getElementById('netLink').value = 'https://breachline.brightsidestrategyllc.com/?salon=AB12C';
 }
 
 /* Exécuté dans la page : salons du serveur simulés (src/09cb-serveurs.js) ; ph : phase du salon ('' : l'accueil avec leur liste), pane :
@@ -87,7 +87,7 @@ function srvMock(ph, pane, perso) {
   CHAT.log.length = 0; if (ph) for (const x of ['Salut', 'Votez Meltem !']) CHAT.log.push({ n: 'Fantôme', t: 0, x, at: performance.now() });
   uiOpen('multi', ['main']); netRender({ fresh: true }); chatRender();
   if (pane === 'srvp') lmPush(LM.scr.multi, 'srvp', 'f'); else if (pane) lmPush(LM.scr.multi, pane);
-  document.getElementById('netLink').value = 'https://www.playriposte.com/?salon=AB12C';
+  document.getElementById('netLink').value = 'https://breachline.brightsidestrategyllc.com/?salon=AB12C';
 }
 
 /* Exécuté dans la page : relevé de l'écran visible */

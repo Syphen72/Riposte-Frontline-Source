@@ -1,4 +1,4 @@
-"""Assemble le jeu en un seul fichier HTML : dist/riposte-frontline.html
+"""Assemble le jeu en un seul fichier HTML : dist/breachline.html
 three.js r147 est servi par le site (assets/vendor, tools/vendor.py) ; les modules de src/ sont concaténés dans l'ordre alphabétique.
 Les images (assets/menu-bg.webp et sa carte de profondeur assets/menu-depth.webp, assets/logo.webp) sont intégrées en data URI, et
 changelog.json (journal des mises à jour, validé ici) dans shell.html, à la place des marqueurs qui y figurent. La musique
@@ -174,7 +174,7 @@ for k in ("favicon-64","favicon-96","apple-touch-icon","icon-192","icon-512"):
 # Aperçu des liens partagés (balises og: de shell.html) : assets/apercu.jpg (composée par tools/dev/apercu.py), copiée comme les icônes avec
 # une empreinte (cache indéfini). SITE est l'adresse publique de référence du jeu (lien canonique, og:url, og:image) : les autres
 # adresses (sans www, préversions, anciennes adresses .vercel.app) y renvoient ou n'ont pas à être référencées.
-SITE="https://www.playriposte.com"
+SITE="https://breachline.brightsidestrategyllc.com"
 data=open("assets/apercu.jpg","rb").read(); apercu="icons/apercu."+hashlib.sha1(data).hexdigest()[:8]+".jpg"
 if not os.path.exists("dist/"+apercu): open("dist/"+apercu,"wb").write(data)
 for f in glob.glob("dist/icons/apercu.*.jpg"):
@@ -183,7 +183,7 @@ html=html.replace("__SITE__",SITE).replace("__APERCU__",apercu)
 # Manifeste de l'application installable (Android : « Ajouter à l'écran d'accueil » ouvre le jeu en plein écran, en paysage, sans barre d'adresse)
 for k in ("maskable-192","maskable-512"):
     if k not in icons: raise SystemExit("icône manquante : assets/icon/"+k+".png")
-json.dump({"id":"/","name":"Riposte: Frontline","short_name":"Riposte","description":"FPS en ligne dans le navigateur : solo contre des bots ou en ligne entre amis.",
+json.dump({"id":"/","name":"Breachline","short_name":"Breachline","description":"FPS en ligne dans le navigateur : solo contre des bots ou en ligne entre amis.",
     "start_url":"./","scope":"./","display":"fullscreen","display_override":["fullscreen","standalone"],"orientation":"landscape","categories":["games"],
     "background_color":"#0E110D","theme_color":"#0E110D","prefer_related_applications":False,
     "icons":[{"src":icons["icon-192"],"sizes":"192x192","type":"image/png","purpose":"any"},{"src":icons["icon-512"],"sizes":"512x512","type":"image/png","purpose":"any"},
@@ -260,7 +260,7 @@ if html.count('<meta charset="utf-8">')!=1: raise SystemExit("shell.html : <meta
 html=html.replace('<meta charset="utf-8">','<meta charset="utf-8">\n<meta http-equiv="Content-Security-Policy" content="'+csp+'">')
 print("CSP :",len(inline),"scripts en ligne,",("relais "+host) if relay else "PeerJS")
 os.makedirs("dist", exist_ok=True)
-open("dist/riposte-frontline.html","w",encoding="utf-8").write(html)
+open("dist/breachline.html","w",encoding="utf-8").write(html)
 with open("dist/version.json","w",encoding="utf-8") as f: f.write(json.dumps({"build":build_id,"version":log[0]["version"]})+"\n")
 # Serveur de jeu (serveur/, voir serveur/README.md) : son code est publié avec le jeu dans dist/serveur/ (le serveur s'y met à
 # jour seul, riposte-maj), et serveur/installer.sh, le script à coller à la création du serveur, est refait ici : il embarque

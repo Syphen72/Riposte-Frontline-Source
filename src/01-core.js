@@ -1,6 +1,6 @@
 'use strict';
 /* ==========================================================================
-   RIPOSTE: FRONTLINE - noyau : utilitaires, textures procédurales, rendu
+   BREACHLINE - noyau : utilitaires, textures procédurales, rendu
    ========================================================================== */
 THREE.ColorManagement.legacyMode = false;
 

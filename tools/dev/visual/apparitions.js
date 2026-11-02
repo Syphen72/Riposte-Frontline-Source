@@ -1,5 +1,5 @@
 /* Qualité des apparitions : simulation accélérée d'une partie entre bots (le joueur est retiré du jeu), qui note chaque apparition au moment
-   où elle a lieu. node apparitions.js [secondes=180] [page=dist/riposte-frontline.html] ; MAP=givre, MODE=tdm, ffa ou dom, DIFF=0 à 2.
+   où elle a lieu. node apparitions.js [secondes=180] [page=dist/breachline.html] ; MAP=givre, MODE=tdm, ffa ou dom, DIFF=0 à 2.
    Rapporte, pour les réapparitions en cours de partie :
      vue       part des apparitions qu'un adversaire voit (ligne de vue dégagée vers la tête ou le buste, à moins de 60 m) ;
      deFace    part de celles qu'un adversaire voit dans son champ (60 degrés de part et d'autre de son regard) : il voit l'autre apparaître ;

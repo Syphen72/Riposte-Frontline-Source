@@ -9,8 +9,8 @@
 
    Installation (une fois) :  cd tools/dev && npm install
    Usage (depuis la racine) :  node tools/dev/audio.js [version.html] [--sortie dossier] [--sons armes,touches,impacts,maniement,menus,explosions,series,pas] [--repli 1]
-   Sans fichier : dist/riposte-frontline.html. Comparaison : l'ancienne page dans un dossier à côté des paquets de sons
-   (mkdir -p /tmp/avant && git show HEAD:dist/riposte-frontline.html > /tmp/avant/avant.html && ln -sfn "$PWD/dist/sfx" /tmp/avant/sfx),
+   Sans fichier : dist/breachline.html. Comparaison : l'ancienne page dans un dossier à côté des paquets de sons
+   (mkdir -p /tmp/avant && git show HEAD:dist/breachline.html > /tmp/avant/avant.html && ln -sfn "$PWD/dist/sfx" /tmp/avant/sfx),
    puis lancer le banc sur chaque version avec une sortie différente ; un paquet introuvable est signalé (sa synthèse de repli
    serait mesurée à sa place). Chromium : celui de Playwright, ou la variable d'environnement CHROME. */
 const path = require('path'), fs = require('fs');
@@ -23,7 +23,7 @@ for (let i = 2; i < process.argv.length; i++) {
   const a = process.argv[i];
   if (a.startsWith('--')) opt[a.slice(2)] = process.argv[++i]; else files.push(path.resolve(a));
 }
-if (!files.length) files.push(path.join(ROOT, 'dist', 'riposte-frontline.html'));
+if (!files.length) files.push(path.join(ROOT, 'dist', 'breachline.html'));
 fs.mkdirSync(opt.sortie, { recursive: true });
 
 /* Chaque son : nom, durée de rendu, code exécuté dans la page (le contexte audio de la page est remplacé par un contexte hors ligne) */

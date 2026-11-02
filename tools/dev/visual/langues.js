@@ -11,7 +11,7 @@ const words = (t) => (t.toLowerCase().match(/[a-zà-ÿœ]{3,}/g) || []);
 const enWords = new Set(pairs.flatMap(([, v]) => words(v)));
 const frWords = new Set(pairs.flatMap(([k]) => words(k)).filter((w) => !enWords.has(w)));
 const FR = { test: (v) => /[àâçéèêëîïôùûœ]/i.test(v) || words(v.replace(/<[^>]*>/g, ' ')).some((w) => frWords.has(w)) };
-const OK = /Kervénec|Hôtel du Col|Café de la Marine|Français|Riposte: Frontline|\[Nom ou raison|\[Adresse|\[région/;
+const OK = /Kervénec|Hôtel du Col|Café de la Marine|Français|Breachline|\[Nom ou raison|\[Adresse|\[région/;
 (async () => {
   const { browser, page, logs } = await openGame({ w: 1280, h: 800, settings: { quality: 'low', lang, map: 'sable' }, noHdri: true });
   const seen = new Set(), left = [];

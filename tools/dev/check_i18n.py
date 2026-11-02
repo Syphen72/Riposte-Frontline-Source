@@ -14,7 +14,7 @@ os.chdir(ROOT)
 errs=[]; warn=[]
 en,e=i18n.load_en(); errs+=e
 keys=K.all_keys(); shell=K.shell_keys()
-SHELL_SAME={'Riposte: Frontline','Khamsin','Place','CODE','Alpha','Bravo','UAV','Killcam','Solo'}  # noms propres ou textes remplacés par le jeu
+SHELL_SAME={'Breachline','Khamsin','Place','CODE','Alpha','Bravo','UAV','Killcam','Solo'}  # noms propres ou textes remplacés par le jeu
 need={k:w for k,w in keys.items()}
 for k in shell:
     if k not in SHELL_SAME: need.setdefault(k,['shell.html'])

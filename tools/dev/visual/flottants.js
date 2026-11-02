@@ -10,7 +10,7 @@ const { openGame, REPO } = require('./common');
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const wanted = opt('armes', 'toutes'), withAcc = opt('acc', '1') !== '0', TOL = +opt('tol', 0.0015), STEP = +opt('pas', 0.0012);
-const distLines = fs.readFileSync(path.join(REPO, 'dist/riposte-frontline.html'), 'utf8').split('\n');
+const distLines = fs.readFileSync(path.join(REPO, 'dist/breachline.html'), 'utf8').split('\n');
 
 (async () => {
   const { browser, page, logs } = await openGame({ w: 640, h: 360, settings: { quality: 'low', dynres: false }, noMap: true, noHdri: true });

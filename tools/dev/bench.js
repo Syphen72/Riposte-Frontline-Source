@@ -11,9 +11,9 @@
    Usage (depuis la racine) :  node tools/dev/bench.js [version.html ...] [--qualite medium] [--taille 1280x720]
                                [--images 4] [--vues rue,place,soleil,toit] [--carte sable] [--herbe 0]   (vue souk : sous les toiles du souk de Khamsin)
    --herbe 0 : réglage « Herbe en relief » coupé (coût des brins d'herbe : même version mesurée avec et sans).
-   Sans fichier : dist/riposte-frontline.html. Avec deux fichiers, la seconde colonne donne l'écart en %. Pour comparer
-   à la version publiée : git show HEAD:dist/riposte-frontline.html > /tmp/avant.html, puis
-   node tools/dev/bench.js /tmp/avant.html dist/riposte-frontline.html.
+   Sans fichier : dist/breachline.html. Avec deux fichiers, la seconde colonne donne l'écart en %. Pour comparer
+   à la version publiée : git show HEAD:dist/breachline.html > /tmp/avant.html, puis
+   node tools/dev/bench.js /tmp/avant.html dist/breachline.html.
    Chromium : celui de Playwright, ou le chemin donné par la variable d'environnement CHROME. */
 const path = require('path'), fs = require('fs');
 const DEV = __dirname, ROOT = path.join(DEV, '..', '..');
@@ -25,7 +25,7 @@ for (let i = 2; i < process.argv.length; i++) {
   const a = process.argv[i];
   if (a.startsWith('--')) opt[a.slice(2)] = process.argv[++i]; else files.push(path.resolve(a));
 }
-if (!files.length) files.push(path.join(ROOT, 'dist', 'riposte-frontline.html'));
+if (!files.length) files.push(path.join(ROOT, 'dist', 'breachline.html'));
 const [W, H] = opt.taille.split('x').map(Number), N = Math.max(1, +opt.images);
 const LABELS = { DepthPrepass: 'pré-passe', ScenePass: 'scène', RenderPass: 'arme', SSAOPass: 'occlusion', UnrealBloomPass: 'halo', RaysPass: 'rayons', ShaderPass: 'finale' };
 

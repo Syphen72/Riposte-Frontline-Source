@@ -13,7 +13,7 @@ const ok = (c, msg, extra) => { console.log((c ? 'ok    ' : 'ÉCHEC ') + msg + (
 const wait = (page, ms) => page.waitForTimeout(ms);
 // le rendu logiciel est lent quand on prend des captures : on attend des images du jeu (frameN), pas des millisecondes
 const frames = async (page, n) => { const f0 = await page.evaluate('frameN'); await page.waitForFunction(`frameN >= ${f0 + n}`, null, { timeout: 180000, polling: 50 }); };
-const PAGE = path.resolve(REPO, 'dist', process.env.PAGE || 'riposte-frontline.html');
+const PAGE = path.resolve(REPO, 'dist', process.env.PAGE || 'breachline.html');
 (async () => {
   if (out) require('fs').mkdirSync(out, { recursive: true });
   // 1. sans ?grenade=1

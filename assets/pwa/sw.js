@@ -1,4 +1,4 @@
-/* Service worker de Riposte: Frontline (copié tel quel dans dist/sw.js par build.py).
+/* Service worker de Breachline (copié tel quel dans dist/sw.js par build.py).
    Il rend le jeu installable sur l'écran d'accueil (Android, Chrome) et garde en cache les fichiers dont l'adresse change avec
    le contenu (textures, sons, illustrations, icônes : un an d'âge sans risque), ce qui accélère les visites suivantes sur un réseau
    mobile. La page du jeu, l'API et version.json ne sont JAMAIS servis depuis le cache : le jeu se met à jour tout seul

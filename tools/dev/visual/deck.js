@@ -12,7 +12,7 @@ const { REPO } = require('./common');
 const DIST = path.join(REPO, 'dist'), HERE = __dirname, OUT = process.argv[2];
 if (OUT) fs.mkdirSync(OUT, { recursive: true });
 let fails = 0; const ok = (c, m) => { if (!c) fails++; console.log((c ? 'ok    : ' : 'ECHEC : ') + m); };
-const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split('?')[0]); if (u === '/') u = '/riposte-frontline.html'; const f = path.join(DIST, u); if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html' : f.endsWith('.js') ? 'application/javascript' : f.endsWith('.sh') ? 'text/plain' : 'application/octet-stream' }); fs.createReadStream(f).pipe(r); });
+const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split('?')[0]); if (u === '/') u = '/breachline.html'; const f = path.join(DIST, u); if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html' : f.endsWith('.js') ? 'application/javascript' : f.endsWith('.sh') ? 'text/plain' : 'application/octet-stream' }); fs.createReadStream(f).pipe(r); });
 (async () => {
   await new Promise((r) => srv.listen(0, '127.0.0.1', r)); const base = `http://127.0.0.1:${srv.address().port}`;
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -35,8 +35,8 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
     ok(st.card && st.btn === 'Installer sur Steam Deck', 'mode Bureau : carte « ' + st.btn + ' » : ' + st.txt);
     const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#deckGo')]);
     const txt = fs.readFileSync(await dl.path(), 'utf8');
-    ok(dl.suggestedFilename() === 'Installer Riposte.desktop', 'fichier téléchargé : ' + dl.suggestedFilename());
-    ok(txt.includes(`Exec=bash -c "curl -fsSL --create-dirs ${base}/deck/installer.sh -o ~/.cache/riposte-installer.sh && bash ~/.cache/riposte-installer.sh ${base}"`) && /Terminal=true/.test(txt) && !/[$`\\]/.test(txt.split('Exec=')[1]), 'raccourci : installe depuis l\'adresse de la page (' + base + ')');
+    ok(dl.suggestedFilename() === 'Installer Breachline.desktop', 'fichier téléchargé : ' + dl.suggestedFilename());
+    ok(txt.includes(`Exec=bash -c "curl -fsSL --create-dirs ${base}/deck/installer.sh -o ~/.cache/breachline-installer.sh && bash ~/.cache/breachline-installer.sh ${base}"`) && /Terminal=true/.test(txt) && !/[$`\\]/.test(txt.split('Exec=')[1]), 'raccourci : installe depuis l\'adresse de la page (' + base + ')');
     ok(await p.evaluate(() => $('deckGo').textContent === 'Télécharger de nouveau' && /Téléchargements/.test($('deckTxt').textContent)), 'après le téléchargement : la carte dit quoi faire');
     if (OUT) await p.screenshot({ path: path.join(OUT, 'deck-bureau.png') });
     ok(!logs.length, 'mode Bureau : aucune erreur' + (logs.length ? ' ' + logs[0] : ''));

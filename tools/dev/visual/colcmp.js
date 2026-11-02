@@ -1,6 +1,6 @@
 /* Compare les collisions de la zone de jeu entre deux versions construites du jeu (par défaut : la version d'un
    commit git et dist/ actuel). Toute différence de boîte change le gameplay (déplacements, tirs, navigation des bots).
-   node colcmp.js [commit=HEAD] [page2=dist/riposte-frontline.html] */
+   node colcmp.js [commit=HEAD] [page2=dist/breachline.html] */
 const fs = require('fs'), path = require('path'), os = require('os'), { execSync } = require('child_process');
 const { openGame, REPO } = require('./common');
 async function dump(page) {
@@ -14,8 +14,8 @@ async function dump(page) {
 }
 (async () => {
   const ref = process.argv[2] || 'HEAD', tmp = path.join(os.tmpdir(), 'cod-ref.html');
-  fs.writeFileSync(tmp, execSync(`git show ${ref}:dist/riposte-frontline.html`, { cwd: REPO, maxBuffer: 64 << 20 }));
-  const A = await dump(tmp), B = await dump(process.argv[3] || path.join(REPO, 'dist/riposte-frontline.html'));
+  fs.writeFileSync(tmp, execSync(`git show ${ref}:dist/breachline.html`, { cwd: REPO, maxBuffer: 64 << 20 }));
+  const A = await dump(tmp), B = await dump(process.argv[3] || path.join(REPO, 'dist/breachline.html'));
   const count = (l) => l.reduce((m, k) => m.set(k, (m.get(k) || 0) + 1), new Map());
   const ca = count(A.col), cb = count(B.col);
   const onlyA = [...ca.keys()].filter((k) => !cb.has(k)), onlyB = [...cb.keys()].filter((k) => !ca.has(k));

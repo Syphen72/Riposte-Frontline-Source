@@ -1,4 +1,4 @@
-/* Contrôle de la mini-carte (src/09ga-minicarte.js, drawMinimap dans src/09-game.js) : node minicarte.js [page=dist/riposte-frontline.html]
+/* Contrôle de la mini-carte (src/09ga-minicarte.js, drawMinimap dans src/09-game.js) : node minicarte.js [page=dist/breachline.html]
    CARTES=sable,stratus pour en limiter le nombre (par défaut les huit) ; TEL=1 : téléphone en paysage au lieu d'un écran de bureau ; sorties dans
    minicartes/ (ignorées par git) : le fond de chaque carte (<id>.png), la mini-carte dessinée à 368 px et à 184 px (<id>-vue.png, <id>-vue-petite.png)
    la carte de la frappe aérienne telle que la tablette l'ouvre (<id>-frappe.png)

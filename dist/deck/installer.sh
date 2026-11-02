@@ -1,16 +1,16 @@
 #!/bin/bash
-# Riposte: Frontline sur Steam Deck : installation dans Steam, en mode Bureau (README « Steam Deck »).
-# Lancé par le fichier « Installer Riposte » que le jeu télécharge (bouton du menu principal sur Steam Deck), ou à la main :
-#   curl -fsSL https://www.playriposte.com/deck/installer.sh | bash
+# Breachline sur Steam Deck : installation dans Steam, en mode Bureau (README « Steam Deck »).
+# Lancé par le fichier « Installer Breachline » que le jeu télécharge (bouton du menu principal sur Steam Deck), ou à la main :
+#   curl -fsSL https://breachline.brightsidestrategyllc.com/deck/installer.sh | bash
 #   bash installer.sh [adresse du jeu] [--desinstaller]
 # Il installe Chrome (Flathub, pour l'utilisateur, sans mot de passe) et lui donne accès à la manette, écrit un lanceur qui ouvre le jeu en
 # ligne en plein écran (?deck=1 : mode Deck du jeu), ferme Steam, ajoute le raccourci (shortcuts.vdf) avec ses images (dossier grid) et la
 # disposition « manette » des commandes, puis revient au mode Jeu. Le jeu se met à jour comme la version web : le lanceur ouvre le site.
 # Le fichier des raccourcis n'est réécrit que si sa relecture redonne exactement les mêmes octets (sinon rien n'est touché), avec une
-# sauvegarde à côté. Relancer l'installation remplace le raccourci au lieu d'en ajouter un. RIPOSTE_DECK_TEST=1 : sans Flatpak, sans
+# sauvegarde à côté. Relancer l'installation remplace le raccourci au lieu d'en ajouter un. BREACHLINE_DECK_TEST=1 : sans Flatpak, sans
 # arrêt de Steam ni retour au mode Jeu (contrôle hors Steam Deck).
 set -u
-SITE="https://www.playriposte.com"
+SITE="https://breachline.brightsidestrategyllc.com"
 MODE=install
 for a in "$@"; do
   case "$a" in
@@ -20,9 +20,9 @@ for a in "$@"; do
 done
 # https seulement (http pour un essai sur cette machine : tools/dev/check_deck.py) : le lanceur et ce qu'il télécharge ne passent pas en clair
 if ! [[ "$SITE" =~ ^https://[A-Za-z0-9.:-]+$ || "$SITE" =~ ^http://(127\.0\.0\.1|localhost)(:[0-9]+)?$ ]]; then echo "Adresse invalide : $SITE"; exit 1; fi
-APP="Riposte: Frontline"
-DIR="$HOME/.local/share/riposte-frontline"
-TEST="${RIPOSTE_DECK_TEST:-}"
+APP="Breachline"
+DIR="$HOME/.local/share/breachline"
+TEST="${BREACHLINE_DECK_TEST:-}"
 FR=; case "${LANG:-}${LC_ALL:-}" in fr*|*fr_*) FR=1 ;; esac
 t() { if [ -n "$FR" ]; then printf '%s\n' "$1"; else printf '%s\n' "$2"; fi; }
 pause() { [ -n "$TEST" ] && return; [ -t 0 ] || [ -e /dev/tty ] || return; t "Appuyez sur Entrée pour fermer cette fenêtre." "Press Enter to close this window."; read -r _ < /dev/tty || true; }
@@ -57,22 +57,22 @@ if [ "$MODE" = install ]; then
     curl -fsSL "$SITE/deck/$f" -o "$DIR/$f" || fail "téléchargement de $f impossible." "Could not download $f."
   done
   # profil de Chrome réservé au jeu : sa progression et ses réglages à part, et une fenêtre à lui (un Chrome déjà ouvert ne la prend pas)
-  cat > "$DIR/riposte.sh" <<EOF
+  cat > "$DIR/breachline.sh" <<EOF
 #!/bin/bash
 # Lanceur de $APP sur Steam Deck, écrit par l'installeur ($SITE/deck/installer.sh) : le jeu en ligne, en plein écran, à la manette.
 exec flatpak run --branch=stable --arch=x86_64 --command=/app/bin/chrome com.google.Chrome \\
-  --user-data-dir="\$HOME/.var/app/com.google.Chrome/data/riposte-frontline" --kiosk --no-first-run --no-default-browser-check \\
+  --user-data-dir="\$HOME/.var/app/com.google.Chrome/data/breachline" --kiosk --no-first-run --no-default-browser-check \\
   --password-store=basic --autoplay-policy=no-user-gesture-required --hide-crash-restore-bubble --disable-features=Translate \\
   "$SITE/?deck=1"
 EOF
-  chmod +x "$DIR/riposte.sh"
+  chmod +x "$DIR/breachline.sh"
   # aussi dans le menu des applications du mode Bureau
   mkdir -p "$HOME/.local/share/applications"
-  cat > "$HOME/.local/share/applications/riposte-frontline.desktop" <<EOF
+  cat > "$HOME/.local/share/applications/breachline.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=$APP
-Exec="$DIR/riposte.sh"
+Exec="$DIR/breachline.sh"
 Icon=$DIR/icone.png
 Categories=Game;
 EOF
@@ -91,7 +91,7 @@ PY="$(mktemp)"
 cat > "$PY" <<'PYEOF'
 import glob, os, re, shutil, struct, sys, zlib
 mode, steam, d, app = sys.argv[1:5]
-exe = '"%s/riposte.sh"' % d
+exe = '"%s/breachline.sh"' % d
 appid = zlib.crc32((exe + app).encode('utf-8')) | 0x80000000  # identifiant du raccourci, écrit dans shortcuts.vdf : les images en portent le nom
 names = [app.lower(), app.lower().replace(':', '')]            # clé du raccourci dans les dispositions des commandes (sans le deux-points selon les versions)
 
@@ -146,7 +146,7 @@ def tdump(m, ind=0):
     return o
 
 def backup(f):
-    if os.path.exists(f) and not os.path.exists(f + '.riposte-sauvegarde'): shutil.copyfile(f, f + '.riposte-sauvegarde')
+    if os.path.exists(f) and not os.path.exists(f + '.breachline-sauvegarde'): shutil.copyfile(f, f + '.breachline-sauvegarde')
 
 users = [u for u in glob.glob(os.path.join(steam, 'userdata', '*')) if os.path.basename(u).isdigit() and os.path.basename(u) != '0']
 if not users: print('NOUSER'); sys.exit(3)
@@ -168,7 +168,7 @@ for u in users:
         print('SKIP %s %s' % (uid, e)); continue
     # notre raccourci : par son nom ou par son lanceur
     mine = [e for e in sc if e[1] == 0 and ((field(e[2], 'AppName') and field(e[2], 'AppName')[2].decode('utf-8', 'replace').lower() == app.lower())
-            or (field(e[2], 'Exe') and b'riposte-frontline/riposte.sh' in field(e[2], 'Exe')[2]))]
+            or (field(e[2], 'Exe') and b'breachline/breachline.sh' in field(e[2], 'Exe')[2]))]
     olds = [struct.unpack('<I', field(e[2], 'appid')[2])[0] for e in mine if field(e[2], 'appid')]
     sc[:] = [e for e in sc if e not in mine]
     if mode == 'install':
@@ -217,7 +217,7 @@ echo "$OUT" | grep -E '^(SKIP|NOTPL)' || true
 [ $RC -eq 3 ] && fail "aucun compte Steam sur cet appareil. Connectez-vous à Steam une fois, puis relancez l'installation." "No Steam account on this device. Sign in to Steam once, then run the installer again."
 [ $RC -ne 0 ] && fail "le raccourci Steam n'a pas pu être écrit." "The Steam shortcut could not be written."
 if [ "$MODE" = uninstall ]; then
-  rm -rf "$DIR" "$HOME/.local/share/applications/riposte-frontline.desktop"
+  rm -rf "$DIR" "$HOME/.local/share/applications/breachline.desktop"
   t "$APP est retiré de Steam." "$APP has been removed from Steam."
 else
   echo "$OUT" | grep -q '^TEMPLATE -$' && t "Disposition des commandes : à choisir dans Steam (Manette avec trackpad souris) si la manette ne répond pas en jeu." "Controller layout: pick Gamepad with Mouse Trackpad in Steam if the controller does not respond in game."

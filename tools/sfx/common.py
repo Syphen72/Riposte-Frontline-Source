@@ -27,7 +27,7 @@ def fetch(rel, url):
     p = SRC / rel
     if not p.exists():
         p.parent.mkdir(parents=True, exist_ok=True)
-        req = urllib.request.Request(url, headers={'User-Agent': 'riposte-frontline-sfx'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'breachline-sfx'})
         with urllib.request.urlopen(req, timeout=120) as r, open(p, 'wb') as f:
             f.write(r.read())
     return p

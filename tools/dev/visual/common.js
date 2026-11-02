@@ -27,7 +27,7 @@ async function openGame(o = {}) {
     if (u.includes('@pmndrs') || u.includes('peerjs') || u.includes('fonts.g') || u.endsWith('.mp3') || u.includes('version.json')) return r.abort();
     return r.continue();
   });
-  await pg.goto(o.url || 'file://' + (o.page || path.join(REPO, 'dist/riposte-frontline.html'))); // o.url : page servie par tools/dev/api-dev.js (comptes)
+  await pg.goto(o.url || 'file://' + (o.page || path.join(REPO, 'dist/breachline.html'))); // o.url : page servie par tools/dev/api-dev.js (comptes)
   if (o.gate) return { browser: b, page: pg, logs }; // o.gate : le jeu attend derrière la fenêtre d'installation, rien à attendre
   await pg.waitForFunction(() => typeof MATCH !== 'undefined' && MATCH.state === 'menu', null, { timeout: 600000, polling: 500 });
   // la carte n'est construite qu'au lancement d'une partie (les versions plus anciennes la construisaient au démarrage)

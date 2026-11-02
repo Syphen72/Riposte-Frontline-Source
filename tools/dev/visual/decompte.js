@@ -1,4 +1,4 @@
-/* Contrôle du décompte du départ (src/09y-decompte.js) : node decompte.js [page=dist/riposte-frontline.html] ; LANGUE=en : textes anglais.
+/* Contrôle du décompte du départ (src/09y-decompte.js) : node decompte.js [page=dist/breachline.html] ; LANGUE=en : textes anglais.
    Partie solo réelle (boucle d'images du jeu, rendu 3D coupé pour aller vite). Le décompte du jeu dure 5 s : un premier lancement le vérifie
    de bout en bout (le chiffre seul, un son par seconde de 5 à 1, aucune voix, « En avant ! »), puis un décompte rallongé à 12 s (MATCH_COUNTDOWN) laisse
    le temps de mesurer le reste :

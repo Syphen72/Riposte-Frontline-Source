@@ -1,6 +1,6 @@
 /* Changement de carte : charge chaque carte jouable l'une après l'autre (comme l'écran de chargement d'une partie),
    puis revient à la première ; vérifie que les collisions, les rampes et la navigation sont identiques après
-   l'aller-retour, et relève les erreurs de la console. node maps.js [page=dist/riposte-frontline.html] */
+   l'aller-retour, et relève les erreurs de la console. node maps.js [page=dist/breachline.html] */
 const { openGame } = require('./common');
 (async () => {
   const { browser, page, logs } = await openGame({ page: process.argv[2], w: 480, h: 270, settings: { quality: 'low', map: 'sable' }, noHdri: true });

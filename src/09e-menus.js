@@ -718,7 +718,7 @@ function menuInit() {
   $('soloGo').addEventListener('click', () => menuLaunch({ online: false, map: Settings.map, deploy: () => startMatch() }));
   $('fsBtn').addEventListener('click', toggleFullscreen);
   // code source public (licence MIT, README « Code source public ») : un bouton plutôt qu'un lien, pour que la manette l'atteigne
-  $('srcBtn').addEventListener('click', () => window.open('https://github.com/BenDBSS/Riposte-Frontline-Source', '_blank', 'noopener'));
+  $('srcBtn').addEventListener('click', () => window.open('https://github.com/Syphen72/Riposte-Frontline-Source', '_blank', 'noopener'));
   mountClassPicker($('cpMenu'), 'menu'); mountClassPicker($('cpDeploy'), 'deploy'); mountClassPicker($('cpPause'), 'pause');
   mountOptions($('optMenu')); mountOptions($('optPause'));
   arsInit(); skinScreenInit(); skinRefresh();

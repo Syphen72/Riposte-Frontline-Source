@@ -137,7 +137,7 @@ SOURCES = {
     },
     'chatterbox': {
         'nom': 'Voix générées par synthèse vocale Chatterbox Multilingual (paquet chatterbox-tts), une voix de référence par langue',
-        'auteur': 'Riposte: Frontline, avec le modèle Chatterbox de Resemble AI',
+        'auteur': 'Breachline, avec le modèle Chatterbox de Resemble AI',
         'licence': 'MIT (modèle) ; sons générés sans restriction',
         'url': 'https://huggingface.co/ResembleAI/chatterbox',
         'preuve': "licence MIT du dépôt Hugging Face ResembleAI/chatterbox (fiche du modèle : license: mit) et du dépôt "

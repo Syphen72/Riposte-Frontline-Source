@@ -28,7 +28,7 @@ try { ({ chromium } = require('playwright-core')); } catch (e) { console.error('
       if (u.startsWith('file:')) return r.continue();
       return r.abort();
     });
-    await pg.goto('file://' + path.join(ROOT, 'dist', 'riposte-frontline.html'));
+    await pg.goto('file://' + path.join(ROOT, 'dist', 'breachline.html'));
     await pg.waitForFunction("typeof MATCH!=='undefined' && MATCH.state==='menu'", null, { timeout: 600000, polling: 500 });
     const ids = process.argv.slice(2).length ? process.argv.slice(2) : await pg.evaluate(() => MAPS.filter((m) => m.ok).map((m) => m.id));
     fs.mkdirSync(path.join(ROOT, 'assets', 'maps'), { recursive: true });

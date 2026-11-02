@@ -1,9 +1,9 @@
-/* Banc de la logique d'une partie, sans rendu : node logique.js [page...] (défaut : dist/riposte-frontline.html)
+/* Banc de la logique d'une partie, sans rendu : node logique.js [page...] (défaut : dist/breachline.html)
    Le hasard est fixé (Math.random à graine), puis une partie entre bots se joue pas à pas (1/60 s) : bots, joueur et vue subjective
    (sa main d'appui, ses doigts), grenades, armes au sol, props, effets, tissus. Pour chaque répétition : temps par pas des bots, du
    joueur et du reste, et une empreinte de l'état final (positions, éliminations, articulations des soldats).
    Comparer deux versions : la même empreinte veut dire le même comportement, à l'articulation près. Mettre l'ancienne page dans
-   dist/ (git show HEAD:dist/riposte-frontline.html > dist/_avant.html, à effacer ensuite) : elle doit trouver les mêmes paquets de
+   dist/ (git show HEAD:dist/breachline.html > dist/_avant.html, à effacer ensuite) : elle doit trouver les mêmes paquets de
    sons et de textures, car tirer une variante de son consomme le hasard. Quelques décisions dépendent de l'horloge (budgets de
    calcul) : une répétition peut s'écarter au premier lancement ou sous le profileur, les suivantes se rejoignent.
    MAP=sable (carte), PAS=900 (pas par répétition), REP=3 ; ALLOC=20 : allocations par fonction (échantillonnage du tas, les 20
@@ -18,7 +18,7 @@ function top(m, n, N, unit, scale) {
   return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => '    ' + (v * scale / N).toFixed(3).padStart(8) + ' ' + unit + '  ' + k).join(NL);
 }
 (async () => {
-  const pages = process.argv.slice(2); if (!pages.length) pages.push(path.join(REPO, 'dist/riposte-frontline.html'));
+  const pages = process.argv.slice(2); if (!pages.length) pages.push(path.join(REPO, 'dist/breachline.html'));
   for (const p of pages) {
     const { browser, page, logs } = await openGame({ page: path.resolve(p), w: 320, h: 180, settings: { quality: 'low', difficulty: 2, map: MAP }, noHdri: true, init: SEED });
     const cdp = process.env.ALLOC || process.env.PROF ? await page.context().newCDPSession(page) : null;
