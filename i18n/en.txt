@@ -1742,3 +1742,7 @@ Déclenchement ⇒ Trigger
 {0} m autour ⇒ {0} m around
 {0} m devant ⇒ {0} m ahead
 Impossible de poser ici ⇒ Can't place here
+Tourelle ⇒ Sentry
+Une tourelle automatique posée devant vous tire sur les ennemis à portée pendant 75 secondes. On peut la détruire. ⇒ An automatic turret placed in front of you fires at enemies in range for 75 seconds. It can be destroyed.
+Tourelle à court ⇒ Sentry out of ammo
+Tourelle détruite ⇒ Sentry destroyed

@@ -75,6 +75,7 @@ const BOT_STATE = {
   warnT: 0, stepHeardT: -99, grudge: null, revenge: null, wasVis: false, standT: 0, fleeT: 0, fleeX: 0, fleeZ: 0, nadeOn: true,
   chaseE: null, contactT: -99, contactD: 0, lostVX: 0, lostVZ: 0, lostWeak: false, searchN: 0, searchP: null, searchC: null, searchPts: null,
   sweepT: 0, sweepDur: 0, sweepYaw: 0, sweepA: 0, startleT: 0, startleAt: -99, blindT: 0, blindW: 0, blindX: 0, blindZ: 0, mkNadeT: -99,
+  uT: 0, uTgt: null, // unité ennemie prise pour cible (tourelle, chien robot, mine : unitsBotsTick, 08h-unites.js)
 };
 function makeBot(team, idx) {
   let wid = BOT_WEAPONS[(idx * 3 + team * 2) % BOT_WEAPONS.length];

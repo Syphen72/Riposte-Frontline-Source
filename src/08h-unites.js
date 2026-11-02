@@ -63,6 +63,39 @@ function updateUnits(dt) {
     if (u.local) K.tick(u, dt); else K.remote(u, dt);
   }
   if (MATCH.online) unitsNetGone();
+  unitsBotsTick(dt);
+}
+/* Les bots et les unités ennemies : un bot qui n'a pas de soldat en vue tire sur l'unité ennemie qu'il voit (tourelle et chien à moins de
+   30 m ; une mine, s'il la remarque, à moins de 9 m : sa diode la trahit), avec son arme, au rythme d'une rafale. Bots de cette machine seulement */
+const UNIT_SEEN = { turret: 30, dog: 28, mine: 9, claymore: 9 };
+function unitsBotsTick(dt) {
+  if (!UNITS.length) return;
+  for (const b of entities) {
+    if (b.isPlayer || !b.alive || b.isRemote || (MATCH.online && !b.netBot) || b.inMecha || !b.model) continue;
+    if (b.visible && b.target && b.target.alive) { b.uTgt = null; continue; } // un soldat en vue passe avant
+    if ((b.uT -= dt) > 0) continue;
+    const eye = entEye(b, _unA);
+    let u = b.uTgt;
+    if (!u || u.dead || u.pos.distanceTo(b.pos) > (UNIT_SEEN[u.kind] || 20) || !lineClear(eye, _unB.set(u.pos.x, u.pos.y + u.h, u.pos.z))) {
+      u = null; let bd = 1e9;
+      for (const x of UNITS) {
+        if (x.dead || x.owner === b || allied(x.owner, b) || x.state === 'deploy') continue;
+        const d = x.pos.distanceTo(b.pos), mine = x.kind === 'mine' || x.kind === 'claymore';
+        if (d > (UNIT_SEEN[x.kind] || 20) || d > bd || (mine && Math.random() > 0.35)) continue;
+        if (lineClear(eye, _unB.set(x.pos.x, x.pos.y + x.h, x.pos.z))) { u = x; bd = d; }
+      }
+    }
+    if (u && u !== b.uTgt) { b.uTgt = u; b.uT = 0.5; continue; } // le temps de la remarquer et de viser
+    b.uTgt = u;
+    if (!u) { b.uT = 0.4; continue; }
+    const w = armsW(b), def = w.def; if (w.mag <= 0 || def.rocket) { b.uT = 0.6; continue; }
+    const c = _unB.set(u.pos.x, u.pos.y + u.h, u.pos.z), dx = c.x - eye.x, dy = c.y - eye.y, dz = c.z - eye.z;
+    b.yaw = Math.atan2(-dx, -dz); b.pitch = Math.atan2(dy, Math.hypot(dx, dz));
+    const muzzle = b.model.gun.localToWorld(b.model.muzzleLocal.clone()), dir = coneDir(c.clone().sub(eye).normalize(), 0.02);
+    w.mag--; fireRay(b, eye.clone(), dir, def, muzzle, Math.random() < 0.6, b.dmgMul || 1);
+    muzzleWorldFx(muzzle, dir, def.silent, def.feel ? def.feel.flash : 1); sfxGun(def.sound, muzzle, b); b.recoil = 0.05; b.lastShotT = MATCH.time;
+    b.uT = (60 / def.rpm) * (def.auto ? 2.6 : 1.4); // des rafales courtes, pas le plein débit
+  }
 }
 function clearUnits() { for (const u of UNITS) { if (u.mesh) scene.remove(u.mesh); if (UNIT_KINDS[u.kind].free) UNIT_KINDS[u.kind].free(u); } UNITS.length = 0; }
 

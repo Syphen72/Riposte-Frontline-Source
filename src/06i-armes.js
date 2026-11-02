@@ -185,6 +185,10 @@ const KSDEF = {
   uav: { n: 4, name: _t('UAV'), short: _t('UAV'), icon: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><path d="M12 12l6-6"/>',
     desc: _t('Pendant 30 secondes, la mini-carte montre les ennemis toutes les 3 secondes.'),
     use: () => useUAV(), bot: (b) => botUav(b) },
+  // Breachline : tourelle automatique posée devant soi (08j-tourelle.js)
+  sentry: { n: 5, name: _t('Tourelle'), short: _t('Tourelle'), icon: '<path d="M9 10h7v4H9zM16 11.5h5M12.5 14v3M12.5 17l-4 4.5M12.5 17l4 4.5M12.5 17v4.5"/><circle cx="11" cy="8.5" r="1.3"/>',
+    desc: _t('Une tourelle automatique posée devant vous tire sur les ennemis à portée pendant 75 secondes. On peut la détruire.'),
+    use: () => useSentry(), bot: (b) => botSentry(b) },
   fpv: { n: 6, name: _t('Drone kamikaze'), short: _t('Drone'), icon: '<path d="M9.5 10.5h5v3h-5zM9.5 10.5L6 7M14.5 10.5L18 7M9.5 13.5L6 17M14.5 13.5L18 17"/><circle cx="5" cy="6" r="2.6"/><circle cx="19" cy="6" r="2.6"/><circle cx="5" cy="18" r="2.6"/><circle cx="19" cy="18" r="2.6"/>',
     desc: _t('Vous pilotez un drone explosif pendant 30 secondes. Il explose au contact ou quand vous tirez. Votre soldat reste sans défense.'),
     use: () => usePhoneKs('fpv'), bot: (b) => fpvLaunch(b) },

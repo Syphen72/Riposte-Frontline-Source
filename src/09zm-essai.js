@@ -14,7 +14,7 @@
    ========================================================================== */
 const ESSAI = (() => {
   const v = new URLSearchParams(location.search).get('essai'); if (!v) return '';
-  const id = { drone: 'fpv', frappe: 'air', helico: 'heli', satellite: 'sat' }[v] || v;
+  const id = { drone: 'fpv', frappe: 'air', helico: 'heli', satellite: 'sat', tourelle: 'sentry', chien: 'dog' }[v] || v;
   return KSDEF[id] ? id : '';
 })();
 const ESSAI_MECHA = new URLSearchParams(location.search).get('essai') === 'marche';
@@ -76,7 +76,7 @@ function essaiSeries() {
   addEventListener('keydown', (e) => {
     if (MATCH.state !== 'playing' && MATCH.state !== 'paused') return;
     if (e.code === 'KeyK' && !e.repeat) { el.classList.toggle('open'); e.preventDefault(); e.stopImmediatePropagation(); return; }
-    const m = /^Digit([1-7])$/.exec(e.code); if (!m || !el.classList.contains('open')) return;
+    const m = /^Digit([1-9])$/.exec(e.code); if (!m || !el.classList.contains('open')) return;
     e.preventDefault(); e.stopImmediatePropagation(); if (e.repeat) return;
     const id = ids[+m[1] - 1]; if (e.shiftKey) essaiFoe(id); else essaiGrant(id);
   }, true);
