@@ -15,8 +15,11 @@
    ========================================================================== */
 const WEAPON_CATS = [
   { id: 'ar', name: _t('Fusils d\u0027assaut') }, { id: 'smg', name: _t('Pistolets-mitrailleurs') }, { id: 'sniper', name: _t('Fusils de précision') },
-  { id: 'shotgun', name: _t('Fusils à pompe') }, { id: 'pistol', name: _t('Pistolets') },
+  { id: 'shotgun', name: _t('Fusils à pompe') }, { id: 'pistol', name: _t('Pistolets') }, { id: 'launcher', name: _t('Lanceurs') },
 ];
+/* Catégories de l'arme secondaire (Breachline : un lance-roquettes peut remplacer le pistolet) */
+const SECONDARY_CATS = new Set(['pistol', 'launcher']);
+const isSecCat = (cat) => SECONDARY_CATS.has(cat);
 /* Emplacements d'accessoires par famille (une arme peut en ouvrir moins : champ slots) */
 const SLOTS_BY_FAM = {
   rifle: ['optic', 'muzzle', 'barrel', 'under', 'side', 'mag', 'stock', 'ammo'],
@@ -42,6 +45,12 @@ const WEAPONS = {
     tube: true, shellTime: 0.46, spread: [0.075, 0.058], moveSpread: 0.01, recoil: { v: 0.046, h: 0.016, kick: 0.07, rot: 0.1 }, adsTime: 0.22, adsFov: 0.82, move: 1.0, pattern: 'rand', loud: true,
     ai: { ideal: 7, aggr: 0.85, shotgun: true, rush: true }, stats: { dmg: 0.95, acc: 0.3, rng: 0.22, rof: 0.4, mob: 0.74 },
     desc: _t('Semi-automatique de la marine. Huit chevrotines par coup, dévastateur en intérieur.') },
+  // Breachline : lance-roquettes, à la place du pistolet ; la roquette (07f-roquettes.js) s'arme après 6 m, explose, perce les engins et ouvre les murs
+  rpg7: { id: 'rpg7', name: 'RPG-7', type: _t('Lance-roquettes'), cat: 'launcher', fam: 'rifle', rig: 'launcher', model: 'rpg7', sound: 'shotgun', auto: false, rpm: 60, rocket: true, slots: [],
+    dmg: [130, 130], range: [0, 200], head: 1, legs: 1, mag: 1, reserve: 3, reload: 2.6, reloadEmpty: 2.6, spread: [0.035, 0.003], moveSpread: 0.03,
+    recoil: { v: 0.075, h: 0.02, kick: 0.1, rot: 0.16 }, adsTime: 0.36, adsFov: 0.8, move: 0.88, pattern: 'rand', loud: true,
+    ai: { ideal: 26, aggr: 0.2 }, stats: { dmg: 1, acc: 0.45, rng: 0.75, rof: 0.05, mob: 0.55 },
+    desc: _t('Roquette antichar. Elle s\u0027arme après six mètres, perce les véhicules et ouvre les murs.') },
   m9: { id: 'm9', name: 'M9', type: _t('Pistolet'), cat: 'pistol', fam: 'pistol', model: 'm9', sound: 'pistol', auto: false, rpm: 480, dmg: [38, 20], range: [8, 26], head: 1.5, legs: 0.85, mag: 15, reserve: 60,
     reload: 1.45, reloadEmpty: 1.75, spread: [0.026, 0.004], moveSpread: 0.01, recoil: { v: 0.019, h: 0.008, kick: 0.05, rot: 0.09 }, adsTime: 0.14, adsFov: 0.85, move: 1.05, pattern: 'rand',
     ai: { ideal: 12, aggr: 0.45 }, stats: { dmg: 0.4, acc: 0.6, rng: 0.3, rof: 0.5, mob: 0.95 },
@@ -126,6 +135,7 @@ const FEEL = {
   glock18: { kick: 0.9, rot: 0.9, roll: 0.5, shake: 0.2, fov: 1.2, flash: 1.0, spring: [380, 26], smoke: 0.15, punch: 1.4, spark: 4 },
   deagle: { kick: 2.5, rot: 2.4, roll: 0.5, shake: 0.9, fov: 4.2, flash: 2.4, spring: [260, 18], smoke: 0.6, punch: 2.2, spark: 12 },
   m9: { kick: 1.5, rot: 1.5, roll: 0.3, shake: 0.5, fov: 2.6, flash: 1.6, spring: [360, 24], smoke: 0.25, punch: 1.8, spark: 8 },
+  rpg7: { kick: 2.6, rot: 2.2, roll: 1.0, shake: 1.1, fov: 6, flash: 2.6, spring: [110, 10], smoke: 1.6, punch: 1.3, spark: 10 },
 };
 /* Grenades au choix (demande du propriétaire, après la 5.0) : chaque classe en porte un seul type, deux à chaque vie (NADE_COUNT). fuse : mèche,
    à partir de la cuillère (s) ; name : nom court (atelier, HUD) ; long : nom entier ; icon : tracé SVG 24 x 24 ; desc : l'effet en une ou deux
@@ -158,6 +168,8 @@ const CLASSES = [
   { name: _t('Nettoyeur'), desc: _t('Vitesse et cadence pour le corps à corps.'), primary: 'mp5', secondary: 'm9', nades: NADE_COUNT, nade: 'flash' },
   { name: _t('Tireur d\u0027élite'), desc: _t('Une balle au torse suffit. En visée, retenez votre souffle pour stabiliser la lunette.'), primary: 'l96', secondary: 'm9', nades: NADE_COUNT, nade: 'smoke' },
   { name: _t('Brèche'), desc: _t('Dévastateur en intérieur, inoffensif au-delà de vingt mètres.'), primary: 'm1014', secondary: 'm9', nades: NADE_COUNT, nade: 'frag' },
+  // Breachline : la classe des explosifs (les classes personnalisées suivent : l'indice enregistré des anciennes est décalé, 01-core.js)
+  { name: _t('Démolition'), desc: _t('Un lance-roquettes pour les engins et les murs, un pistolet-mitrailleur pour le reste.'), primary: 'mp5', secondary: 'rpg7', nades: NADE_COUNT, nade: 'frag' },
 ];
 /* Séries d'éliminations au choix : chaque classe en porte trois (c.ks), à trois seuils différents, rangées par seuil ; ce sont les emplacements 1, 2 et 3
    (touches 4, 5 et 6, actions ks1 à ks3 ; boutons tactiles et de la manette de même). n : éliminations d'affilée sans mourir ; short : libellé du bouton

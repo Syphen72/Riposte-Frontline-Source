@@ -348,7 +348,7 @@ function vmFire(ev, m, D, def) {
   if (ev === 'magout') { sfxMech('magout'); D.old = 1; }
   else if (ev === 'drop') D.dropAt = 1; // lâché en fin d'image, depuis la main (vmAttachMags)
   else if (ev === 'spare') { D.spare = 1; }
-  else if (ev === 'insert') { D.spare = 0; D.old = 0; sfxMech('magin'); sfxMech('slap', 0.05); }
+  else if (ev === 'insert') { D.spare = 0; D.old = 0; D.ins = 1; sfxMech('magin'); sfxMech('slap', 0.05); }
   else if (ev === 'slide') { VM.slideK = 1; sfxMech('charge'); }
   else if (ev === 'catch') sfxMech('charge');
   else if (ev === 'boltsnd') sfxMech('bolt');
@@ -454,8 +454,10 @@ function vmAttachMags(m, carry) {
   if (m.spare && m.spare.visible) vmMagInHand(m.spare, m, hand);
   if (D && D.old === 1 && carry === 1) { m.mag.visible = true; vmMagInHand(m.mag, m, hand); }
   else if (D && D.old === 2) m.mag.visible = false;
-  else { m.mag.position.copy(m.magHome); m.mag.quaternion.identity(); m.mag.visible = !m.tubeFed; }
+  else { m.mag.position.copy(m.magHome); m.mag.quaternion.identity(); m.mag.visible = !m.tubeFed && !(m.rocket && vmRocketOut(D)); }
 }
+/* Lance-roquettes : tube vide (roquette partie, pas encore remise par le rechargement) */
+function vmRocketOut(D) { const w = PL.ent.arms ? armsW(PL.ent) : null; return !!w && !!w.def.rocket && w.mag <= 0 && !(D && D.ins); }
 /* Chorégraphie coupée (changement d'arme, couteau, grenade) : la main qui manipulait (chargeur, culasse) revient à sa prise
    en quelques images au lieu d'y sauter. X : état de la main, h : sa cible de chorégraphie de l'image (null si aucune),
    grip : sa prise sur l'arme, rest : pose de la main sur sa prise. Renvoie la cible à suivre, ou null. */

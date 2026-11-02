@@ -133,7 +133,7 @@ async function mapCompile(prog) {
 /* Libère tout ce qui appartient à la carte (retour à la mémoire du socle) */
 function mapUnload() {
   for (const n of NADES) scene.remove(n.mesh);
-  NADES.length = 0; SMOKES.length = 0; clearThrowKnives(); clearAircraft(); clearDrops(); ambUnload();
+  NADES.length = 0; SMOKES.length = 0; clearThrowKnives(); clearAircraft(); clearDrops(); clearRockets(); clearUnits(); ambUnload();
   for (const d of DEPTH_OWN.values()) d.dispose(); DEPTH_OWN.clear(); // matières de profondeur propres à chaque matière (shadowWarm, 09-game.js)
   if (FX) { FX.holes.clear(); FX.splats.clear(); FX.scorch.clear(); }
   if (MAPL.root) {

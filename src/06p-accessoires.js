@@ -77,7 +77,7 @@ function attFits(base, id) {
   const a = ATT[id]; if (!a || !base.slots.includes(a.slot) || !a.fam.includes(base.fam)) return false;
   return !(base.noAtt && base.noAtt.includes(id));
 }
-function attMax(base) { return base.cat === 'pistol' ? ATT_MAX.secondary : ATT_MAX.primary; }
+function attMax(base) { return isSecCat(base.cat) ? ATT_MAX.secondary : ATT_MAX.primary; }
 /* Point d'accroche (ATT_GROUPS) d'un accessoire, et ceux que l'arme possède */
 const attGroup = (id) => ATT_GROUP[ATT[id].slot];
 const attGroupsOf = (base) => ATT_GROUPS.filter((g) => ATT_GROUP_SLOTS[g].some((s) => base.slots.includes(s)));

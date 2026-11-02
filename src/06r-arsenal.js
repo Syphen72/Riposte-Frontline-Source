@@ -200,7 +200,7 @@ function gunTrim() {
 /* Remet une configuration en règle : arme existante et débloquée (sinon celle d'origine), accessoires débloqués qui vont sur l'arme
    (au plus attMax, un par emplacement), camouflage débloqué */
 function classClean(c, wkey, akey, ckey, want, defId) {
-  let id = WEAPONS[want] && !weaponLock(want) && (wkey === 'primary' ? WEAPONS[want].cat !== 'pistol' : WEAPONS[want].cat === 'pistol') ? want : defId;
+  let id = WEAPONS[want] && !weaponLock(want) && (wkey === 'primary' ? !isSecCat(WEAPONS[want].cat) : isSecCat(WEAPONS[want].cat)) ? want : defId;
   const base = WEAPONS[id];
   c[wkey] = id;
   c[akey] = attNormalize(base, (c[akey] || []).filter((a) => ATT[a] && !attLock(id, a)));
@@ -246,7 +246,7 @@ function classSetWeapon(i, which, id) {
   if (!classEditable(i)) return false;
   const c = CLASSES[i], k = which === 's';
   if (!WEAPONS[id] || weaponLock(id)) return false;
-  if (k ? WEAPONS[id].cat !== 'pistol' : WEAPONS[id].cat === 'pistol') return false;
+  if (k ? !isSecCat(WEAPONS[id].cat) : isSecCat(WEAPONS[id].cat)) return false;
   if (c[k ? 'secondary' : 'primary'] === id) return true;
   // l'arme quittée garde ses accessoires et son camouflage pour la prochaine fois, la nouvelle reprend les siens
   arsRemember(c[k ? 'secondary' : 'primary'], c[k ? 'sa' : 'pa'], c[k ? 'sc' : 'pc']);

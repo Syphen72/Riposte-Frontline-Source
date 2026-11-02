@@ -934,7 +934,7 @@ function netApply(id, P) {
     const cp = Math.cos(e.net.pitch), dir = new V3(-Math.sin(e.net.yaw) * cp, Math.sin(e.net.pitch), -Math.cos(e.net.yaw) * cp);
     muzzleWorldFx(muzzle, dir, e.weapon.silent, e.weapon.feel ? e.weapon.feel.flash : 1); if (!e.weapon.silent) flashLight(muzzle, 2.5, 7, 0.05); sfxGun(e.weapon.sound, muzzle, e);
     kcEvent('shot', { m: muzzle.clone(), d: dir.clone(), kind: e.weapon.sound, sid: e.kcI }); // pour la relecture des killcams
-    if (!e.weapon.silent) {
+    if (!e.weapon.silent && !e.weapon.rocket) { // (une roquette arrive par son propre événement, 'rk')
       const hit = rayWorld(muzzle.x, muzzle.y, muzzle.z, dir.x, dir.y, dir.z, 120), end = muzzle.clone().addScaledVector(dir, hit ? hit.t : 80);
       FX.tracers.add(muzzle, end); kcEvent('ray', { a: muzzle.clone(), b: end.clone(), tr: true, flesh: false, head: false, dir: dir.clone() });
     }
@@ -1001,6 +1001,12 @@ function netEventIn(e, ev) {
     if (h) { h.state = 'crash'; h.burst = null; h.vy = 0; h.spin = 0; heliMsg(h, 'down'); }
   } else if (ev.k === 'prop') {
     propNetHit(ev, e);
+  } else if (ev.k === 'rk') {
+    rocketNetIn(e, ev);
+  } else if (ev.k === 'rkx') {
+    rocketNetEnd(e, ev);
+  } else if (ev.k === 'uh' || ev.k === 'ux') {
+    unitsNetIn(e, ev);
   } else if (DMG_EVENTS.has(ev.k)) {
     dmgNetIn(e, ev); // décor abîmé (04c-degats.js)
   } else if (ev.k === 'hang') {

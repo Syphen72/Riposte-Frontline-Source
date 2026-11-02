@@ -286,7 +286,7 @@ function playerShotFx(d, ads, f, muzzle, kv, kh, hitAny) {
   HUD.kick = Math.min(16, HUD.kick + 2 + d.recoil.kick * 80);
   vmKick(d, ads > 0.5);
   padRumble(0.18 + d.recoil.kick * 40, 0.5, 45);
-  if (!d.bolt && !d.pump) vmShell(d);
+  if (!d.bolt && !d.pump && !d.rocket) vmShell(d);
   sfxGun(d.sound, null);
   if (!d.silent) flashLight(muzzle, 3, 8, 0.05);
 }

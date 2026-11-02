@@ -1722,3 +1722,8 @@ Se déplacer (analogique). L3 (appui sur le bâton) pour sprinter, en lunette po
 Aucun salon public pour le moment. Créez le vôtre, il apparaîtra ici. ⇒ No public lobby right now. Create yours and it will show up here.
 Véhicule ⇒ Vehicle
 Explosion ⇒ Explosion
+Lanceurs ⇒ Launchers
+Lance-roquettes ⇒ Rocket launcher
+Roquette antichar. Elle s'arme après six mètres, perce les véhicules et ouvre les murs. ⇒ Anti-tank rocket. It arms after six meters, punches through vehicles and opens walls.
+Démolition ⇒ Demolition
+Un lance-roquettes pour les engins et les murs, un pistolet-mitrailleur pour le reste. ⇒ A rocket launcher for vehicles and walls, a submachine gun for the rest.

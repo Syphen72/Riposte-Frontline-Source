@@ -216,6 +216,7 @@ function ctlWeapon(ent, dt, now) {
 }
 
 /* Tir : même dispersion, même recul et même cadence pour tout le monde */
+const _ctRk = new V3();
 function ctlShoot(ent, now) {
   const A = ent.arms, w = armsW(ent), d = w.def;
   w.mag--; A.shots++;
@@ -236,8 +237,10 @@ function ctlShoot(ent, now) {
     const cp = Math.cos(ent.pitch); f = new V3(-Math.sin(ent.yaw) * cp, Math.sin(ent.pitch), -Math.cos(ent.yaw) * cp);
     muzzle = ent.model.gun.localToWorld(ent.model.muzzleLocal.clone());
   }
-  const pellets = d.pellets || 1;
+  const pellets = d.rocket ? 0 : d.pellets || 1;
   let hitAny = false;
+  // lance-roquettes : une roquette (07f-roquettes.js), partie juste devant l'œil du joueur (la visée reste juste), de la bouche pour un bot
+  if (d.rocket) rocketFire(ent, ent.isPlayer ? origin.clone().addScaledVector(f, 0.75).add(_ctRk.set(0, -0.04, 0)) : muzzle, coneDir(f, spread), d);
   for (let i = 0; i < pellets; i++) {
     const dir = coneDir(f, d.pellets ? lerp(d.spread[0], d.spread[1], ads) : spread);
     const r = fireRay(ent, origin, dir, d, muzzle, !d.silent && (ent.isPlayer ? pellets === 1 && Math.random() < 0.25 : i === 0 && Math.random() < 0.6), ent.dmgMul || 1);

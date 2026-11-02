@@ -321,13 +321,18 @@ function fireRay(shooter, origin, dir, def, muzzle, tracer, dmgMul = 1) {
   const dz = shooter.isRemote || !DRONES.length ? null : rayDrones(shooter, origin, dir, hz ? hz.t : eh ? eh.t : wt);
   // et un mecha ennemi (08f-mecha.js) : son blindage arrête la balle
   const mz = dz || shooter.isRemote || !MECHAS.length ? null : rayMechas(shooter, origin, dir, hz ? hz.t : eh ? eh.t : wt);
-  const endT = mz ? mz.t : dz ? dz.t : hz ? hz.t : eh ? eh.t : wt;
+  // et une unité posée ennemie (tourelle, chien robot : 08h-unites.js)
+  const uz = mz || dz || shooter.isRemote || !UNITS.length ? null : rayUnits(shooter, origin, dir, hz ? hz.t : eh ? eh.t : wt);
+  const endT = uz ? uz.t : mz ? mz.t : dz ? dz.t : hz ? hz.t : eh ? eh.t : wt;
   if (HANGS.length) hangShot(origin, dir, endT, def.dmg[0] * dmgMul, shooter); // seau du puits : poussé au passage, la balle continue
   if (TOILES.length) toilesShot(origin, dir, endT); // linge, drapeaux : poussés au passage (02me-toiles.js)
   const end = origin.clone().addScaledVector(dir, endT);
   if (tracer && muzzle) FX.tracers.add(muzzle, end);
   kcEvent('ray', { a: (muzzle || origin).clone(), b: end.clone(), tr: !!muzzle && Math.random() < 0.7, flesh: !!eh, head: !!eh && eh.part === 'head', dir: dir.clone() });
-  if (mz) {
+  if (uz) {
+    unitDamage(uz.u, lerp(def.dmg[0], def.dmg[1], clamp((endT - def.range[0]) / (def.range[1] - def.range[0]), 0, 1)) * dmgMul, shooter);
+    impactFx(end, dir.clone().negate(), 'metal', false, true);
+  } else if (mz) {
     mechaDamage(mz.me, lerp(def.dmg[0], def.dmg[1], clamp((endT - def.range[0]) / (def.range[1] - def.range[0]), 0, 1)) * dmgMul * MECHA_HEAT.bullet, shooter);
     impactFx(end, dir.clone().negate(), 'metal', false, true);
   } else if (dz) {
@@ -701,6 +706,7 @@ function explode(p, owner, weaponName, radius, maxDmg, life, roofK) {
   explosionFx(p); if (wet) sfxPlunge(p, 1); else sfxExplosion(p); kcEvent('boom', { p: p.clone() });
   propBlast(p, radius, maxDmg, owner); // chaque pair rejoue l'explosion : le souffle sur les props est calculé chez tous
   dmgBlast(p, radius, maxDmg, owner); // vitres, véhicules (04c-degats.js)
+  unitsBlast(p, radius, maxDmg, owner); // unités posées de ce pair (08h-unites.js) : le souffle rejoué compte chez leur propriétaire
   hangBlast(p, radius);
   toilesBlast(p, radius); // les toiles tendues se gonflent (02me-toiles.js) ; chaque pair rejoue le souffle, comme sur les props
   const dc = p.distanceTo(camera.position);

@@ -490,7 +490,7 @@ function startMatch(opt = {}) {
   const want = MATCH.online ? NET.cfg.mode : Settings.mode, mode = !MODES[want] || !CURMAP.def || (want === 'dom' && !CURMAP.def.dom) ? 'tdm' : want; // en ligne, le mode est celui du salon
   MATCH.limit = MATCH.online ? NET.cfg.limit : Settings[MODES[mode].key];
   SMOKES.length = 0; PL.flashT = 0; MATCH.score = [0, 0]; MATCH.time = 0; MATCH.timeLeft = (MATCH.online ? NET.cfg.time : Settings.minutes) * 60; MATCH.uav = [0, 0]; MATCH.uavPing = [null, null]; MATCH.sat = [0, 0]; MATCH.iem = [0, 0]; MATCH.events = []; MATCH.winner = -1;
-  for (const n of NADES) scene.remove(n.mesh); NADES.length = 0; clearThrowKnives(); soundEvents.length = 0; clearAircraft(); clearDrops();
+  for (const n of NADES) scene.remove(n.mesh); NADES.length = 0; clearThrowKnives(); soundEvents.length = 0; clearAircraft(); clearDrops(); clearRockets(); clearUnits();
   FX.holes.clear(); FX.splats.clear(); FX.scorch.clear(); propsReset(); dmgReset();
   for (const e of entities) { e.kills = e.deaths = e.score = e.assists = e.streak = e.comboN = 0; e.comboT = -99; e.alive = false; e.lastShotT = -9; }
   MATCH.state = 'playing'; kcReset(); MATCH.finalPending = null; MATCH.lastKill = null; MATCH.fin = null; MATCH.finSoon = false; finClear(); MATCH.startAt = MATCH.time;
@@ -562,7 +562,7 @@ function toMenu(screen) {
   MATCH.state = 'menu'; showLockPrompt(false); setAmbience(false); musicRestart();
   if (document.fullscreenElement && Settings.fsGame && document.exitFullscreen) document.exitFullscreen().catch(() => {}); // les menus gardent Échap (retour) et la sortie du plein écran
   for (const e of entities) { e.alive = false; if (e.model) e.model.root.visible = false; }
-  for (const n of NADES) scene.remove(n.mesh); NADES.length = 0; clearThrowKnives(); clearAircraft();
+  for (const n of NADES) scene.remove(n.mesh); NADES.length = 0; clearThrowKnives(); clearAircraft(); clearRockets(); clearUnits();
   VM.root.visible = false;
   $('hud').classList.add('hidden'); $('end').classList.remove('show'); $('pause').classList.remove('show');
   hideDeathScreen(); showScoreboard(false);
@@ -733,7 +733,7 @@ function matchTick(dt, bg) {
   pfrLap(3); updatePlayer(dt, t); pfrLap(0); // pfrLap : étapes de l'enregistreur de performances (09zo-perfs.js)
   botsTick(dt, t); pfrLap(1);
   updateNades(dt); updateThrowKnives(dt); updateSmokes(dt); updateDrops(dt); updateProps(dt); pfrLap(2);
-  updateKillstreak(dt); updateAircraft(dt); dmgTick(dt);
+  updateKillstreak(dt); updateAircraft(dt); dmgTick(dt); updateRockets(dt); updateUnits(dt);
   if (!bg) { drawTacMap(); if (ESSAI || ESSAI_MECHA) essaiTick(dt); updateHud(dt); }
   if (!fin && MATCH.timeLeft <= 0) matchFinish();
   if (!bg && !(KC.active && KC.live)) kcRecord(); // relecture en ligne : tampon figé

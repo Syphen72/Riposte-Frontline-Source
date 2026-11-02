@@ -43,7 +43,7 @@ function deckLooksLike() {
 /* Écran tactile comme pointeur principal (téléphone, tablette) : contrôles tactiles (09q-tactile.js) et profil graphique de départ allégé */
 const COARSE = !DECK && typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches && (navigator.maxTouchPoints || 0) > 0;
 const VIEW = { w: innerWidth, h: innerHeight, set: false }; // taille de la vue 3D (viewSync)
-const Settings = { binds: {}, touch: 'auto', tcRun: 'stick', tcStick: 'float', tcLay: null, aimAssist: 'normal', tpMode: 'auto', tpSeen: false, tpHint: false, tpAuto: true, tpDblAds: true, adsToggle: false, tcAuto: true, tcDblAds: true, tcQuick: true, tcVib: true, tcAlpha: '1', tcV: 0, gfxSafe: false, gfxSafeAuto: '', padSeen: false, padSens: 1.0, padAdsMul: 0.65, adsMul: 1.0, padDead: 0.1, padCurve: 'reactive', padAccel: 'normal', padRun: 'click', padLay: 'default', padVib: true, sens: 1.0, fov: 62, quality: 'auto', dynres: true, eco: null, fpsMax: '0', perf: false, ao: false, rays: true, grass: true, difficulty: 2, loadout: 0, mode: 'tdm', limit: 75, limitFfa: 20, limitDom: 150, minutes: 10, map: 'sable', volume: 0.8, music: 0.5, voice: true, nadeArc: true, invertY: false, fsGame: false, allyMarks: true, hudScale: '1', skin: 'assault', lang: 'auto', sv: 8 };
+const Settings = { binds: {}, touch: 'auto', tcRun: 'stick', tcStick: 'float', tcLay: null, aimAssist: 'normal', tpMode: 'auto', tpSeen: false, tpHint: false, tpAuto: true, tpDblAds: true, adsToggle: false, tcAuto: true, tcDblAds: true, tcQuick: true, tcVib: true, tcAlpha: '1', tcV: 0, gfxSafe: false, gfxSafeAuto: '', padSeen: false, padSens: 1.0, padAdsMul: 0.65, adsMul: 1.0, padDead: 0.1, padCurve: 'reactive', padAccel: 'normal', padRun: 'click', padLay: 'default', padVib: true, sens: 1.0, fov: 62, quality: 'auto', dynres: true, eco: null, fpsMax: '0', perf: false, ao: false, rays: true, grass: true, difficulty: 2, loadout: 0, mode: 'tdm', limit: 75, limitFfa: 20, limitDom: 150, minutes: 10, map: 'sable', volume: 0.8, music: 0.5, voice: true, nadeArc: true, invertY: false, fsGame: false, allyMarks: true, hudScale: '1', skin: 'assault', lang: 'auto', sv: 9 };
 try {
   const s = JSON.parse(localStorage.getItem('dc_settings') || 'null');
   // réglages d'avant la version 2 : la qualité « Haute » y était la valeur par défaut, on passe en automatique
@@ -61,6 +61,8 @@ try {
     for (const o of [Settings.binds, Settings.tcLay]) if (o && typeof o === 'object') for (const k in ren) if (k in o) { o[ren[k]] = o[k]; delete o[k]; }
     Settings.sv = 8;
   }
+  // Breachline : la classe Démolition prend l'indice 4, les classes personnalisées enregistrées glissent d'un cran
+  if (s && s.sv < 9) { if (Settings.loadout >= 4) Settings.loadout++; Settings.sv = 9; }
   if (Settings.aimAssist !== 'off') Settings.aimAssist = 'normal';
 } catch (e) { /* stockage indisponible */ }
 /* Économie d'énergie (CAP, plus bas) : jamais choisie, elle part activée au doigt (téléphone, tablette) et le jeu demande une fois s'il faut la garder

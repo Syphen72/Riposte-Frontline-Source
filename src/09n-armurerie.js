@@ -96,7 +96,7 @@ function arsNadePick(id) {
 /* Cartes d'armes par catégorie */
 function renderArsList() {
   const { sec, base } = arsCur();
-  $('arsList').innerHTML = WEAPON_CATS.filter((k) => (sec ? k.id === 'pistol' : k.id !== 'pistol')).map((cat) => {
+  $('arsList').innerHTML = WEAPON_CATS.filter((k) => (sec ? isSecCat(k.id) : !isSecCat(k.id))).map((cat) => {
     const ids = Object.keys(WEAPONS).filter((id) => WEAPONS[id].cat === cat.id);
     return `<h4>${cat.name}</h4><div class="ars-grid">${ids.map((id) => {
       const w = WEAPONS[id], lock = weaponLock(id), u = w.unlock;
