@@ -14,7 +14,7 @@ const _unA = new V3(), _unB = new V3();
 let UNIT_UID = 1;
 /* Pose d'une unité chez son propriétaire (o : champs propres au type) */
 function unitSpawn(kind, owner, pos, yaw, o = {}) {
-  const K = UNIT_KINDS[kind]; if (!K) return null;
+  const K = hasKey(UNIT_KINDS, kind) ? UNIT_KINDS[kind] : null; if (!K) return null; // (un type venu du réseau : jamais une clé héritée, « constructor »)
   const u = Object.assign({ kind, owner, team: owner.team, pos: pos.clone(), yaw, hp: K.hp, hpMax: K.hp, r: K.r, h: K.h, state: 'deploy', t: 0, local: !owner.isRemote, uid: UNIT_UID++, last: 0, dead: false, mesh: null, by: null }, o);
   K.make(u);
   UNITS.push(u);
@@ -110,7 +110,7 @@ function unitsPub(owner) {
 function unitsNet(owner, list) {
   if (!Array.isArray(list)) return;
   for (const a of list.slice(0, 8)) {
-    if (!Array.isArray(a) || typeof a[1] !== 'string' || !UNIT_KINDS[a[1]]) continue;
+    if (!Array.isArray(a) || typeof a[1] !== 'string' || !hasKey(UNIT_KINDS, a[1])) continue;
     const uid = a[0] | 0, pos = _unB.set(clamp(+a[2] || 0, -300, 300), clamp(+a[3] || 0, -20, 80), clamp(+a[4] || 0, -300, 300));
     let u = UNITS.find((x) => x.owner === owner && x.uid === uid && !x.local);
     if (!u) { u = unitSpawn(a[1], owner, pos, +a[5] || 0, { uid, local: false }); if (!u) continue; u.state = 'live'; }

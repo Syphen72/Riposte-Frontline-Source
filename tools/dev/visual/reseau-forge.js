@@ -14,6 +14,11 @@ const CASES = [
   ['position et vitesse infinies (1e999)', (P) => netApply('gF', JSON.parse(JSON.stringify(P).replace('"s":[3,0.2,3,0,0,0,0', '"s":[1e999,-1e999,1e999,1e999,0,1e999,-1e999')))],
   ['800 grenades dans un seul état', (P) => { const p = PL.ent.pos, ev = []; for (let i = 1; i <= 800; i++) ev.push({ k: 'nade', i, px: p.x, py: p.y + 0.3, pz: p.z, vx: 0, vy: 0, vz: 0, fu: 0.1 }); netApply('gG', { ...P, ev }); }],
   ['événements mal formés (null, nombres, texte)', (P) => netApply('gH', { ...P, ev: [null, 3, 'x', { k: 'hit', i: 1, to: 'personne', d: 'abc' }, { k: 'air', i: 2, x: 1e999, z: 'z', y: {} }] })],
+  // Breachline : unités posées, câble de grappin, roquettes, mines, décor
+  ['unités « constructor », position infinie, 500 unités', (P) => { const u = [[1, 'constructor', 0, 0, 0, 0], [2, '__proto__', 0, 0, 0, 0]]; for (let i = 0; i < 500; i++) u.push([10 + i, 'turret', 1e999, -1e999, 'x', null, 'a', {}, 1]); netApply('gI', { ...P, u }); }],
+  ['câble de grappin infini ou mal formé', (P) => { netApply('gJ', { ...P, gr: [1e999, 'a', null] }); netApply('gJ', { ...P, gr: { x: 1 } }); }],
+  ['100 roquettes et explosions forgées', (P) => { const ev = []; for (let i = 1; i <= 100; i++) ev.push({ k: 'rk', i, px: i % 2 ? 1e999 : 0, py: 1, pz: 0, vx: 1, vy: 0, vz: 'z' }); ev.push({ k: 'rkx', i: 101, r: 'x', x: 1e999, a: 1 }, { k: 'mt', i: 102, u: 'a', x: 'b', f: 1e999, c: 1 }); netApply('gK', { ...P, ev }); }],
+  ['décor forgé (vitres, brèches, véhicules, barils, unités, hélicoptère)', (P) => netApply('gL', { ...P, ev: [{ k: 'gb', i: 1, n: new Array(5000).fill(0) }, { k: 'gb', i: 2, n: 'x' }, { k: 'wb', i: 3, n: 1e9 }, { k: 'wh', i: 4, n: -1, d: 1e999 }, { k: 'vb', i: 5, n: -1, by: {} }, { k: 'vh', i: 6, n: 'constructor', d: 'x' }, { k: 'bx', i: 7, n: '__proto__' }, { k: 'uh', i: 8, to: 'moi', u: 'x', d: 1e999 }, { k: 'ux', i: 9, u: null }, { k: 'hs', i: 10, s: 'z' }] })],
 ];
 (async () => {
   const { browser, page, logs } = await openGame({ page: process.env.PAGE, w: 640, h: 360, noHdri: true, settings: { quality: 'low', map: 'sable', lang: 'fr' } });
@@ -28,6 +33,7 @@ const CASES = [
       for (let i = 0; i < 120; i++) {
         MATCH.time += 1 / 60; NET.hostSeen = performance.now() + 1e9; PL.ent.protT = 1e9; PL.ent.health = 100;
         step('updateNades', () => updateNades(1 / 60)); step('netUpdate', () => netUpdate(1 / 60));
+        step('updateUnits', () => updateUnits(1 / 60)); step('updateRockets', () => updateRockets(1 / 60)); step('dmgTick', () => dmgTick(1 / 60)); step('grappleDraw', () => grappleDraw());
       }
       step('rendu', () => renderer.render(scene, camera));
       return { errs: [...errs.entries()], grew: scene.children.length - before, nades: NADES.length, ms: Math.round(performance.now() - t0) };

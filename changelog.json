@@ -1,5 +1,53 @@
 [
   {
+    "version": "6.0.0",
+    "date": "2026-11-02",
+    "title": "Breachline",
+    "title_en": "Breachline",
+    "changes": [
+      {
+        "t": "new",
+        "x": "Murs à brèche. Une roquette, deux grenades ou une frappe aérienne ouvrent certains murs du souk, du hangar et de la Maison du balcon, et les bots passent par l'ouverture.",
+        "x_en": "Breachable walls. A rocket, two grenades or an airstrike open some walls of the souk, the hangar and the balcony house, and bots use the opening."
+      },
+      {
+        "t": "new",
+        "x": "Lance-roquettes RPG-7, à la place du pistolet, et nouvelle classe Démolition. La roquette s'arme après six mètres et frappe fort les engins.",
+        "x_en": "RPG-7 rocket launcher, in place of the pistol, and a new Demolition class. The rocket arms after six meters and hits vehicles hard."
+      },
+      {
+        "t": "new",
+        "x": "Mine bondissante et claymore, deux équipements à poser au sol. Leur diode et leurs faisceaux rouges les trahissent, une balle les détruit.",
+        "x_en": "Bounding mine and claymore, two pieces of equipment you place on the ground. Their red light and beams give them away, and a bullet destroys them."
+      },
+      {
+        "t": "new",
+        "x": "Grappin, touche V. Il hisse sur les toits et en haut des murs, avec deux charges qui reviennent en neuf secondes.",
+        "x_en": "Grapple on the V key. It pulls you onto roofs and up walls, with two charges that come back in nine seconds."
+      },
+      {
+        "t": "new",
+        "x": "Deux séries d'éliminations. La tourelle automatique à cinq, et le chien robot armé à neuf, qui vous suit et attaque.",
+        "x_en": "Two new killstreaks. The automatic sentry at five, and the armed robot dog at nine, which follows you and attacks."
+      },
+      {
+        "t": "new",
+        "x": "Le décor réagit. Les vitres se brisent, les voitures fument, brûlent puis explosent, les barils rouges et les bouteilles de gaz sautent, les caisses volent en éclats.",
+        "x_en": "The world reacts. Windows shatter, cars smoke, burn and explode, red barrels and gas bottles blow up, crates splinter."
+      },
+      {
+        "t": "improved",
+        "x": "L'hélicoptère et le mecha tirent des traçantes lourdes à chaque coup. L'hélicoptère fume, prend feu, s'écrase en explosant et laisse une épave en feu.",
+        "x_en": "The helicopter and the mech fire heavy tracers on every round. The helicopter smokes, catches fire, crashes in an explosion and leaves a burning wreck."
+      },
+      {
+        "t": "improved",
+        "x": "Les toits plats se tiennent, derrière un acrotère qui protège.",
+        "x_en": "Flat roofs can be held, behind a parapet that gives cover."
+      }
+    ]
+  },
+  {
     "version": "5.6.0",
     "date": "2026-10-25",
     "changes": [
