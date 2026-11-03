@@ -2,7 +2,7 @@
 
 Produite à partir du code par `python3 tools/dev/assets.py`, que `build.py` lance à chaque construction : ne pas la modifier à la main. Tout le jeu est construit par le code (README, « Direction artistique : tout en code ») ; seules les textures photo, les ciels et les HDRI viennent de fichiers, tous en CC0. La description d'un asset est le commentaire écrit au-dessus de sa définition : pour la changer, changer le commentaire.
 
-221 prefabs, 39 props physiques, 47 surfaces photo, 62 surfaces procédurales, 14 atlas dessinés au chargement, 8 ciels photographiés, 3 HDRI, 18 armes, 18 accessoires.
+221 prefabs, 39 props physiques, 47 surfaces photo, 62 surfaces procédurales, 14 atlas dessinés au chargement, 8 ciels photographiés, 3 HDRI, 19 armes, 18 accessoires.
 
 ## Cartes
 
@@ -581,8 +581,8 @@ Photos CC0 ramenées à une plage commune (`tools/build_assets.py`), un fichier 
 | `pathgravel` | gravel_floor_02 | Poly Haven | CC0 1.0 | Hortus, French Dream |
 | `pavers` | Concrete012 | ambientCG | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Meltem, Tephra, French Dream |
 | `pise` | excavated_soil_wall | Poly Haven | CC0 1.0 | Simoun |
-| `plaster` | white_plaster_rough_01 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, French Dream |
 | `plaster2` | clay_plaster | Poly Haven | CC0 1.0 | Khamsin, Kervénec |
+| `plaster` | white_plaster_rough_01 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, French Dream |
 | `reg` | sandy_gravel_02 | Poly Haven | CC0 1.0 | Simoun |
 | `rock` | rock_face | Poly Haven | CC0 1.0 | Val-Blanc, Kervénec |
 | `rollshutter` | rusty_metal_shutter | Poly Haven | CC0 1.0 | Khamsin, Kervénec, French Dream |
@@ -704,6 +704,7 @@ Modèles construits par le code (`src/06c-models.js`), statistiques dans `src/06
 | `mp5` | MP5 | Pistolet-mitrailleur |
 | `l96` | L96A1 | Fusil de précision |
 | `m1014` | M1014 | Fusil à pompe |
+| `rpg7` | RPG-7 | Lance-roquettes |
 | `m9` | M9 | Pistolet |
 | `ak47` | AK-47 | Fusil d'assaut |
 | `scarh` | SCAR-H | Fusil d'assaut |
