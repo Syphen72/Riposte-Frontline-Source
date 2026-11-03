@@ -12,7 +12,12 @@ const { openGame } = require('./common');
       const foe = entities.find((e) => !e.isPlayer && !allied(e, PL.ent));
       const at = new V3(0, 0, 20); PL.ent.pos.copy(at); PL.ent.alive = true;
       callHeli(foe);
-      mechaCall(foe, new V3(at.x + 8, 0, at.z - 10), 0);
+      // le mecha à 10-16 m du joueur, sur un sol dégagé qui le voit (avant novembre 2026 : posé dans un bloc, il voyait à travers, le rayon
+      // ignorant la boîte de départ)
+      let drop = null;
+      for (let k = 0; k < 48 && !drop; k++) { const a = k * 2.39996, r = 10 + (k % 4) * 2, p = new V3(at.x + Math.sin(a) * r, 0, at.z + Math.cos(a) * r); p.y = groundHeight(p.x, p.z, 1, 0.5); const eye = new V3(p.x, p.y + 2, p.z); if (Math.abs(p.y) < 0.3 && !COL.some((c) => !c.ray && !c.noRay && eye.x > c.x0 - 1.2 && eye.x < c.x1 + 1.2 && eye.z > c.z0 - 1.2 && eye.z < c.z1 + 1.2 && c.y1 > 0.5 && c.y0 < 4) && lineClear(eye, new V3(at.x, 1.3, at.z))) drop = p; }
+      if (!drop) { out.fails.push('aucun sol dégagé où poser le mecha'); return out; }
+      mechaCall(foe, drop, 0);
       let heavy = 0, heliShots = 0, mechaShots = 0;
       const t0 = MATCH.time;
       for (let i = 0; i < 30 * 30; i++) {

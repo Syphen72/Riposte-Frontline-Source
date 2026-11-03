@@ -97,8 +97,12 @@ function ctlMove(ent, dt) {
     else if (ent.crouch) ent.crouch = false; else { ent.vy = 6.3; ent.onGround = false; jumped = true; }
   }
   ent.jumpHeld = !!I.jump;
-  const px0 = ent.pos.x, pz0 = ent.pos.z;
-  ent.pos.x += ent.vel.x * dt; ent.pos.z += ent.vel.z * dt;
+  const px0 = ent.pos.x, pz0 = ent.pos.z, py0 = ent.pos.y;
+  // (Breachline) un déplacement rapide (grappin, élan, image lente) avance par pas de 25 cm au plus, chacun repoussé par les murs : d'un seul
+  // pas, un mur fin pouvait être sauté
+  const mvx = ent.vel.x * dt, mvz = ent.vel.z * dt, nsub = Math.min(8, Math.max(1, Math.ceil(hyp(mvx, mvz) / 0.25)));
+  for (let k = 1; k < nsub; k++) { ent.pos.x += mvx / nsub; ent.pos.z += mvz / nsub; collideCircle(ent.pos, ent.isPlayer ? 0.36 : 0.34, ent.crouch ? 1.2 : 1.75); }
+  ent.pos.x += mvx / nsub; ent.pos.z += mvz / nsub;
   // plafond trop bas pour se tenir debout là où l'on pose les pieds (monté sur un canapé ou une table sous un plafond de 2,4 m : la marche
   // automatique hisse le soldat sur le meuble, sa tête entre dans la dalle) : il s'accroupit. Debout, collideCircle prendrait la dalle pour
   // un mur et le repousserait jusqu'à son bord, à l'autre bout de la pièce
@@ -124,13 +128,17 @@ function ctlMove(ent, dt) {
   // un mur (ou le vide) met fin à la glissade
   if (sliding && ent.slideT > 0 && hyp(ent.pos.x - px0, ent.pos.z - pz0) < slideV * dt * 0.35) { ent.slideT = 0; ent.slideCd = SLIDE.cdWall; sliding = false; }
   ent.vy -= 19 * dt; ent.pos.y += ent.vy * dt;
+  // plafond : cherché depuis la hauteur d'avant le pas (une tête qui passerait le dessous d'une dalle en une image s'y arrête, au lieu de la
+  // traverser : la dalle d'un étage, le débord d'un toit sous lequel le grappin tire), et la tête ramenée dessous, avant de chercher le sol
+  // (sinon le dessus de la dalle, à portée de la montée automatique, devenait le sol) (Breachline)
+  if (ent.vy > 0) { const c = ceilingAbove(ent.pos.x, ent.pos.z, py0 + 0.3, 0.3); if (c < ent.pos.y + height + 0.05) { ent.vy = 0; ent.pos.y = Math.max(py0, Math.min(ent.pos.y, c - height - 0.05)); } }
   const g = groundHeight(ent.pos.x, ent.pos.z, Math.max(ent.pos.y, ent.pos.y - ent.vy * dt), 0.3);
-  if (ent.vy > 0) { const c = ceilingAbove(ent.pos.x, ent.pos.z, ent.pos.y + 0.3, 0.3); if (c < ent.pos.y + height + 0.05) ent.vy = 0; }
   let landed = 0;
   if (ent.pos.y <= g) { if (!ent.onGround && ent.airVy < -6) landed = ent.airVy; ent.pos.y = g; ent.vy = 0; ent.onGround = true; }
   else if (ent.onGround && ent.vy <= 0 && ent.pos.y - g < STEP + 0.05) { ent.pos.y = g; ent.vy = 0; }
   else ent.onGround = false;
   ent.airVy = ent.vy;
+  ctlUnstuck(ent, height);
   if (sliding && !ent.onGround) { ent.slideT = 0; ent.slideCd = SLIDE.cd; sliding = false; } // plus de sol : fin de la glissade
   ent.slideAmt = damp(ent.slideAmt || 0, sliding ? 1 : 0, sliding ? 12 : 7, dt);
   ent.eyeH = damp(ent.eyeH, sliding ? 0.85 : ent.crouch ? 1.1 : 1.62, sliding ? 22 : 12, dt);
@@ -139,6 +147,21 @@ function ctlMove(ent, dt) {
   return { landed, jumped, slid };
 }
 
+/* (Breachline) Dernier recours : le corps d'un soldat ne doit jamais finir dans une boîte pleine (le dessus d'une marche n'en est pas une, la
+   montée automatique le pose dessus). S'il y est, il revient à sa dernière place sûre, sans vitesse : rien ne le loge plus dans un mur, une
+   dalle ou un toit, quoi qu'il arrive avant (grappin, souffle, image très lente). Le joueur, et tout soldat qui va vite. */
+function ctlUnstuck(ent, height) {
+  if (!ent.isPlayer && hyp3(ent.vel.x, ent.vy, ent.vel.z) < 8) return;
+  const p = ent.pos, r = (ent.isPlayer ? 0.36 : 0.34) - 0.06, f = p.y;
+  let stuck = false;
+  for (const c of queryBoxes(p.x - r, p.z - r, p.x + r, p.z + r)) {
+    if (c.ray || c.y1 <= f + STEP + 0.02 || c.y0 >= f + height - 0.05) continue;
+    const dx = p.x - clamp(p.x, c.x0, c.x1), dz = p.z - clamp(p.z, c.z0, c.z1);
+    if (dx * dx + dz * dz < r * r) { stuck = true; break; }
+  }
+  if (!stuck) { if (!ent.safeP) ent.safeP = new V3(); ent.safeP.copy(p); return; }
+  if (ent.safeP && ent.safeP.distanceToSquared(p) < 9) { p.copy(ent.safeP); ent.vel.set(0, 0, 0); ent.vy = 0; } // (pas après une réapparition : la place sûre est celle d'avant)
+}
 /* Pendant ses 3 premières secondes, un soldat qui se trouve dans un autre (deux alliés apparus au même endroit) s'en écarte, même à l'arrêt,
    avant la collision avec le décor ; ensuite les soldats se traversent comme avant. Deux soldats exactement superposés partent chacun dans
    une direction tirée de leur emplacement de killcam (kcI), donc différente. */

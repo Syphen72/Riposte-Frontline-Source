@@ -14,7 +14,7 @@ const json = process.argv.includes('--json'), nPaths = +(process.argv.slice(2).f
   const { browser, page } = await openGame({ w: 480, h: 270, page: process.env.PAGE, noHdri: true, settings: { quality: 'low', difficulty: 1, map } });
   const R = await page.evaluate((nPaths) => {
     LOCK.fallback = true; startMatch({});
-    const N = NAV.count, main = (i) => NAV.comp[i] === NAV.mainComp, lift = (i) => NAV.ny[i] - gy0(NAV.nx[i], NAV.nz[i]);
+    const N = NAV.count, main = (i) => NAV.comp[i] === NAV.mainComp && !(NAV.gate && navGated(i)), lift = (i) => NAV.ny[i] - gy0(NAV.nx[i], NAV.nz[i]);
     let seed = 12345; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
     // plus court chemin (Dijkstra) en nœuds, sans lissage : chaque pas va d'un nœud à un voisin du réseau
     const path = (s, e) => {
@@ -22,7 +22,7 @@ const json = process.argv.includes('--json'), nPaths = +(process.argv.slice(2).f
       const push = (k, id) => { H.push([k, id]); let i = H.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (H[p][0] <= H[i][0]) break; [H[p], H[i]] = [H[i], H[p]]; i = p; } };
       const pop = () => { const t = H[0], l = H.pop(); if (H.length) { H[0] = l; let i = 0; for (;;) { const a = i * 2 + 1, b = a + 1; let m = i; if (a < H.length && H[a][0] < H[m][0]) m = a; if (b < H.length && H[b][0] < H[m][0]) m = b; if (m === i) break; [H[m], H[i]] = [H[i], H[m]]; i = m; } } return t; };
       dist[s] = 0; push(0, s);
-      while (H.length) { const [d, n] = pop(); if (n === e) break; if (d > dist[n]) continue; for (let j = NAV.adjStart[n]; j < NAV.adjStart[n + 1]; j++) { if (NAV.adjKind && NAV.adjKind[j]) continue; const m = NAV.adj[j], nd = d + NAV.adjCost[j]; if (nd < dist[m]) { dist[m] = nd; from[m] = n; push(nd, m); } } }
+      while (H.length) { const [d, n] = pop(); if (n === e) break; if (d > dist[n]) continue; for (let j = NAV.adjStart[n]; j < NAV.adjStart[n + 1]; j++) { if (NAV.adjKind && NAV.adjKind[j]) continue; const m = NAV.adj[j]; if (NAV.gate && navGated(m)) continue; const nd = d + NAV.adjCost[j]; if (nd < dist[m]) { dist[m] = nd; from[m] = n; push(nd, m); } } }
       if (dist[e] > 1e8) return null;
       const p = []; for (let n = e; n >= 0; n = from[n]) p.push(n); return p.reverse();
     };

@@ -717,6 +717,8 @@ PF.portique = (w = 11, L = 25, H = 10) => prefab(`portique${w}_${L}_${H}`, (M) =
   M.cls = 0;
   M.color([0.95, 0.95, 0.92]); M.boxB('paint', -w / 2 - 0.46, -w / 2 - 0.44, H + 0.15, H + 1.15, -3, 3);
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) M.col(sx * w / 2 - 0.6, sx * w / 2 + 0.6, 0, H, sz * L / 2 - 1.1, sz * L / 2 + 1.1, 'metal');
+  // (Breachline) poutres du haut pleines : on ne se tenait plus dedans, debout sur une jambe ; le grappin n'y pose personne
+  for (const sx of [-1, 1]) M.col(sx * w / 2 - 0.45, sx * w / 2 + 0.45, H, H + 1.3, -L / 2 - 0.5, L / 2 + 0.5, 'metal', false, true, { noTop: true });
   M.occ(-w / 2 - 0.5, w / 2 + 0.5, H, H + 1.3, -L / 2, L / 2, 0.35);
 });
 /* Machine à glace en écailles (d'après photos de machines de criée) : pieds, bac à glace en inox à panneaux et trappe, tambour évaporateur
@@ -862,7 +864,7 @@ function slateRoof(x0, x1, z0, z1, y, o = {}) {
   const M = DECOR, alongX = o.alongX !== undefined ? o.alongX : x1 - x0 >= z1 - z0, span = alongX ? z1 - z0 : x1 - x0, len = alongX ? x1 - x0 : z1 - z0;
   const R = o.R || rngOf(Math.round(x0 * 7 + z0 * 13 + y)), pitch = o.pitch || 0.82, tn = Math.tan(pitch), rise = (span / 2) * tn, ov = 0.25, drop = ov * tn;
   const hs = span / 2 + ov, nl = hyp(hs, rise + drop), tint = o.tint || [0.62, 0.64, 0.7], gt = o.gable || R.pick(PAL_BZH.granite), mat = o.mat || 'slate';
-  M.save();
+  M.save().capBegin(); // (Breachline) collision prise sur le rendu (Maker.capEnd)
   if (alongX) M.move(x0, y, (z0 + z1) / 2); else M.move((x0 + x1) / 2, y, z1).rotY(Math.PI / 2);
   for (const s of [1, -1]) {
     M.color(tint).world(1);
@@ -901,7 +903,8 @@ function slateRoof(x0, x1, z0, z1, y, o = {}) {
     M.restore();
   }
   M.occ(-ov, len + ov, -drop, rise * 0.6, -hs, hs, 1);
-  M.col(0, len, 0, rise * 0.55, -span / 2 + 0.3, span / 2 - 0.3, 'concrete');
+  M.col(0, len, 0, rise * 0.55, -span / 2 + 0.3, span / 2 - 0.3, 'concrete', false, true, ROOFCAP.fl);
+  M.capEnd({ x0, x1, z0, z1, base: y });
   M.restore();
   return { rise, span, len };
 }

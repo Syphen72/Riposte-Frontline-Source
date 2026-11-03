@@ -206,6 +206,8 @@ function stratusPhare() {
   M.color(ST.stone); M.save().move(0, 11.65, 0); M.cyl('stone', 1.4, 0.4, 12, { r1: 0.2 }); M.restore();
   M.restore();
   DECOR.col(cx - 2.0, cx + 2.0, 0, 9.85, cz - 2.0, cz + 2.0, 'concrete');
+  // (Breachline) lanterne et chapeau pleins : on ne se tient plus dans la lanterne de cristal (tools/dev/visual/toits.js) ; le grappin n'y pose personne
+  WORLD.col({ x0: cx - 0.85, x1: cx + 0.85, y0: 9.85, y1: 12.05, z0: cz - 0.85, z1: cz + 0.85 }, 'glass', false, false, { noTop: true, roof: 'dome' });
   // échafaudage à l'ouest de la tour : plate-forme à 3 m (poste en hauteur qui voit le Sanctuaire), une rampe vers chaque camp, loin du
   // passage nord-sud des ponts
   stDeck(-37.6, -33.6, -1.4, 2.4, -36.4, -35.0); // un passage d'1,5 m entre les rampes et la tour

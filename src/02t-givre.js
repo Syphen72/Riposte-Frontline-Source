@@ -196,6 +196,7 @@ function givreStation() {
   // clocheton sur le faîtage : cloche, abat-son, toit pointu enneigé, girouette
   {
     const M = DECOR, yb = H + roof.rise + 0.05;
+    M.capBegin(); // (Breachline) clocheton plein, collision prise sur le rendu (Maker.capEnd)
     M.save().move(-2, yb - 0.6, 0).color([0.9, 0.88, 0.84]).world(1);
     M.boxB('plaster', -0.8, 0.8, 0, 1.2, -0.8, 0.8);
     M.local(1); M.color([0.42, 0.32, 0.24]);
@@ -207,6 +208,7 @@ function givreStation() {
     M.color([0.2, 0.2, 0.2]); M.save().move(0, 4.2, 0); M.cyl('steel', 0.02, 0.9, 5); M.restore();
     M.save().move(0.12, 4.85, 0); M.boxB('steel', -0.3, 0.3, 0, 0.18, -0.01, 0.01); M.restore();
     M.restore();
+    M.capEnd({ x0: -3.0, x1: -1.0, z0: -1.0, z1: 1.0, base: yb - 0.6, step: 0.2, fl: { noTop: true, roof: 'clocheton' } });
   }
   // intérieur : guichet au centre, bancs doubles, poêle, consignes, colonnes, horaires, lanternes
   {
@@ -528,7 +530,10 @@ function givreHalf(s) {
   skiRackAt(DECOR, 14.75, Z(32) + s * 0.56, s > 0 ? 0 : Math.PI, [[0.75, 0.15, 0.12], [0.2, 0.35, 0.6], [0.9, 0.7, 0.15], [0.15, 0.15, 0.17]]); // râtelier contre le mur de la Grange
 
   /* ----- Base (z 38..48) : tente, camion, caisses, sacs de sable, bourrelets ----- */
-  { const tz = Z(45.5); DECOR.place(PF.tent(), -4.0, 0, tz, 0, { nocol: true }); box('canvas', -7.5, -0.5, 0, 2.1, tz - 2.2, tz + 2.2, { m: 'dirt', skip: 'xXyYzZ' }); }
+  { const tz = Z(45.5); DECOR.place(PF.tent(), -4.0, 0, tz, 0, { nocol: true }); box('canvas', -7.5, -0.5, 0, 2.1, tz - 2.2, tz + 2.2, { m: 'dirt', skip: 'xXyYzZ' });
+    // (Breachline) le toit de toile (tissu, de 2,1 à 3,3 m) plein en deux gradins : la boîte de 2,1 m laissait un comble où se tenir sous la toile
+    for (const [y0, y1, hw] of [[2.1, 2.5, 1.67], [2.5, 2.9, 0.83]]) WORLD.col({ x0: -7.5, x1: -0.5, y0, y1, z0: tz - hw, z1: tz + hw }, 'dirt', false, false, { noTop: true, roof: 'toile' });
+    COL[COL.length - 3].noTop = true; }
   truck(9.0, Z(44.5), 'x', 'cargo', { load: 'tarp' }, [0.36, 0.42, 0.3]); // porteur bâché à cabine avancée
   crate(16.5, 0, Z(41.2), 1.2, 0.2); crate(17.95, 0, Z(41.0), 1.1, 0.5); crate(17.2, 1.2, Z(41.1), 1.0, 0.1);
   sandbags(13.0, Z(39.0), 2.4, 'x', 4, 0, 'kaki');

@@ -45,7 +45,7 @@ function parisRoof(w, d, h, faces, R) {
   const M = DECOR, i1 = 1.7, h1 = 3.0, i2 = Math.min(i1 + 3.0, Math.min(w, d) / 2 - 0.6), h2 = 1.2, zinc = [0.5, 0.56, 0.64];
   const rect = (i, y) => [[-w / 2 + i, y, -d / 2 + i], [w / 2 - i, y, -d / 2 + i], [w / 2 - i, y, d / 2 - i], [-w / 2 + i, y, d / 2 - i]];
   const A = rect(0, h), B = rect(i1, h + h1), C = rect(i2, h + h1 + h2);
-  M.save().color(zinc).local(1); M.cls = 1;
+  M.save().color(zinc).local(1); M.cls = 1; M.capBegin(); // (Breachline) collision prise sur le rendu (Maker.capEnd)
   for (const [P, Q] of [[A, B], [B, C]]) for (let k = 0; k < 4; k++) {
     const p0 = P[k], p1 = P[(k + 1) % 4], q0 = Q[k], q1 = Q[(k + 1) % 4], e = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]], f = [q0[0] - p0[0], q0[1] - p0[1], q0[2] - p0[2]];
     let n = [e[1] * f[2] - e[2] * f[1], e[2] * f[0] - e[0] * f[2], e[0] * f[1] - e[1] * f[0]]; const mx = (p0[0] + p1[0]) / 2, mz = (p0[2] + p1[2]) / 2;
@@ -70,6 +70,7 @@ function parisRoof(w, d, h, faces, R) {
   // cheminées sur le terrasson
   const n = 2 + Math.floor(R() * 3);
   for (let i = 0; i < n; i++) { const x = R.range(-w / 2 + i2 + 0.8, w / 2 - i2 - 0.8), z = R.range(-d / 2 + i2 + 0.6, d / 2 - i2 - 0.6); M.color([0.88, 0.8, 0.7]); M.boxB('plaster', x - 0.45, x + 0.45, h + h1 + h2 - 0.2, h + h1 + h2 + 2.2, z - 0.35, z + 0.35); M.color([0.3, 0.28, 0.27]); M.boxB('plaster', x - 0.52, x + 0.52, h + h1 + h2 + 2.2, h + h1 + h2 + 2.4, z - 0.42, z + 0.42); }
+  { const b = M._aabb(-w / 2, w / 2, h, h, -d / 2, d / 2, true); M.capEnd({ x0: b.x0, x1: b.x1, z0: b.z0, z1: b.z1, base: b.y0 }); }
   M.restore();
 }
 

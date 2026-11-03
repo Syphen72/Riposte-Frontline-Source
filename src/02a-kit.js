@@ -114,7 +114,7 @@ class Maker {
     const t = this.tint;
     return B.vert(wx, wy, wz, mx, my, mz, u / this.uvS + this.uvO[0], v / this.uvS + this.uvO[1], t[0], t[1], t[2], ao, sw);
   }
-  tri(B, a, b, c) { if (this.flip) B.tri(a, c, b); else B.tri(a, b, c); }
+  tri(B, a, b, c) { if (this.flip) B.tri(a, c, b); else B.tri(a, b, c); if (this.cap) { const P = B.P, A = a * 3, Bb = b * 3, C = c * 3; this.cap.push(P[A], P[A + 1], P[A + 2], P[Bb], P[Bb + 1], P[Bb + 2], P[C], P[C + 1], P[C + 2]); } }
   quadI(B, a, b, c, d) { this.tri(B, a, b, c); this.tri(B, a, c, d); }
   /* Quadrilatère plan (points locaux [x,y,z]) orienté selon n ; coordonnées de texture projetées sur le plan */
   quad(mat, p0, p1, p2, p3, n, o = {}) {
@@ -372,16 +372,16 @@ class Maker {
      1 à 4 bandes sur le petit), chacune dans sa boîte englobante exacte : elles débordent de l'objet de 25 cm au plus. Jusqu'en 2.32, une seule
      boîte englobante resserrée de 12 % : un mètre de vide aux angles d'une voiture garée de biais, et des bords visibles que les tirs traversaient
      au milieu des faces (retour du propriétaire : « ajuster les hitbox des assets ») */
-  col(x0, x1, y0, y1, z0, z1, m = 'concrete', ray = false, occ = true) {
+  col(x0, x1, y0, y1, z0, z1, m = 'concrete', ray = false, occ = true, fl) { // fl (Breachline) : marques recopiées sur la boîte (noTop, roof...)
     const e = this.m.elements;
-    if (Math.min(Math.abs(e[0]), Math.abs(e[8])) <= 0.02) { this.T.col(this._aabb(x0, x1, y0, y1, z0, z1, true), m, ray, occ); return this; }
+    if (Math.min(Math.abs(e[0]), Math.abs(e[8])) <= 0.02) { this.T.col(this._aabb(x0, x1, y0, y1, z0, z1, true), m, ray, occ, fl); return this; }
     const lx = Math.abs(x1 - x0), lz = Math.abs(z1 - z0), alongX = lx >= lz, L = alongX ? lx : lz, S = alongX ? lz : lx;
     const n = Math.min(24, Math.max(1, Math.ceil(L / 0.5))), k = Math.min(4, Math.max(1, Math.ceil(S / 0.75)));
     for (let i = 0; i < n; i++) for (let j = 0; j < k; j++) {
       const a0 = i / n, a1 = (i + 1) / n, b0 = j / k, b1 = (j + 1) / k;
       const b = alongX ? this._aabb(lerp(x0, x1, a0), lerp(x0, x1, a1), y0, y1, lerp(z0, z1, b0), lerp(z0, z1, b1), true)
         : this._aabb(lerp(x0, x1, b0), lerp(x0, x1, b1), y0, y1, lerp(z0, z1, a0), lerp(z0, z1, a1), true);
-      this.T.col(b, m, ray, occ);
+      this.T.col(b, m, ray, occ, fl);
     }
     return this;
   }
@@ -457,6 +457,40 @@ class Maker {
     const side = o.side || [(ay * bz - az * by) * nf, (az * bx - ax * bz) * nf, (ax * by - ay * bx) * nf];
     return this.fabric({ cu, rv, P, pin, maxD, uv, glow: o.glow !== undefined ? o.glow : 0.2, side, genre: o.genre || 'tendu', grp: o.grp, mat: o.mat || 'canvas' });
   }
+  /* (Breachline) Collision prise sur le rendu. Entre capBegin() et capEnd(o), les triangles émis sont relevés, dans le repère de la cible
+     (le monde, ou celui du prefab) ; sous leur dessus, des boîtes qui le suivent sans jamais le dépasser : sur une grille de o.step (35 cm
+     par défaut), chaque coin prend la plus haute surface tournée vers le haut au-dessus de lui, chaque case la plus basse de ses quatre coins
+     (une case dont un coin n'a pas de dessus reste vide) arrondie aux 5 cm du dessous, et les cases voisines de même hauteur sont regroupées
+     en rectangles, dans les bornes o.x0..o.x1, o.z0..o.z1 de la cible (en général le bloc, sans les débords). Une case posée sur un dessus
+     plein à la hauteur o.base (le haut d'un bloc, d'un mur, la dalle d'un plafond) est pleine de o.base jusqu'à la surface ; au-dessus d'un
+     vide (une halle ouverte jusqu'au toit), seulement une coque de ROOFCAP.shell sous la surface : la pièce garde son volume. Dans le monde, la
+     décision attend que toutes les collisions de la carte soient posées (capResolve, au chargement) ; dans un prefab, o.shell la donne.
+     Toit en pente, dôme, coque : le volume sous la surface vue est plein, on ne se tient plus dans des combles d'où l'on tirait dehors sans
+     être vu (tools/dev/visual/toits.js). o.fl : marques des boîtes ({ noTop: true, roof: 'pente' } par défaut : on peut y marcher si l'on y
+     tombe, le grappin n'y pose personne) ; o.m : matière d'impact. Sans volume d'occlusion : l'éclairage cuit ne change pas. */
+  capBegin() { this.cap = []; return this; }
+  capEnd(o) {
+    const T = this.cap; this.cap = null; if (!T || !T.length) return this;
+    const st = o.step || 0.35, nx = Math.max(1, Math.round((o.x1 - o.x0) / st)), nz = Math.max(1, Math.round((o.z1 - o.z0) / st)), sx = (o.x1 - o.x0) / nx, sz = (o.z1 - o.z0) / nz;
+    const W = nz + 1, H = new Float32Array((nx + 1) * W).fill(-1e9);
+    for (let t = 0; t < T.length; t += 9) {
+      const ax = T[t], ay = T[t + 1], az = T[t + 2], bx = T[t + 3], by = T[t + 4], bz = T[t + 5], cx = T[t + 6], cy = T[t + 7], cz = T[t + 8];
+      const ux = bx - ax, uy = by - ay, uz = bz - az, vx = cx - ax, vy = cy - ay, vz = cz - az, ny = uz * vx - ux * vz, l = hyp3(uy * vz - uz * vy, ny, ux * vy - uy * vx);
+      if (l < 1e-9 || Math.abs(ny) < l * 0.15) continue; // face presque verticale : un pignon, un bandeau
+      const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz); if (Math.abs(d) < 1e-9) continue;
+      const i0 = Math.max(0, Math.ceil((Math.min(ax, bx, cx) - o.x0) / sx - 1e-6)), i1 = Math.min(nx, Math.floor((Math.max(ax, bx, cx) - o.x0) / sx + 1e-6));
+      const j0 = Math.max(0, Math.ceil((Math.min(az, bz, cz) - o.z0) / sz - 1e-6)), j1 = Math.min(nz, Math.floor((Math.max(az, bz, cz) - o.z0) / sz + 1e-6));
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+        const x = o.x0 + i * sx, z = o.z0 + j * sz;
+        const u = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / d, v = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / d, w = 1 - u - v;
+        if (u < -1e-5 || v < -1e-5 || w < -1e-5) continue;
+        const y = u * ay + v * by + w * cy, k = i * W + j; if (y > H[k]) H[k] = y;
+      }
+    }
+    const job = { o, nx, nz, sx, sz, H };
+    if (this.T === WORLD) CAPQ.push(job); else capEmit(job, (c) => this.T.col(c, job.o.m || 'concrete', false, false, job.o.fl || ROOFCAP.fl), () => o.shell || 0);
+    return this;
+  }
   _aabb(x0, x1, y0, y1, z0, z1, exact) {
     const e = this.m.elements, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, cz = (z0 + z1) / 2, hx = Math.abs(x1 - x0) / 2, hy = (y1 - y0) / 2, hz = Math.abs(z1 - z0) / 2;
     const wx = e[0] * cx + e[4] * cy + e[8] * cz + e[12], wy = e[1] * cx + e[5] * cy + e[9] * cz + e[13], wz = e[2] * cx + e[6] * cy + e[10] * cz + e[14];
@@ -486,8 +520,9 @@ class Maker {
           tn ? gC[i3] * tn[0] : gC[i3], tn ? gC[i3 + 1] * tn[1] : gC[i3 + 1], tn ? gC[i3 + 2] * tn[2] : gC[i3 + 2], a, gS ? gS[i] : 0);
       }
       for (let i = 0; i < g.ni; i += 3) { if (flip) B.tri(base + g.I[i], base + g.I[i + 2], base + g.I[i + 1]); else B.tri(base + g.I[i], base + g.I[i + 1], base + g.I[i + 2]); }
+      if (this.cap) { const P = B.P; for (let i = 0; i < g.ni; i++) { const q = (base + g.I[i]) * 3; this.cap.push(P[q], P[q + 1], P[q + 2]); } } // relevé de collision (capEnd) : le prefab estampillé compte aussi
     }
-    if (!o.nocol) for (const c of pf.cols) this.col(c.x0, c.x1, c.y0, c.y1, c.z0, c.z1, c.m, c.ray, c.occ);
+    if (!o.nocol) for (const c of pf.cols) this.col(c.x0, c.x1, c.y0, c.y1, c.z0, c.z1, c.m, c.ray, c.occ, c.fl);
     for (const c of pf.occs) this.T.occ(this._aabb(c.x0, c.x1, c.y0, c.y1, c.z0, c.z1, true), c.k);
     for (const c of pf.pcols) this.pcol(c.x0, c.x1, c.y0, c.y1, c.z0, c.z1, c.tag);
     for (const l of pf.lamps) this.lamp(l.x, l.y, l.z, l.c, l.p, l.r, l.down);
@@ -567,7 +602,7 @@ function sagPath(a, b, sag, n = 12) {
 class Prefab {
   constructor(name) { this.name = name; this.parts = new Map(); this.cols = []; this.occs = []; this.pcols = []; this.dyn = []; this.lamps = []; this.fabrics = []; this.panes = []; this.tintable = null; }
   buf(mat, cls) { const k = mat + '|' + cls; let p = this.parts.get(k); if (!p) this.parts.set(k, p = { mat, cls, g: new GeoBuf(256, 512, LIVING.has(mat)) }); return p.g; }
-  col(b, m, ray, occ) { this.cols.push({ ...b, m, ray, occ }); }
+  col(b, m, ray, occ, fl) { this.cols.push({ ...b, m, ray, occ, fl }); }
   occ(b, k) { this.occs.push({ ...b, k }); }
   pcol(b, tag) { this.pcols.push({ ...b, tag }); }
   dynAdd(d) { this.dyn.push({ t: d.t, x: d.x, y: d.y, z: d.z, ry: d.ry, o: d.o, tintFrom: !!d.o.tintFrom }); return null; }
@@ -581,6 +616,52 @@ const PREFABS = new Map();
 function prefab(name, build) {
   let p = PREFABS.get(name); if (p) return p;
   p = new Prefab(name); const M = new Maker(p); build(M, p); PREFABS.set(name, p); return p;
+}
+
+/* (Breachline) Collisions prises sur le rendu (Maker.capEnd) : celles du monde attendent la fin de la construction de la carte, puis
+   capResolve les pose (09a-loading.js, avant le réseau des bots). shell : épaisseur de la coque au-dessus d'un vide ; fl : marques par défaut */
+const ROOFCAP = { shell: 0.5, fl: { noTop: true, roof: 'pente' } }, CAPQ = [];
+/* Boîtes d'un relevé : hauteur de chaque case, plein ou coque (shellAt(x, z) : 0 plein depuis o.base, sinon l'épaisseur), puis rectangles de
+   même hauteur et même sorte, rangées le long de x prolongées d'une rangée à l'autre */
+function capEmit(job, push, shellAt) {
+  const { o, nx, nz, sx, sz, H } = job, W = nz + 1, base = o.base;
+  const cell = (i, j) => {
+    const h = Math.min(H[i * W + j], H[(i + 1) * W + j], H[i * W + j + 1], H[(i + 1) * W + j + 1]) - 0.01;
+    if (h < base + 0.1) return null;
+    const y1 = base + Math.floor((h - base) / 0.05) * 0.05, sh = shellAt(o.x0 + (i + 0.5) * sx, o.z0 + (j + 0.5) * sz);
+    return { y1, y0: sh ? Math.max(base, y1 - sh) : base };
+  };
+  const emit = (r) => { if (r.y1 - r.y0 > 0.04) push({ x0: o.x0 + r.i0 * sx, x1: o.x0 + r.i1 * sx, y0: r.y0, y1: r.y1, z0: o.z0 + r.j0 * sz, z1: o.z0 + (r.j + 1) * sz }); };
+  let open = new Map();
+  for (let j = 0; j < nz; j++) {
+    const row = [], C = [];
+    for (let i = 0; i < nx; i++) C.push(cell(i, j));
+    for (let i = 0; i < nx;) {
+      const c = C[i]; let e = i + 1;
+      while (e < nx && (c ? C[e] && C[e].y1 === c.y1 && C[e].y0 === c.y0 : !C[e])) e++;
+      if (c) row.push({ i0: i, i1: e, y0: c.y0, y1: c.y1 }); i = e;
+    }
+    const next = new Map();
+    for (const r of row) { const k = r.i0 + ':' + r.i1 + ':' + r.y0 + ':' + r.y1, p = open.get(k); if (p) { p.j = j; next.set(k, p); open.delete(k); } else next.set(k, { ...r, j0: j, j }); }
+    for (const p of open.values()) emit(p);
+    open = next;
+  }
+  for (const p of open.values()) emit(p);
+}
+/* Au chargement, une fois toutes les collisions de la carte posées et rangées (buildHash) : chaque case des relevés en attente est pleine si
+   elle repose sur un dessus à la hauteur de base, sinon une coque ; puis la grille de collision est refaite avec les nouvelles boîtes */
+function capResolve() {
+  if (!CAPQ.length) return 0;
+  const n0 = COL.length;
+  for (const job of CAPQ) {
+    const b = job.o.base;
+    // plein : une boîte touche la hauteur de base par en dessous ou la contient (le haut d'un bloc, d'un mur, une dalle ; un tambour de coupole
+    // enfoncé dans une voûte) ; sinon un vide, la coque seule
+    const shellAt = (x, z) => { for (const c of queryBoxes(x - 0.02, z - 0.02, x + 0.02, z + 0.02)) if (!c.ray && x >= c.x0 && x <= c.x1 && z >= c.z0 && z <= c.z1 && c.y0 <= b + 0.05 && c.y1 >= b - 0.2) return 0; return job.o.shell || ROOFCAP.shell; };
+    capEmit(job, (c) => WORLD.col(c, job.o.m || 'concrete', false, false, job.o.fl || ROOFCAP.fl), shellAt);
+  }
+  CAPQ.length = 0; buildHash();
+  return COL.length - n0;
 }
 
 /* ---------- Décor : tampons fusionnés par matière, classe de détail et tronçon ---------- */
@@ -600,7 +681,7 @@ const WORLD = {
     let b = this.bufs.get(k); if (!b) this.bufs.set(k, b = { mat, cls, ck, g: new GeoBuf(1024, 2048, LIVING.has(mat)) });
     return b.g;
   },
-  col(b, m, ray, occ) { COL.push({ x0: b.x0, x1: b.x1, y0: b.y0, y1: b.y1, z0: b.z0, z1: b.z1, m, ray: !!ray }); if (occ !== false && !ray) OCC.push({ ...b, k: 1 }); },
+  col(b, m, ray, occ, fl) { const c = { x0: b.x0, x1: b.x1, y0: b.y0, y1: b.y1, z0: b.z0, z1: b.z1, m, ray: !!ray }; if (fl) Object.assign(c, fl); COL.push(c); if (occ !== false && !ray) OCC.push({ ...b, k: 1 }); },
   occ(b, k) { OCC.push({ ...b, k }); },
   pcol(b, tag) { propBlock(b, tag); },
   dynAdd(d) { return propSpawn(d.t, d.x, d.y, d.z, d.ry, d.o); },

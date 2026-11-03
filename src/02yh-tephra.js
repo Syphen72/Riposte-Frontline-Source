@@ -455,7 +455,9 @@ function tephraObservatory() {
   for (const sx of [-1, 1]) for (const z of [-4, 4]) { DECOR.col(sx * 6.15 - (sx > 0 ? 0.7 : 0), sx * 6.15 + (sx > 0 ? 0 : 0.7), 0, 0.8, z - 0.9, z + 0.9, 'wood'); DECOR.place(PF.tpDrums(), sx * 5.8, 0, z, (-sx * Math.PI) / 2); }
   DECOR.place(PF.tpWeather(), 4.6, H + 0.06, 5.0, 0.4); DECOR.place(PF.tpGps(), -4.8, H + 0.06, -5.2, 2.0);
   const M = DECOR;
+  M.capBegin(); // (Breachline) radôme plein, collision prise sur le rendu (Maker.capEnd) : on ne se tenait plus dedans, au sommet de la tour
   M.save().move(0, 11.0, 0).color([0.95, 0.95, 0.93]).local(1); M.lathe('panel', [[0, -0.2], [2.4, -0.2], [3.1, 0.6], [3.3, 1.8], [3.1, 3.0], [2.4, 4.1], [1.3, 4.8], [0, 5.0]], 24); M.restore();
+  M.capEnd({ x0: -3.3, x1: 3.3, z0: -3.3, z1: 3.3, base: 11.0, fl: { noTop: true, roof: 'dome' } });
 }
 
 /* ---------- Galerie (entre l'observatoire et la salle des turbines) ---------- */

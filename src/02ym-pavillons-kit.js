@@ -138,6 +138,7 @@ function fdRoof(x0, x1, z0, z1, y, o = {}) {
   const xa = G[0] ? -ovx : -0.05, xb = len + (G[1] ? ovx : 0.05), mat = o.mat || 'rooftiles', tint = o.tint || (mat === 'slate' ? FDP.slate : FDP.tiles);
   const slate = mat === 'slate';
   M.save().move(x0, y, (z0 + z1) / 2);
+  if (o.col !== false) M.capBegin(); // (Breachline) collision prise sur le rendu (Maker.capEnd) : les gradins ci-dessous restaient jusqu'à 60 cm sous les tuiles
   for (const s of [1, -1]) {
     M.color(tint).world(1); M.cls = 0;
     M.quad(mat, [xa, -drop, s * hs], [xb, -drop, s * hs], [xb, rise, 0], [xa, rise, 0], [0, hs / nl, (s * (rise + drop)) / nl]);
@@ -178,11 +179,13 @@ function fdRoof(x0, x1, z0, z1, y, o = {}) {
     M.color(o.gable || FDP.crepi[0]).world(1); M.boxB(o.wallMat || 'crepi', cx - 0.32, cx + 0.32, rise * 0.55, rise + 0.85, -0.32, 0.32);
     M.color([0.62, 0.62, 0.6]).local(1); M.boxB('concrete', cx - 0.38, cx + 0.38, rise + 0.85, rise + 0.93, -0.38, 0.38, { bevel: 0.01 });
     M.color([0.4, 0.4, 0.4]); M.save().move(cx, rise + 0.93, 0); M.cyl('steel', 0.08, 0.3, 8); M.restore();
+    M.col(cx - 0.32, cx + 0.32, rise * 0.55, rise + 0.93, -0.32, 0.32, 'concrete', false, false, { noTop: true, roof: 'pente' }); // (Breachline) souche pleine
   }
   // occultation et collision du comble en gradins, sous les pans : une boîte unique dépassait des pans près de l'égout (saillie invisible,
   // éclairage cuit assombri en bande au milieu du toit) ; l'occultation reste à 0,35 m sous la couverture (cellules de 0,5 m)
   for (let k = 0; k < 6; k++) { const w = hs * (1 - k / 6), yt = rise - w * tn - 0.35; if (yt > -drop + 0.1) M.occ(0, len, -drop, yt, -w, w, 1); }
-  if (o.col !== false) for (let k = 0, yb = 0; k < 4; k++) { const w = (span / 2 - 0.3) * (1 - k / 4), yt = rise - w * tn - 0.12; if (yt > yb) M.col(0, len, yb, yt, -w, w, 'concrete'); yb = Math.max(yb, yt); }
+  if (o.col !== false) for (let k = 0, yb = 0; k < 4; k++) { const w = (span / 2 - 0.3) * (1 - k / 4), yt = rise - w * tn - 0.12; if (yt > yb) M.col(0, len, yb, yt, -w, w, 'concrete', false, true, ROOFCAP.fl); yb = Math.max(yb, yt); }
+  if (o.col !== false) M.capEnd({ x0, x1, z0, z1, base: y });
   M.restore();
   return { rise };
 }

@@ -42,7 +42,14 @@ const { openGame } = require('./common');
     // coup direct sur un véhicule
     const rec = DMG.veh[0];
     if (rec) {
-      const o = rec.c.clone().add(new V3(rec.r + 12, 0.4, 0)), dir = rec.c.clone().sub(o).normalize();
+      // d'un point dégagé à 12 m qui voit le véhicule (avant novembre 2026 : de l'intérieur d'un bloc, le rayon ignorant la boîte de départ)
+      let o = null;
+      for (let k = 0; k < 16 && !o; k++) {
+        const a = (k / 16) * TAU, c = rec.c.clone().add(new V3(Math.sin(a) * (rec.r + 12), 0.4, Math.cos(a) * (rec.r + 12))), d = rec.c.clone().sub(c), L = d.length(); d.divideScalar(L);
+        const h = rayWorld(c.x, c.y, c.z, d.x, d.y, d.z, L); if (!h || (h.t > 1e-6 && h.t > L - rec.r - 1)) o = c; // rien avant le véhicule
+      }
+      if (!o) { fail('aucun point dégagé d’où tirer sur le véhicule'); return out; }
+      const dir = rec.c.clone().sub(o).normalize();
       rocketFire(PL.ent, o, dir, WEAPONS.rpg7); fly(1);
       out.vehicule = rec.state;
       if (rec.state < 1) fail('coup direct sur un véhicule : il ne s’embrase pas (' + Math.round(rec.hp) + ' pv)');

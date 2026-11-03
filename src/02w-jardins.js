@@ -9,12 +9,13 @@
 /* Toit à quatre pans (pavillons) : égout rectangulaire à y, faîte à y + h, débord ov */
 function hipRoof(x0, x1, z0, z1, y, h, o = {}) {
   const M = DECOR, ov = o.ov !== undefined ? o.ov : 0.5, a0 = x0 - ov, a1 = x1 + ov, b0 = z0 - ov, b1 = z1 + ov, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, yt = y + h, mat = o.mat || 'slate';
-  M.save().color(o.tint || [0.42, 0.46, 0.52]).world(1); M.cls = 0;
+  M.save().color(o.tint || [0.42, 0.46, 0.52]).world(1); M.cls = 0; M.capBegin(); // (Breachline) collision prise sur le rendu (Maker.capEnd)
   const sx = h / ((a1 - a0) / 2 + 0.001), sz = h / ((b1 - b0) / 2 + 0.001);
   M.tri3(mat, [a0, y, b0], [a1, y, b0], [cx, yt, cz], [0, 1, -sz]); M.tri3(mat, [a1, y, b1], [a0, y, b1], [cx, yt, cz], [0, 1, sz]);
   M.tri3(mat, [a1, y, b0], [a1, y, b1], [cx, yt, cz], [sx, 1, 0]); M.tri3(mat, [a0, y, b1], [a0, y, b0], [cx, yt, cz], [-sx, 1, 0]);
   M.color(o.under || [0.3, 0.22, 0.15]).local(1);
   M.boxB('paintwood', a0, a1, y - 0.14, y, b0, b1, { bevel: 0.02 });
+  M.capEnd({ x0, x1, z0, z1, base: y });
   M.restore();
   M.occ(a0, a1, y - 0.1, yt * 0.9 + y * 0.1, b0, b1, 0.9);
   DECOR.col(x0 - ov * 0.5, x1 + ov * 0.5, y - 0.14, y + 0.1, z0 - ov * 0.5, z1 + ov * 0.5, 'wood', true);

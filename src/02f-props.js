@@ -420,6 +420,7 @@ PF.acUnit = () => prefab('acUnit', (M) => {
   M.color([0.4, 0.4, 0.38]); M.cls = 1;
   for (const x of [-0.3, 0.3]) M.boxB('steel', x - 0.02, x + 0.02, -0.03, 0.0, 0, 0.4);
   M.color([0.9, 0.9, 0.9]); M.tube('plastic', 0.008, [[0.35, 0.05, 0.08], [0.35, -0.3, 0.06], [0.33, -0.5, 0.04]], 4);
+  M.col(-0.4, 0.4, 0, 0.56, 0.04, 0.34, 'metal');
 });
 /* Réservoir d'eau en polyéthylène sur son support (typique des toits du Maghreb) */
 PF.waterTank = () => prefab('waterTank', (M, P) => {
@@ -431,6 +432,7 @@ PF.waterTank = () => prefab('waterTank', (M, P) => {
   const pr = [[0, 0.52], [0.52, 0.52], [0.55, 0.56], [0.55, 0.7], [0.53, 0.72], [0.55, 0.74], [0.55, 0.95], [0.53, 0.97], [0.55, 0.99], [0.55, 1.2], [0.5, 1.3], [0.2, 1.36], [0.2, 1.42], [0, 1.42]];
   M.lathe('plastic', pr, 18, { sharp: 0.7, uR: 0.55 });
   M.color([0.5, 0.5, 0.5]); M.tube('steel', 0.02, [[0.5, 0.65, 0], [0.7, 0.62, 0], [0.75, 0.2, 0], [0.75, 0.06, 0]], 5);
+  M.col(-0.55, 0.55, 0, 1.42, -0.55, 0.55, 'metal'); // (Breachline) plein jusqu'au couvercle : on ne se glisse pas dans le support, on ne tire pas à travers la cuve
 });
 /* Antenne parabolique sur pied */
 PF.dish = () => prefab('dish', (M) => {
@@ -453,6 +455,7 @@ PF.solarHeater = () => prefab('solarHeater', (M) => {
   M.cls = 1; M.color([0.8, 0.85, 0.95]); M.boxB('glass', -0.96, 0.96, 0.06, 0.065, 0.04, 1.66); M.restore();
   M.color([0.85, 0.85, 0.82]);
   M.save().move(-1.05, 1.35, 0.25).rotZ(-Math.PI / 2); M.lathe('steel', [[0, 0], [0.24, 0.0], [0.25, 0.03], [0.25, 2.07], [0.24, 2.1], [0, 2.1]], 12); M.restore();
+  M.col(-1.05, 1.05, 0, 1.6, -0.65, 0.55, 'metal'); // (Breachline) on ne se glisse pas sous le capteur ni entre les pieds
 });
 /* Antenne râteau */
 PF.antenna = () => prefab('antenna', (M) => {
@@ -469,6 +472,7 @@ PF.roofHut = () => prefab('roofHut', (M) => {
   M.local(1); M.color([0.85, 0.83, 0.78]); M.boxB('concrete', -1.18, 1.18, 2.5, 2.6, -0.98, 0.98, { bevel: 0.015 });
   M.color(PAL.door[0]); M.boxB('paintwood', -0.4, 0.4, 0.02, 2.0, 0.9, 0.93);
   M.color([0.5, 0.45, 0.3]); M.boxB('steel', 0.25, 0.3, 1.0, 1.08, 0.93, 0.97);
+  M.col(-1.1, 1.1, 0, 2.6, -0.9, 0.9, 'concrete'); // (Breachline) la cage est pleine : un soldat posé sur le toit n'entre pas dans l'édicule (tools/dev/visual/toits.js)
 });
 /* Pot de fleurs en terre cuite (garni d'une touffe) */
 PF.pot = () => prefab('pot', (M) => {

@@ -192,6 +192,9 @@ function collideCircle(pos, r, height) {
       const c = arr[k];
       if (c.ray) continue;
       if (c.y1 <= feet + STEP || c.y0 >= feet + height) continue;
+      // (Breachline) une dalle mince qui n'entre que dans le haut de la tête est un plafond (ctlMove arrête la tête dessous), pas un mur : repoussé
+      // jusqu'au bord de la dalle, le soldat passait de l'autre côté d'un mur (mezzanine de la halle, plancher d'un étage)
+      if (c.y0 > feet + height - 0.35 && c.y1 - c.y0 < 0.8) continue;
       const cx = clamp(pos.x, c.x0, c.x1), cz = clamp(pos.z, c.z0, c.z1);
       let dx = pos.x - cx, dz = pos.z - cz; const d2 = dx * dx + dz * dz;
       if (d2 >= r * r) continue;
@@ -228,7 +231,7 @@ function ceilingAbove(x, z, y, r) {
 /* Rayon contre la géométrie statique et les props physiques. Renvoie distance, normale, matière, et le prop touché s'il y en a un
    (RAYHIT.prop). mode : 0 visée et lignes de vue (les petits props, que les balles traversent, sont ignorés), 1 tir (tous les
    props), 2 la carte seule. Les boîtes de collision d'un prop (noRay) ne comptent pas : c'est sa forme qui répond. */
-const RAYHIT = { t: 0, nx: 0, ny: 0, nz: 0, m: 'concrete', prop: null, box: null }, _rn = [0, 1, 0]; // box : la boîte de collision touchée (null : sol, eau, prop)
+const RAYHIT = { t: 0, nx: 0, ny: 0, nz: 0, m: 'concrete', prop: null, box: null }, _rn = [0, 1, 0], RAY_IN = 0.12; // box : la boîte de collision touchée (null : sol, eau, prop)
 function rayWorld(ox, oy, oz, dx, dy, dz, maxD, mode = 0) {
   let best = maxD, bn = 0, bm = 'concrete', found = false, pb = null, bc = null;
   if (RELIEF.on && !VOID.on) {
@@ -278,6 +281,14 @@ function rayWorld(ox, oy, oz, dx, dy, dz, maxD, mode = 0) {
     t1 = (c.z0 - oz) * iz; t2 = (c.z1 - oz) * iz;
     a = Math.min(t1, t2); b = Math.max(t1, t2);
     if (a > tmin) { tmin = a; ax = 2; } if (b < tmax) tmax = b;
+    if (tmin < 0 && tmax > 0 && Math.min(ox - c.x0, c.x1 - ox, oy - c.y0, c.y1 - oy, oz - c.z0, c.z1 - oz) > RAY_IN) {
+      // (Breachline) départ dans la boîte, à plus de 12 cm de ses faces : le rayon est arrêté tout de suite. Avant, la boîte était ignorée :
+      // un soldat logé dans un volume plein (sous des combles, dans un édicule) voyait et tirait dehors, et les tirs du dehors s'arrêtaient sur
+      // la face (tir à sens unique). 12 cm : un pied dans une marche, une grenade posée sur un escalier ne comptent pas
+      const adx = Math.abs(dx), ady = Math.abs(dy), adz = Math.abs(dz);
+      best = 0; bm = c.m; found = true; bc = c; bn = adx >= ady && adx >= adz ? (dx > 0 ? -1 : 1) : ady >= adz ? (dy > 0 ? -2 : 2) : (dz > 0 ? -3 : 3);
+      break;
+    }
     if (tmax < Math.max(tmin, 0) || tmin > best || tmin < 0) continue;
     best = tmin; bm = c.m; found = true; bc = c;
     bn = ax === 0 ? (dx > 0 ? -1 : 1) : ax === 1 ? (dy > 0 ? -2 : 2) : (dz > 0 ? -3 : 3);

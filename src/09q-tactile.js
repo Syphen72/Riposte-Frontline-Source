@@ -262,7 +262,7 @@ function touchTick() {
   if (dead !== TC.dead) { TC.dead = dead; TC.root.classList.toggle('dead', dead); if (dead) touchReset(); }
   const map = KS.map.open || CHAT.open; TC.root.classList.toggle('map', map); TC.root.classList.toggle('fpv', !!PILOT.d); TC.root.classList.toggle('mecha', !!MECHA_P.me);
   const vis = (id, on) => TC.el[id].classList.toggle('gone', !on);
-  touchKsIcons(); PL.ksSel.forEach((k, i) => vis('ks' + (i + 1), !!PL.ks[k]));
+  touchKsIcons(); PL.ksSel.forEach((k, i) => vis('ks' + (i + 1), !!PL.ks[k])); vis('grapple', modeAllows('grapple')); // (Breachline) pas de bouton de grappin dans un mode qui le retire
   const mk = !!MECHA_P.me || !!mechaNear(); vis('pick', !!DROP.cur || mk); touchPickIcon(mk); vis('run', Settings.tcRun !== 'stick'); TC.el.run.classList.toggle('lit', TC.runOn); TC.root.classList.toggle('runbtn', Settings.tcRun === 'button'); TC.root.classList.toggle('float', Settings.tcStick !== 'fixed');
   const w = PL.ent.alive ? curW() : null; vis('breath', !!(w && w.def.scope && VM.ads > 0.6));
   vis('chat', MATCH.online && !!NET.on); vis('nade', PL.nades > 0 || !!PL.nadeState);

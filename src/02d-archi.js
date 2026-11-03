@@ -601,7 +601,7 @@ function pitchedRoof(x0, x1, z0, z1, y, tint, R) {
   M.save();
   if (alongX) M.move(x0, y, (z0 + z1) / 2); else M.move((x0 + x1) / 2, y, z1).rotY(Math.PI / 2);
   const hs = span / 2 + ov, yr = rise;
-  M.color(T).world(1);
+  M.color(T).world(1); M.capBegin();
   for (const s of [1, -1]) {
     const nl = hyp(hs, yr + drop);
     M.quad('rooftiles', [-ov, -drop, s * hs], [len + ov, -drop, s * hs], [len + ov, yr, 0], [-ov, yr, 0], [0, hs / nl, (s * (yr + drop)) / nl]);
@@ -641,7 +641,9 @@ function pitchedRoof(x0, x1, z0, z1, y, tint, R) {
     const cx = len * (0.2 + R() * 0.6), cz = (R() - 0.5) * span * 0.3;
     M.color(tint).world(1); M.boxB('plaster', cx - 0.3, cx + 0.3, rise * 0.5, yr + 0.9, cz - 0.3, cz + 0.3);
     M.color([0.7, 0.66, 0.6]).local(1); M.boxB('concrete', cx - 0.36, cx + 0.36, yr + 0.9, yr + 0.98, cz - 0.36, cz + 0.36, { bevel: 0.01 });
+    M.col(cx - 0.3, cx + 0.3, rise * 0.5, yr + 0.98, cz - 0.3, cz + 0.3, 'concrete', false, false, { noTop: true, roof: 'pente' }); // (Breachline) souche pleine
   }
+  M.capEnd({ x0, x1, z0, z1, base: y }); // (Breachline) le volume sous les tuiles est plein (Maker.capEnd)
   M.restore();
   DECOR.occ(x0 - ov, x1 + ov, y, y + rise * 0.6, z0 - ov, z1 + ov, 1);
 }

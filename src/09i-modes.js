@@ -24,6 +24,10 @@ const MODES = {
 };
 const MODE_IDS = ['tdm', 'ffa', 'dom'];
 function modeDef() { return MODES[MATCH.mode] || MODES.tdm; }
+/* (Breachline) Équipement permis par le mode : un mode retire ce qui casserait son équilibre (MODES.<id>.ban : 'grapple', une série, un
+   équipement...). Le mode vient de l'hôte (MATCH.mode, réglage du salon) : la même règle vaut pour tous les joueurs de la partie, la touche,
+   le bouton au doigt, la manette, le HUD et le câble des autres joueurs compris. */
+function modeAllows(what) { const b = modeDef().ban; return !b || !b.includes(what); }
 /* Alliés : même équipe, sauf en match à mort où chacun joue pour soi */
 function allied(a, b) { return a === b || (MATCH.mode !== 'ffa' && a.team === b.team); }
 /* Un bruit (tir, explosion) est-il celui d'un adversaire de b ? */

@@ -65,12 +65,13 @@ function cyChurch() {
     }
     for (const zc of [-0.62, 0.62]) { M.save().move(xb + th / 2, 3.4 + 1.35, zc).color([0.55, 0.38, 0.15]).local(1); M.lathe('steel', [[0, 0.0], [0.07, -0.02], [0.14, -0.2], [0.2, -0.4], [0.17, -0.42], [0, -0.42]], 10); M.restore(); }
     M.save().color(CY_WHITE).local(1); M.boxB('chaux', xb + th / 2 - 0.035, xb + th / 2 + 0.035, 3.4 + 3.9, 3.4 + 4.6, -0.035, 0.035); M.boxB('chaux', xb + th / 2 - 0.035, xb + th / 2 + 0.035, 3.4 + 4.25, 3.4 + 4.32, -0.2, 0.2); M.restore();
-    DECOR.col(xb - 0.05, xb + th + 0.05, 3.4, 7.2, -1.6, 1.6, 'concrete', true);
+    DECOR.col(xb - 0.05, xb + th + 0.05, 3.4, 7.2, -1.6, 1.6, 'concrete'); // (Breachline) pleine pour les soldats aussi : on traversait le clocheton depuis le toit du porche
     DECOR.occ(xb - 0.3, xb + th + 0.3, 3.4, 7.2, -1.7, 1.7, 0.3);
   }
   // dôme : tambour à six baies sur la voûte, calotte bleue légèrement bombée, lanterne et croix
   {
     const cx = 2.2, y0 = 5.6, R = 2.5;
+    M.capBegin(); // (Breachline) tambour et coupole pleins, collision prise sur le rendu (Maker.capEnd)
     M.save().move(cx, y0, 0).color(CY_WHITE).local(1); M.cyl('chaux', R, 1.7, 24, { caps: '' }); M.restore();
     M.save().move(cx, y0 + 1.7, 0).color([0.95, 0.94, 0.9]).local(1); M.cyl('chaux', R + 0.14, 0.14, 24, {}); M.restore();
     for (let i = 0; i < 6; i++) {
@@ -83,14 +84,16 @@ function cyChurch() {
     M.save().move(cx, y0 + 4.36, 0).color(CY_WHITE).local(1); M.cyl('chaux', 0.22, 0.3, 10, { r1: 0.18 }); M.restore();
     M.save().color(CY_WHITE).local(1);
     M.boxB('chaux', cx - 0.04, cx + 0.04, y0 + 4.66, y0 + 5.5, -0.04, 0.04); M.boxB('chaux', cx - 0.04, cx + 0.04, y0 + 5.05, y0 + 5.12, -0.26, 0.26); M.restore();
+    M.capEnd({ x0: cx - R - 0.16, x1: cx + R + 0.16, z0: -R - 0.16, z1: R + 0.16, base: y0, m: 'concrete', step: 0.2, fl: { noTop: true, roof: 'dome' } });
     M.occ(cx - R, cx + R, y0, y0 + 4.4, -R, R, 1);
   }
   // abside : demi-cylindre et demi-calotte à l'est, une baie
   {
     M.save().move(XN, 0, 0).color(CY_WHITE).world(1);
     M.cyl('chaux', 2.4, 4.0, 18, { a0: -Math.PI / 2, a1: Math.PI / 2, caps: '' });
-    M.lathe('chaux', [[2.5, 4.0], [2.46, 4.14], [2.0, 4.9], [1.2, 5.5], [0.4, 5.85], [0, 5.95]], 18, { a0: -Math.PI / 2, a1: Math.PI / 2, sharp: 0.9 });
+    M.capBegin(); M.lathe('chaux', [[2.5, 4.0], [2.46, 4.14], [2.0, 4.9], [1.2, 5.5], [0.4, 5.85], [0, 5.95]], 18, { a0: -Math.PI / 2, a1: Math.PI / 2, sharp: 0.9 });
     M.restore();
+    M.capEnd({ x0: XN, x1: XN + 2.5, z0: -2.5, z1: 2.5, base: 4.0, fl: { noTop: true, roof: 'dome' } }); // (Breachline) demi-calotte pleine (Maker.capEnd)
     M.save().move(XN + 2.42, 1.4, 0).rotY(Math.PI / 2).color([0.03, 0.04, 0.06]).local(1); M.extrude('dark', cyArchShape(0.5, 1.2), 0.01); M.restore();
     DECOR.col(XN, XN + 2.4, 0, 4.2, -1.0, 1.0, 'concrete'); DECOR.col(XN, XN + 2.0, 0, 4.2, 1.0, 1.9, 'concrete'); DECOR.col(XN, XN + 2.0, 0, 4.2, -1.9, -1.0, 'concrete');
     DECOR.col(XN, XN + 1.3, 0, 4.2, 1.9, 2.4, 'concrete'); DECOR.col(XN, XN + 1.3, 0, 4.2, -2.4, -1.9, 'concrete');
@@ -117,8 +120,10 @@ function cyChapel(xc, zc) {
     cyBand0(MM, W);
   });
   // dôme bleu sur un tambour bas, clocheton, croix
+  M.capBegin(); // (Breachline) coupole pleine (Maker.capEnd)
   M.save().move(xc, H + 0.25, zc).color(CY_WHITE).local(1); M.cyl('chaux', 1.55, 0.5, 18, { caps: '' }); M.restore();
   M.save().move(xc, H + 0.75, zc).color(CY_DOME).world(1); M.lathe('chaux', [[1.62, 0], [1.66, 0.08], [1.5, 0.5], [1.1, 1.0], [0.55, 1.35], [0.15, 1.5], [0, 1.52]], 18, { sharp: 0.9 }); M.restore();
+  M.capEnd({ x0: xc - 1.66, x1: xc + 1.66, z0: zc - 1.66, z1: zc + 1.66, base: H + 0.25, step: 0.2, fl: { noTop: true, roof: 'dome' } });
   M.save().color(CY_WHITE).local(1); M.boxB('chaux', xc - 0.035, xc + 0.035, H + 2.27, H + 2.9, zc - 0.035, zc + 0.035); M.boxB('chaux', xc - 0.2, xc + 0.2, H + 2.6, H + 2.67, zc - 0.035, zc + 0.035); M.restore();
   M.save().move(x1 - 0.25, H + 0.25, zc).color(CY_WHITE).world(1); M.boxB('chaux', -0.2, 0.2, 0, 1.3, -0.7, 0.7, { bevel: 0.03 }); M.restore();
   M.save().move(x1 - 0.05, H + 0.7, zc).rotY(Math.PI / 2).color([0.03, 0.04, 0.06]).local(1); M.extrude('dark', cyArchShape(0.5, 0.8), 0.012); M.restore();

@@ -244,10 +244,11 @@ function cyRoof(h, top, o) {
     const n = 1 + (R() < 0.55 ? 1 : 0);
     for (let q = 0; q < n; q++) {
       const px = lerp(x0 + 1.3, x1 - 1.3, R()), pz = lerp(z0 + 1.3, z1 - 1.3, R()), r = R(); // à 1,3 m des bords : le chauffe-eau (2,1 m) touchait le parapet
-      if (r < 0.3) M.place(PF.waterTank(), px, y + 0.02, pz, R() * TAU, { tint: { plastic: R.pick([[0.12, 0.12, 0.13], [0.2, 0.25, 0.3], [0.9, 0.9, 0.88]]) }, nocol: true });
-      else if (r < 0.55) M.place(PF.solarHeater(), px, y + 0.02, pz, R.pick([0, Math.PI / 2, Math.PI]), { nocol: true });
+      // (Breachline) citerne et chauffe-eau gardent leur collision : on ne se tenait plus dans leur support, sur un toit atteint au grappin
+      if (r < 0.3) M.place(PF.waterTank(), px, y + 0.02, pz, R() * TAU, { tint: { plastic: R.pick([[0.12, 0.12, 0.13], [0.2, 0.25, 0.3], [0.9, 0.9, 0.88]]) } });
+      else if (r < 0.55) M.place(PF.solarHeater(), px, y + 0.02, pz, R.pick([0, Math.PI / 2, Math.PI]));
       else if (r < 0.72) M.place(PF.antenna(), px, y + 0.02, pz, R() * TAU, { nocol: true, cls: 1 });
-      else if (r < 0.9) { M.save().color([0.97, 0.96, 0.94]).world(1); M.boxB('chaux', px - 0.3, px + 0.3, y, y + 1.0, pz - 0.3, pz + 0.3, { bevel: 0.04 }); M.boxB('chaux', px - 0.4, px + 0.4, y + 1.0, y + 1.1, pz - 0.4, pz + 0.4, { bevel: 0.03 }); M.restore(); }
+      else if (r < 0.9) { M.save().color([0.97, 0.96, 0.94]).world(1); M.boxB('chaux', px - 0.3, px + 0.3, y, y + 1.0, pz - 0.3, pz + 0.3, { bevel: 0.04 }); M.boxB('chaux', px - 0.4, px + 0.4, y + 1.0, y + 1.1, pz - 0.4, pz + 0.4, { bevel: 0.03 }); DECOR.col(px - 0.3, px + 0.3, y, y + 1.1, pz - 0.3, pz + 0.3, 'concrete'); M.restore(); }
     }
   }
 }

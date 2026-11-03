@@ -527,7 +527,7 @@ function alpineRoof(x0, x1, z0, z1, y, o = {}) {
   const R = o.R || rngOf(Math.round(x0 * 7 + z0 * 13 + y)), pitch = o.pitch || 0.46, ovE = o.ovE !== undefined ? o.ovE : 1.1, ovG = o.ovG !== undefined ? o.ovG : 0.8, tR = 0.16;
   const tn = Math.tan(pitch), rise = (span / 2) * tn, hs = span / 2 + ovE, drop = ovE * tn, T = o.snowT !== undefined ? o.snowT : 0.34;
   const L0 = -ovG, L1 = len + ovG, top = (z) => rise + tR - Math.abs(z) * tn, nl = hyp(hs, rise + drop), roofTint = o.tint || R.pick(PAL_ALP.roof);
-  M.save();
+  M.save().capBegin(); // (Breachline) collision prise sur le rendu de la couverture et de la neige (Maker.capEnd)
   if (alongX) M.move(x0, y, (z0 + z1) / 2); else M.move((x0 + x1) / 2, y, z1).rotY(Math.PI / 2);
   for (const s of [1, -1]) {
     // couverture, sous-face, bandeau d'égout
@@ -562,6 +562,7 @@ function alpineRoof(x0, x1, z0, z1, y, o = {}) {
     M.color([0.75, 0.73, 0.7]).local(1); M.boxB('concrete', cx - 0.4, cx + 0.4, cy + 1.1, cy + 1.18, cz - 0.4, cz + 0.4, { bevel: 0.015 });
     M.color([1, 1, 1]); M.boxB('snowmat', cx - 0.38, cx + 0.38, cy + 1.18, cy + 1.32, cz - 0.38, cz + 0.38, { bevel: 0.06 });
     M.color([0.12, 0.11, 0.1]); M.boxB('dark', cx - 0.18, cx + 0.18, cy + 0.9, cy + 1.101, cz - 0.18, cz + 0.18);
+    M.col(cx - 0.32, cx + 0.32, cy - 0.6, cy + 1.32, cz - 0.32, cz + 0.32, 'concrete', false, false, { noTop: true, roof: 'pente' }); // (Breachline) souche pleine
   }
   // couche de neige : profil bombé, bourrelet qui déborde de l'égout, extrudé le long du faîtage
   if (T > 0) {
@@ -589,7 +590,8 @@ function alpineRoof(x0, x1, z0, z1, y, o = {}) {
     M.restore();
   }
   M.occ(L0, L1, -drop, rise * 0.6, -hs, hs, 1);
-  M.col(0, len, 0, rise * 0.5, -span / 2 + 0.3, span / 2 - 0.3, 'concrete');
+  M.col(0, len, 0, rise * 0.5, -span / 2 + 0.3, span / 2 - 0.3, 'concrete', false, true, ROOFCAP.fl);
+  M.capEnd({ x0, x1, z0, z1, base: y });
   M.restore();
   return { rise, span, len, alongX };
 }
@@ -781,6 +783,8 @@ function farChalet(cx, cz, w, d, h, rot, R) {
 /* Toit enneigé simplifié dans le repère courant (bloc de 0 à w en x, 0 à d en z, égout à h), faîtage le long de x */
 function alpineRoofLocal(M, w, d, h, R) {
   const pitch = 0.46, tn = Math.tan(pitch), ov = 0.9, hs = d / 2 + ov, rise = (d / 2) * tn, drop = ov * tn;
+  M.capBegin(); // (Breachline) collision prise sur le rendu (Maker.capEnd) : les bornes du bloc, dans le repère de la cible
+  const e = M.m.elements, bx = [e[12], e[12] + e[0] * w + e[8] * d], bz = [e[14], e[14] + e[2] * w + e[10] * d];
   M.save().move(0, h, d / 2);
   M.color(R.pick(PAL_ALP.wood)).world(1);
   for (const xx of [0, w]) M.tri3('boards', [xx, 0, -d / 2], [xx, 0, d / 2], [xx, rise, 0], [xx ? 1 : -1, 0, 0]);
@@ -790,6 +794,7 @@ function alpineRoofLocal(M, w, d, h, R) {
   M.color([1, 1, 1]).move(-ov - 0.05, 0, 0).mul(basis([0, 0, 1], [0, 1, 0], [1, 0, 0]).clone());
   M.extrude('snowmat', P, w + ov * 2 + 0.1, { sharp: 0.9 });
   M.restore();
+  M.capEnd({ x0: Math.min(...bx), x1: Math.max(...bx), z0: Math.min(...bz), z1: Math.max(...bz), base: e[13] + h });
 }
 
 /* ---------- Chute de neige ---------- */
