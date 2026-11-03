@@ -13,6 +13,8 @@ function applyDamage(victim, dmg, attacker, weapon, head, dir, srcPos, life) { /
   if ((ESSAI || ESSAI_MECHA) && victim.isPlayer && !(attacker === victim && weapon === NET_WSPECIAL.mecha)) return; // essai d'une série (?essai=, 09zm-essai.js) : le joueur ne prend rien (sauf son mecha qui explose avec lui à bord, ce qu'on essaie aussi)
   if (MATCH.online && attacker && attacker !== victim && allied(attacker, victim)) return; // pas de tir allié (en match à mort, personne n'est allié)
   if (victim.protT > 0) return; // protection de réapparition (match à mort, domination)
+  if (victim.isZombie && victim.zNet) { survNetZombieHit(victim, dmg, attacker, head, dir); return; } // (Breachline : un mort simulé chez l'hôte, 09ia-survie.js)
+  if (victim.isPlayer && survOn() && survDownCheck(victim, dmg, attacker)) return; // survie : à terre plutôt que mort
   // victime distante : la touche lui est adressée, elle applique elle-même les dégâts
   if (victim.isRemote) {
     if (attacker && netIsLocal(attacker)) {
@@ -44,7 +46,8 @@ function applyDamage(victim, dmg, attacker, weapon, head, dir, srcPos, life) { /
     // réaction à l'impact (06b-soldier.js) : dans le sens du tir, plus forte en pleine tête
     const M = victim.model; M.hitKick = (M.hitKick || 0) + (head ? 1.4 : 1); M.hitHead = !!head;
     if (dir) (M.hitDir = M.hitDir || new V3()).copy(dir);
-    if (!srcPos && attacker !== victim) botHurt(victim, attacker, dmg, dir, MATCH.time); // pas de riposte contre l'hélicoptère : les bots ne le visent pas
+    if (victim.isZombie) zombieHurt(victim, dmg, head); // (un mort tressaille, chancelle : 07g-zombies.js)
+    else if (!srcPos && attacker !== victim) botHurt(victim, attacker, dmg, dir, MATCH.time); // pas de riposte contre l'hélicoptère : les bots ne le visent pas
   }
   const kill = victim.health <= 0;
   if (attacker.isPlayer && victim !== attacker) hitFeedback(head, kill);
@@ -75,6 +78,7 @@ function voidCheck(e) {
    l'écran de mort, ni avec une grenade ou une frappe aérienne lancée dans une vie précédente (life : son apparition, spawnAt, au lancer) */
 function streakKill(a, weapon, life) { return a.alive && weapon !== NET_WSPECIAL.heli && (life === undefined || life === a.spawnAt); }
 function killEnt(v, a, weapon, head, dir, life) {
+  if (v.isZombie) { zombieDie(v, a, weapon, head, dir || new V3(0, 0, -1)); return; } // (survie : ragdoll, points au tueur, 07g-zombies.js)
   v.alive = false; v.deaths++; v.streak = 0; v.health = 0; v.protT = 0; pfrEvent(2);
   noteDeath(v); botDeathNote(v, a);
   dropKilledWeapon(v, dir);
@@ -84,7 +88,7 @@ function killEnt(v, a, weapon, head, dir, life) {
   if (v.isPlayer) {
     if (PILOT.d) fpvLeave(); // la vue revient au corps ; le drone tombe (fpvStep)
     PL.deathT = 0; PL.killer = a !== v ? a : null; PL.reload = null; dropCookedNade(); PL.nadeState = null; PL.knifeT = 0; PL.knifeOut = false; PL.knifeHold = 0; PL.knifeBtn = null; vmClearHeld();
-      KC.pending = a && a !== v && a.model && weapon !== NET_WSPECIAL.heli && weapon !== NET_WSPECIAL.drone && weapon !== NET_WSPECIAL.mecha && weapon !== NET_WSPECIAL.fall && weapon !== NET_WSPECIAL.zone && !wsNoCam(weapon) ? a : null; KC.deathT = MATCH.time; // (le nom traduit : en anglais, 'Hélicoptère' ne correspondait jamais)
+      KC.pending = a && a !== v && a.model && !a.isZombie && weapon !== NET_WSPECIAL.heli && weapon !== NET_WSPECIAL.drone && weapon !== NET_WSPECIAL.mecha && weapon !== NET_WSPECIAL.fall && weapon !== NET_WSPECIAL.zone && !wsNoCam(weapon) ? a : null; KC.deathT = MATCH.time; // (le nom traduit : en anglais, 'Hélicoptère' ne correspondait jamais)
     if (KC.pending) KC.info = `<span class="enemy">${esc(a.name)}</span><i>${esc(weapon)}</i><i>${Math.round(a.pos.distanceTo(v.pos))} m</i>`;
     showDeathScreen(a, weapon, head);
   } else {
@@ -488,7 +492,7 @@ function startMatch(opt = {}) {
   Object.assign(DYN, { good: 0, slow: 0, need: 4, lastUp: -1e9 }); DYN.win.length = 0;
   if (!opt.online && netInLobby()) netQuit();
   MATCH.online = !!opt.online; if (MATCH.online) hostBgInit(); // hôte en arrière-plan : la partie continue (hostBgTick)
-  const want = MATCH.online ? NET.cfg.mode : Settings.mode, mode = !MODES[want] || !CURMAP.def || (want === 'dom' && !CURMAP.def.dom) ? 'tdm' : want; // en ligne, le mode est celui du salon
+  const want = MATCH.online ? NET.cfg.mode : Settings.mode, mode = !MODES[want] || !CURMAP.def || !modeMapOk(want, CURMAP.id) ? (CURMAP.def && CURMAP.def.zombie ? 'zombie' : 'tdm') : want; // en ligne, le mode est celui du salon ; une carte de survie n'a que la survie
   MATCH.limit = MATCH.online ? NET.cfg.limit : Settings[MODES[mode].key];
   SMOKES.length = 0; PL.flashT = 0; MATCH.score = [0, 0]; MATCH.time = 0; MATCH.timeLeft = (MATCH.online ? NET.cfg.time : Settings.minutes) * 60; MATCH.uav = [0, 0]; MATCH.uavPing = [null, null]; MATCH.sat = [0, 0]; MATCH.iem = [0, 0]; MATCH.events = []; MATCH.winner = -1;
   for (const n of NADES) scene.remove(n.mesh); NADES.length = 0; clearThrowKnives(); soundEvents.length = 0; clearAircraft(); clearDrops(); clearRockets(); clearUnits();
@@ -546,6 +550,7 @@ function endMatch() {
   const st = (v, l, c) => `<div class="st${c ? ' ' + c : ''}"><span>${l}</span><b>${v}</b></div>`;
   $('endStats').innerHTML = st(`${ordinal(R.rank)}<small>/${R.total}</small>`, _t('Classement'), 'hi') + st(me.score, _t('Score')) + st(me.kills, _t('Éliminations')) + st(me.deaths, _t('Morts'))
     + st(ratio, _t('Ratio')) + st(`${acc}<small>%</small>`, _t('Précision')) + st(PL.bestStreak, _t('Meilleure série'));
+  if (MATCH.mode === 'zombie') survEndFill(); // (survie : vagues, morts abattus, relevés, planches)
   $('end').classList.add('show'); $('pause').classList.remove('show'); $('hud').classList.add('hidden'); showScoreboard(false); hideDeathScreen();
   $('againBtn').textContent = MATCH.online ? _t('Retour au salon') : _t('Rejouer');
   $('menuBtn').classList.toggle('hidden', !!MATCH.online);
@@ -716,7 +721,7 @@ function botsTick(dt, t) {
     const e = entities[i]; if (e.isPlayer) continue;
     e.hfDt = (e.hfDt || 0) + dt; // (les joueurs distants, créés ailleurs, n'ont pas le champ)
     if (k > 1 && (frameN + i) % k !== 0) continue;
-    const d = e.hfDt; e.hfDt = 0; updateBot(e, d, t);
+    const d = e.hfDt; e.hfDt = 0; if (e.isZombie) zombieTick(e, d, t); else updateBot(e, d, t);
   }
 }
 /* Une image de partie (en jeu, en pause en ligne, annonce du résultat) : le temps, les règles, le joueur, les bots, les projectiles, le réseau ;

@@ -1,5 +1,48 @@
 [
   {
+    "version": "6.1.0",
+    "date": "2026-11-03",
+    "title": "Survie",
+    "title_en": "Survival",
+    "changes": [
+      {
+        "t": "new",
+        "x": "Survie en coopération sur une nouvelle carte, Holloway, une ferme isolée la nuit. De un à quatre survivants, des compagnons bots en solo, des vagues de morts de plus en plus nombreuses.",
+        "x_en": "Co-op survival on a new map, Holloway, an isolated farm at night. One to four survivors, bot companions when solo, and ever larger waves of the dead."
+      },
+      {
+        "t": "new",
+        "x": "Cinq sortes de morts. Ceux qui marchent en traînant la jambe, ceux qui courent, ceux qui rampent, les brutes qui défoncent les barricades et les hurleurs qui en appellent d'autres.",
+        "x_en": "Five kinds of dead. Shamblers dragging a leg, runners, crawlers, brutes that smash barricades and screamers that call in more."
+      },
+      {
+        "t": "new",
+        "x": "Barricades. On cloue des planches aux portes et aux fenêtres, on les répare, on pousse un meuble contre une entrée. Les morts arrachent les planches une à une, et une porte clouée leur ferme le passage.",
+        "x_en": "Barricades. Nail planks over doors and windows, repair them, push furniture against an entrance. The dead tear the planks off one by one, and a nailed door closes their path."
+      },
+      {
+        "t": "new",
+        "x": "À terre plutôt que mort. Un équipier vous relève, l'adrénaline vous relève une fois par partie. Objectifs, groupe électrogène et pick-up, puis la fuite. Hordes, pannes de courant et ravitaillements annoncés.",
+        "x_en": "Downed instead of dead. A teammate revives you, and adrenaline gets you up once per match. Objectives, the generator and the pickup, then the escape. Announced hordes, power failures and supply drops."
+      },
+      {
+        "t": "fixed",
+        "x": "Toits et combles pleins sur toutes les cartes. On ne se tient plus sous les tuiles, et on ne tire plus de l'intérieur d'un volume sans pouvoir être touché.",
+        "x_en": "Solid roofs and attics on every map. You can no longer stand under the tiles, nor shoot from inside a volume while being impossible to hit."
+      },
+      {
+        "t": "fixed",
+        "x": "Grappin plus sûr. Il refuse les toits en pente et les endroits trop étroits, vérifie le passage du corps, et pose sur le toit plutôt que sur l'acrotère. Il est retiré de la survie.",
+        "x_en": "Safer grapple. It refuses sloped roofs and cramped spots, checks the body's path, and sets you down on the roof instead of the parapet. It is removed from survival."
+      },
+      {
+        "t": "new",
+        "x": "Nouvelle tourelle, avec trépied télescopique, bouclier, capteur et diode d'état, recul et douilles, une épave qui fume quand on la détruit.",
+        "x_en": "A new turret with a telescoping tripod, gun shield, sensor and status light, recoil and spent casings, and a smoking wreck when destroyed."
+      }
+    ]
+  },
+  {
     "version": "6.0.0",
     "date": "2026-11-02",
     "title": "Breachline",

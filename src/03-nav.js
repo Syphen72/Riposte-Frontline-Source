@@ -1,7 +1,7 @@
 /* ==========================================================================
    NAVIGATION : grille 1 m multi-niveaux générée depuis les collisions
    ========================================================================== */
-const NAV = { x0: MAP.x0, z0: MAP.z0, W: MAP.x1 - MAP.x0, H: MAP.z1 - MAP.z0, cells: null, nx: null, ny: null, nz: null, adjStart: null, adj: null, adjCost: null, count: 0, gate: null }; // gate : nœuds fermés par une brèche (04d-breches.js)
+const NAV = { x0: MAP.x0, z0: MAP.z0, W: MAP.x1 - MAP.x0, H: MAP.z1 - MAP.z0, cells: null, nx: null, ny: null, nz: null, adjStart: null, adj: null, adjCost: null, count: 0, gate: null, bgate: null }; // bgate : nœuds d'une porte que ferme une barricade (08m-barricades.js) // gate : nœuds fermés par une brèche (04d-breches.js)
 const NAV_DH = 0.62, NAV_R = 0.42;
 
 function navClear(x, z, h) {
@@ -230,7 +230,7 @@ function navLeaps() {
 
 /* Déchargement de la carte */
 function navUnload() {
-  for (const k of ['cells', 'nx', 'ny', 'nz', 'adjStart', 'adj', 'adjCost', 'adjKind', 'adjLead', 'kind', 'lead', 'g', 'f', 'from', 'stamp', 'closed', 'comp', 'gate']) NAV[k] = null;
+  for (const k of ['cells', 'nx', 'ny', 'nz', 'adjStart', 'adj', 'adjCost', 'adjKind', 'adjLead', 'kind', 'lead', 'g', 'f', 'from', 'stamp', 'closed', 'comp', 'gate', 'bgate']) NAV[k] = null;
   NAV.count = 0;
 }
 /* Composantes connexes : sert à éviter les nœuds isolés (dessus de caisses) */

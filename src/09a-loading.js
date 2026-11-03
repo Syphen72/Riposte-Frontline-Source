@@ -75,7 +75,7 @@ async function mapBuild(id) {
     await step(_t('Éclairage cuit de la carte'), 0.48);
     bakeLightStart();
     await step(_t('Calcul des itinéraires des bots'), 0.52);
-    breachNavOpen(); buildNav(); breachNavGate(); buildCovers(); mnavBuild(); // (brèches : le réseau construit pans ouverts, leurs nœuds fermés ensuite, 04d-breches.js) // (le réseau du mecha, 08f-mecha.js, se tire de celui des bots)
+    breachNavOpen(); survNavOpen(); buildNav(); breachNavGate(); survNavGate(); buildCovers(); mnavBuild(); // (brèches : le réseau construit pans ouverts, leurs nœuds fermés ensuite, 04d-breches.js) // (le réseau du mecha, 08f-mecha.js, se tire de celui des bots)
     await step(_t('Éclairage cuit de la carte'), 0.62);
     await LIGHT.ready;
     // éclairage HDRI de la carte (sinon son ciel procédural), voir mapEnvironment
@@ -133,7 +133,7 @@ async function mapCompile(prog) {
 /* Libère tout ce qui appartient à la carte (retour à la mémoire du socle) */
 function mapUnload() {
   for (const n of NADES) scene.remove(n.mesh);
-  NADES.length = 0; SMOKES.length = 0; clearThrowKnives(); clearAircraft(); clearDrops(); clearRockets(); clearUnits(); ambUnload();
+  NADES.length = 0; SMOKES.length = 0; clearThrowKnives(); clearAircraft(); clearDrops(); clearRockets(); clearUnits(); ambUnload(); if (SV.on) survEnd(); survClear(); // (survie : 09ia-survie.js, 08m-barricades.js)
   for (const d of DEPTH_OWN.values()) d.dispose(); DEPTH_OWN.clear(); // matières de profondeur propres à chaque matière (shadowWarm, 09-game.js)
   if (FX) { FX.holes.clear(); FX.splats.clear(); FX.scorch.clear(); }
   if (MAPL.root) {

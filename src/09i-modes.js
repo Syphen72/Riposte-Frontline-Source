@@ -37,6 +37,7 @@ const ffaCmp = (a, b) => b.kills - a.kills || a.deaths - b.deaths || b.score - a
 
 /* ---------- Début et fin de partie ---------- */
 function modeStart(mode) {
+  if (SV.on || ZOMBIES.length) survEnd(); // (une partie de survie précédente : ses morts quittent la liste des entités)
   MATCH.mode = MODES[mode] ? mode : 'tdm';
   SPAWN_LOG.length = 0; DEATH_LOG.length = 0; SPAWN_TRAP.length = 0; OPEN.on = true; // départ : chacun sa place (spawnOpening), jusqu'au « En avant ! »
   for (const e of entities) { e.protT = 0; e.lastDeath = null; e.caps = 0; }
@@ -45,6 +46,7 @@ function modeStart(mode) {
   domClear();
   if (MATCH.mode === 'dom') domInit();
   MATCH.over = false;
+  if (MATCH.mode === 'zombie') survStart(); // (09ia-survie.js)
   const D = modeDef();
   document.querySelectorAll('.score .row span').forEach((s, i) => { s.textContent = MATCH.mode === 'ffa' ? [_t('Vous'), _t('Rival')][i] : TEAM_NAMES[i]; });
   $('domRow').classList.toggle('hidden', MATCH.mode !== 'dom');
@@ -55,6 +57,7 @@ function modeStart(mode) {
 /* Soldats en jeu et tenue de chacun. Match à mort : 7 bots seulement, tous vus en ennemis (tenue sombre, bandes rouges : skinRel),
    pour qu'aucun ne ressemble à un allié. Autres modes : tous en jeu, alliés en clair, ennemis en sombre (06ga-tenues.js). */
 function modeRoster() {
+  if (MATCH.mode === 'zombie') { survRoster(); return; } // survie : des compagnons alliés en solo, aucun ennemi (09ia-survie.js)
   const ffa = MATCH.mode === 'ffa', bots = entities.filter((e) => !e.isPlayer), cut = MATCH.online ? 0 : bots.length - FFA_BOTS; // en ligne, l'hôte active les bots (netRebalanceBots)
   // on retire des bots répartis sur les deux camps d'origine (un sur trois, puis les derniers)
   const off = new Set(ffa && cut > 0 ? bots.filter((e, i) => i % 3 === 1).concat(bots.slice().reverse()).filter((e, i, a) => a.indexOf(e) === i).slice(0, cut) : []);
@@ -64,7 +67,7 @@ function modeRoster() {
     soldierLook(e.model, skinOf(e), skinRel(e));
   }
 }
-function modeEnd() { domClear(); }
+function modeEnd() { domClear(); if (SV.on) survEnd(); }
 
 /* Mises à jour à chaque image : protection d'apparition, score du match à mort, points de la domination */
 function modeUpdate(dt) {
@@ -74,6 +77,7 @@ function modeUpdate(dt) {
   hudStyle($('prot'), 'opacity', PL.ent.alive && PL.ent.protT > 0 ? '1' : '0');
   if (MATCH.mode === 'ffa') ffaScore();
   else if (MATCH.mode === 'dom') domUpdate(dt);
+  else if (MATCH.mode === 'zombie') survTick(dt);
 }
 /* Match à mort : MATCH.score[0] = mes éliminations, MATCH.score[1] = celles du meilleur adversaire */
 function ffaScore() {
@@ -86,6 +90,7 @@ function ffaList() { return entities.filter((e) => !e.off && (!MATCH.online || e
 function ffaRank() { return ffaList().sort(ffaCmp).indexOf(PL.ent) + 1; }
 /* Limite atteinte par un tueur (éliminations) : la partie se joue sur une dernière killcam */
 function killLimitReached() {
+  if (MATCH.mode === 'zombie') return false; // (la survie finit d'elle-même : survOver)
   if (MATCH.mode === 'ffa') { ffaScore(); return ffaList().some((e) => e.kills >= MATCH.limit); }
   if (MATCH.mode === 'dom') return false;
   return MATCH.score[0] >= MATCH.limit || MATCH.score[1] >= MATCH.limit;
@@ -276,6 +281,7 @@ function spawnPick(e, C, pool) {
   return { pick: top.length ? top[Math.floor(Math.random() * top.length)] : null, best: R[0] };
 }
 function chooseSpawn(e) {
+  if (MATCH.mode === 'zombie') return survSpawnSpot(e); // survie : dans la maison (09ia-survie.js)
   if (OPEN.on) { const p = spawnOpening(e); if (p) return p; }
   const C = spawnCtx(e), r = spawnPick(e, C, spawnPool(e, false));
   const c = r.pick || (MATCH.mode !== 'ffa' && spawnPick(e, C, spawnPool(e, true)).pick) || r.best;

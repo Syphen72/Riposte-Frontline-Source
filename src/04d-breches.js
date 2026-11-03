@@ -98,7 +98,7 @@ function breachNavGate() {
   NAV.gate = any ? gate : null;
 }
 /* Nœud fermé par un pan debout (findPath, navNode) */
-function navGated(id) { const g = NAV.gate ? NAV.gate[id] : 0; return g > 0 && !BRCH.open[g - 1]; }
+function navGated(id) { const g = NAV.gate ? NAV.gate[id] : 0; return (g > 0 && !BRCH.open[g - 1]) || (!!NAV.bgate && survBGated(id)); } // (et les portes barricadées de la survie)
 function breachReset() { for (const b of BRCH.list) breachSet(b, false, false); }
 function breachClear() { BRCH.list.length = 0; BRCH.open = new Uint8Array(0); }
 function sfxBreach(p) {

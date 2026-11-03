@@ -22,6 +22,7 @@ function uiOpen(name = 'main', stack = []) {
 }
 function uiHide() { $('ui').classList.add('hidden'); }
 function uiGo(name, push = true, fresh = push) {
+  if (name === 'survie') { Settings.map = 'ferme'; Settings.mode = 'zombie'; saveSettings(); name = netInLobby() ? 'multi' : 'solo'; } // (Breachline : la survie, 09ia-survie.js ; en salon, l'hôte choisit la carte)
   const toLobby = name === 'play' && netInLobby(); if (toLobby) name = 'multi'; // déjà dans un salon : Jouer y ramène
   // un salon ouvert sans passer par la liste des salons (Jouer, Entre amis, le groupe qui suit son chef) : le quitter ramène à l'écran d'avant
   if (name === 'multi' && UI.screen !== 'multi') UI.lobbyBack = toLobby;
@@ -448,14 +449,17 @@ function matchRows(o) {
   const rows = [];
   if (dis) rows.push({ k: 'note', text: o.note || _t('Réglés par l\u0027hôte') });
   rows.push(
-    { k: 'seg', full: true, wide: true, key: 'mode', label: _t('Mode'), items: MODE_IDS.filter((id) => id !== 'dom' || MAP_DEFS[o.map].dom).map((id) => [id, MODES[id].btn]), get: () => o.mode, set: set('mode'), disabled: dis },
+    { k: 'seg', full: true, wide: true, key: 'mode', label: _t('Mode'), items: MODE_IDS.filter((id) => modeMapOk(id, o.map)).map((id) => [id, MODES[id].btn]), get: () => o.mode, set: set('mode'), disabled: dis },
     { k: 'note', cls: 'hint', text: MD.hint },
     { k: 'info', label: _t('Joueurs'), value: teams },
-    { k: 'seg', full: true, wide: o.online, key: 'bots', label: o.online ? _t('Bots') : _t('Difficulté des bots'), items: o.online ? [['off', _t('Aucun')], ...diffs] : diffs, get: () => (o.online && !o.bots ? 'off' : o.diff), set: set('bots'), disabled: dis });
+    { k: 'seg', full: true, wide: o.online, key: 'bots', label: o.mode === 'zombie' ? _t('Difficulté') : o.online ? _t('Bots') : _t('Difficulté des bots'), items: o.online ? [['off', _t('Aucun')], ...diffs] : diffs, get: () => (o.online && !o.bots ? 'off' : o.diff), set: set('bots'), disabled: dis });
   if (!o.online || o.bots) rows.push({ k: 'note', cls: 'hint', text: DIFF_HINT[o.diff] });
   rows.push(
-    { k: 'seg', full: true, key: 'limit', label: MD.lim, items: MD.limits.map((v) => [v, String(v)]), get: () => o.limit, set: set('limit'), disabled: dis },
-    { k: 'seg', full: true, key: 'time', label: _t('Durée maximale'), items: [5, 10, 15].map((v) => [v, v + ' min']), get: () => o.time, set: set('time'), disabled: dis });
+    { k: 'seg', full: true, key: 'limit', label: MD.lim, items: MD.limits.map((v) => [v, v ? String(v) : _t('Sans fin')]), get: () => o.limit, set: set('limit'), disabled: dis });
+  if (o.mode === 'zombie') { // survie (09ia-survie.js) : pas de durée ; en solo, des compagnons ; le filtre noir et blanc
+    if (!o.online) rows.push({ k: 'seg', full: true, key: 'mates', label: _t('Compagnons'), items: [0, 1, 2, 3].map((v) => [v, String(v)]), get: () => Settings.survMates, set: set('mates'), disabled: dis });
+    rows.push({ k: 'seg', full: true, key: 'noir', label: _t('Image'), items: [[0, _t('Couleur')], [1, _t('Noir et blanc')]], get: () => (Settings.survNoir ? 1 : 0), set: (v) => { Settings.survNoir = !!v; saveSettings(); } });
+  } else rows.push({ k: 'seg', full: true, key: 'time', label: _t('Durée maximale'), items: [5, 10, 15].map((v) => [v, v + ' min']), get: () => o.time, set: set('time'), disabled: dis });
   if (o.pubOk) rows.push({ k: 'seg', full: true, key: 'pub', label: _t('Salon'), items: [[0, _t('Privé')], [1, _t('Public')]], get: () => (o.pub ? 1 : 0), set: set('pub'), disabled: dis }); // en ligne, avec le serveur de jeu : privé ou listé
   return rows;
 }
@@ -484,6 +488,7 @@ function lobbyMe(tags) {
 function soloStage() {
   const ffa = Settings.mode === 'ffa', MD = MODES[Settings.mode] || MODES.tdm;
   const me = lobbyMe([]), bot = (n, i) => ({ k: 'player', key: 'b' + i, label: n, bot: true }); // (leur niveau est dans le résumé des paramètres)
+  if (Settings.mode === 'zombie') return { head: `<b>${esc(_t('Survivants'))}</b><span>${esc(MD.teams)}</span>`, cols: [{ cls: 'ally', head: esc(_t('Survivants')), rows: [me, ...BOT_NAMES[0].slice(0, clamp(Settings.survMates | 0, 0, 3)).map(bot)] }] };
   if (ffa) {
     const all = [...BOT_NAMES[0], ...BOT_NAMES[1]], idx = all.map((n, i) => i), cut = all.length - FFA_BOTS;
     const off = new Set(idx.filter((i) => i % 3 === 1).concat(idx.slice().reverse()).filter((e, i, a) => a.indexOf(e) === i).slice(0, cut));
@@ -495,14 +500,14 @@ function soloStage() {
   ] };
 }
 function soloSet(k, v) {
-  if (k === 'mode') Settings.mode = v; else if (k === 'bots') Settings.difficulty = v; else if (k === 'limit') Settings[MODES[Settings.mode].key] = v; else Settings.minutes = v;
+  if (k === 'mode') Settings.mode = v; else if (k === 'bots') Settings.difficulty = v; else if (k === 'limit') Settings[MODES[Settings.mode].key] = v; else if (k === 'mates') Settings.survMates = v; else Settings.minutes = v;
   saveSettings();
 }
 function soloCfg() { const MD = MODES[Settings.mode] || MODES.tdm; return { map: Settings.map, mode: Settings.mode, diff: Settings.difficulty, limit: Settings[MD.key], time: Settings.minutes, online: false, edit: true, set: soloSet }; }
 const SOLO_PAGES = {
   solo: () => {
     const m = mapById(Settings.map);
-    if (!MODES[Settings.mode] || (Settings.mode === 'dom' && !MAP_DEFS[m.id].dom)) Settings.mode = 'tdm';
+    if (!MODES[Settings.mode] || !modeMapOk(Settings.mode, m.id)) Settings.mode = MAP_DEFS[m.id] && MAP_DEFS[m.id].zombie ? 'zombie' : 'tdm';
     const MD = MODES[Settings.mode];
     const rows = [ // la carte et les paramètres sont dans l'encart, sous le menu
       { k: 'link', key: 'map', label: _t('Carte'), page: 'map' },

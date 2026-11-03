@@ -109,7 +109,7 @@ function padAction(act, down) {
 /* X : recharger (appui bref) ou ramasser l'arme au sol qui est à portée (maintenu PAD_HOLD s), comme dans les Call of Duty. Sans arme à portée, le rechargement part
    dès l'appui, sans attente ; avec une arme à portée, on attend de savoir : relâché avant PAD_HOLD, il recharge, tenu jusqu'au bout, il échange (padUseTick) */
 function padReloadUse(down) {
-  if (down) { if (DROP.cur || MECHA_P.me || mechaNear()) PAD.useT = 0; else startReload(); return; }
+  if (down) { if (survUse()) return; if (DROP.cur || MECHA_P.me || mechaNear()) PAD.useT = 0; else startReload(); return; } // (survie : l'action d'abord, 08m-barricades.js)
   if (PAD.useT >= 0 && PAD.useT < PAD_HOLD) startReload();
   PAD.useT = -1;
 }

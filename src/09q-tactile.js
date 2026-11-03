@@ -98,7 +98,7 @@ const TC_BTNS = [
   ['nade', 'tc-nade', 'nade', _t('Grenade'), 'hold', (d) => { if (d) cookNade(); else releaseNade(); }],
   ['grapple', 'tc-grapple', 'grapple', _t('Grappin'), 'tap', () => grappleTry()], // (08k-grappin.js)
   ['knife', 'tc-knife', 'knife', _t('Couteau'), 'hold', (d) => knifeButton(d)], // appui bref : un coup ; maintenu : couteau en main (08-player.js)
-  ['pick', 'tc-pick', 'pick', _t('Ramasser'), 'tap', () => { if (!mechaUse()) swapWithDrop(); }], // à portée de son mecha, ou à bord : monter, descendre (08g-mecha-pilote.js)
+  ['pick', 'tc-pick', 'pick', _t('Ramasser'), 'tap', () => { if (!survUse() && !mechaUse()) swapWithDrop(); }], // à portée de son mecha, ou à bord : monter, descendre (08g-mecha-pilote.js)
   ['breath', 'tc-breath', 'breath', _t('Retenir son souffle'), 'hold', (d) => { KEYS.ShiftLeft = d; }],
   ['ks1', 'tc-ks tc-ks0', 'uav', _t('Première série'), 'tap', () => useKs(0)],
   ['ks2', 'tc-ks tc-ks1', 'air', _t('Deuxième série'), 'tap', () => useKs(1)],
@@ -263,7 +263,7 @@ function touchTick() {
   const map = KS.map.open || CHAT.open; TC.root.classList.toggle('map', map); TC.root.classList.toggle('fpv', !!PILOT.d); TC.root.classList.toggle('mecha', !!MECHA_P.me);
   const vis = (id, on) => TC.el[id].classList.toggle('gone', !on);
   touchKsIcons(); PL.ksSel.forEach((k, i) => vis('ks' + (i + 1), !!PL.ks[k])); vis('grapple', modeAllows('grapple')); // (Breachline) pas de bouton de grappin dans un mode qui le retire
-  const mk = !!MECHA_P.me || !!mechaNear(); vis('pick', !!DROP.cur || mk); touchPickIcon(mk); vis('run', Settings.tcRun !== 'stick'); TC.el.run.classList.toggle('lit', TC.runOn); TC.root.classList.toggle('runbtn', Settings.tcRun === 'button'); TC.root.classList.toggle('float', Settings.tcStick !== 'fixed');
+  const mk = !!MECHA_P.me || !!mechaNear(); vis('pick', !!DROP.cur || mk || !!SACT.hint); touchPickIcon(mk); vis('run', Settings.tcRun !== 'stick'); TC.el.run.classList.toggle('lit', TC.runOn); TC.root.classList.toggle('runbtn', Settings.tcRun === 'button'); TC.root.classList.toggle('float', Settings.tcStick !== 'fixed');
   const w = PL.ent.alive ? curW() : null; vis('breath', !!(w && w.def.scope && VM.ads > 0.6));
   vis('chat', MATCH.online && !!NET.on); vis('nade', PL.nades > 0 || !!PL.nadeState);
   TC.el.ads.classList.toggle('lit', !!PL.adsWant);

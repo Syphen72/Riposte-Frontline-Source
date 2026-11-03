@@ -49,12 +49,12 @@ function botPickCat(mix, noSniper) {
 const BOT_ARM = { map: null };
 /* Armes des bots (tirage botArmForMap) construites d'avance : modèle extérieur et modèle de la vue subjective (killcam du tueur) ; une fois
    construites, elles restent pour la session (gunTrim garde les armes nues) */
-function botArmPrebuild() { for (const b of entities) if (!b.isPlayer && !b.isRemote) gunPrebuild(b.weapon); }
+function botArmPrebuild() { for (const b of entities) if (!b.isPlayer && !b.isRemote && !b.isZombie) gunPrebuild(b.weapon); }
 function botArmForMap() {
   const type = CURMAP.def && BOT_WEAPON_MIX[CURMAP.def.type] ? CURMAP.def.type : 'mid', mix = BOT_WEAPON_MIX[type], maxSn = type === 'open' ? 2 : 1, sn = [0, 0];
   const byCat = {}; for (const id in WEAPONS) { const c = WEAPONS[id].cat; if (mix[c] !== undefined) (byCat[c] || (byCat[c] = [])).push(id); }
   for (const b of entities) {
-    if (b.isPlayer || b.isRemote) continue;
+    if (b.isPlayer || b.isRemote || b.isZombie) continue; // (les morts de la survie n'ont pas d'arme)
     const cat = botPickCat(mix, sn[b.team] >= maxSn), list = byCat[cat] || byCat.ar, wid = list[Math.floor(Math.random() * list.length)];
     if (WEAPONS[wid].ai.sniper) sn[b.team]++;
     const def = WEAPONS[wid];

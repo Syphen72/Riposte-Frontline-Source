@@ -26,8 +26,36 @@ killstreaks. Everything is procedural code in `src/`, with no new asset files.
 Multiplayer follows the existing model: the shooter or owner simulates, decor that changes collision (vehicles, barrels, breach
 walls) is decided by the host, and the host's state packets carry the decor state for players who join mid-match.
 
+### Survival (6.1)
+
+A co-op mode against waves of the dead, on its own map (Holloway, an isolated farm at night). It is reached from the main menu
+(Survie) or by picking the farm in a lobby; the other modes stay as they were.
+
+| System | Where | In play |
+| --- | --- | --- |
+| Mode and waves | `src/09ia-survie.js` | 1 to 4 survivors (bot companions when solo). Preparation, then waves that grow with the wave number, the player count and the difficulty, mixing the five kinds. Objectives (generator, pickup) and an escape after the last wave, or endless. Announced events: a horde from one side, a power failure, a supply drop. Downed instead of dead, revived by a teammate or once by adrenaline; dead players watch a teammate and come back with the next wave. Points, ammunition crate, end statistics. |
+| The dead | `src/07g-zombies.js` | Ordinary entities of team 2 built on the soldier body (same hit zones and ragdoll), with civilian clothes and their own gait, perception (sight, smell, gunshots, explosions), pathing, separation and melee. Shambler, runner, crawler, brute, screamer. |
+| Barricades | `src/08m-barricades.js` | Planks are real collision boxes nailed one by one on windows and doors (shoot between them, nobody walks through), damaged in visible stages, torn off by the dead. A nailed door closes its nodes in the bot network (`NAV.bgate`), so the dead go around or break in. Furniture to push against an entrance, caches of planks, tools and nails. One action key for everything. |
+| The farm | `src/02yo-ferme.js` | Stone farmhouse (two floors, solid attic), barn with a hayloft, tool shed, yard, fields, treeline. Collision defined with the map: nothing walkable above the roofs. |
+
+Online, the host simulates the dead, the waves, the stockpiles, planks and furniture, and sends them in its state packet; guests
+send their hits, requests, downed state and revives. If the host leaves, its replacement takes the dead over where they stand.
+
+The grapple is removed from survival through a per-mode rule (`modeAllows`, `MODES.<id>.ban`), applied to every input and to other
+players' ropes.
+
+### Collision
+
+Roofs, domes and rooftop equipment get collision taken from their rendered triangles (`Maker.capBegin` / `capEnd` in
+`src/02a-kit.js`): solid where they sit on a wall or slab, a shell over an open hall. A ray that starts more than 12 cm inside a solid
+box is stopped (no more shooting out of geometry you cannot be hit in). Fast movement is sub-stepped and cannot pass through thin walls
+or ceilings; a body that still ends up inside geometry returns to its last safe place. The grapple checks the landing spot, the room to
+stand and the body's whole path, and finishes with a short mantle.
+
 Headless benches for these systems are in `tools/dev/visual/`: `degats.js`, `lourdes.js`, `roquettes.js`, `mines.js`,
-`tourelle.js`, `grappin.js`, `breches.js`, `chien.js`, `helico.js`. `docs/BREACHLINE-ASSETS.md` lists what remains to replace
+`tourelle.js`, `grappin.js`, `breches.js`, `chien.js`, `helico.js`; for survival and collision, `survie.js`, `survie-reseau.js` (two game
+pages joined through a stand-in for PeerJS), `toits.js` (roof cavities on a map) and `grappin-toits.js` (grapples, high-speed movement
+and ray symmetry on a map). `docs/BREACHLINE-ASSETS.md` lists what remains to replace
 before a commercial release.
 
 ## What is inside

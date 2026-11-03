@@ -1754,3 +1754,92 @@ Chien robot détruit ⇒ Robot dog destroyed
 Un chien robot armé vous suit et attaque les ennemis qu'il voit pendant 50 secondes. À bout de forces, il s'autodétruit. ⇒ An armed robot dog follows you and attacks the enemies it sees for 50 seconds. When it is about to break, it self-destructs.
 Votre hélicoptère est en perdition ⇒ Your helicopter is going down
 Grappin indisponible dans ce mode ⇒ Grapple unavailable in this mode
+
+Barricadez la ferme et tenez les vagues. La touche d'action cloue une planche, répare, pousse un meuble ou relève un équipier. ⇒ Barricade the farm and hold out against the waves. The action key nails a plank, repairs, pushes furniture or revives a teammate.
+Un hurlement : d'autres arrivent ⇒ A scream, more of them are coming
+Une ferme au bout d'un chemin de terre. La radio ne capte plus rien depuis mardi. ⇒ A farm at the end of a dirt road. The radio has picked up nothing since Tuesday.
+l'est ⇒ the east
+l'ouest ⇒ the west
+À terre : l'adrénaline vous relève dans un instant ⇒ Down, adrenaline will get you up in a moment
++{0} planches ⇒ +{0} planks
+Appentis ⇒ Tool shed
+Caisse à outils trouvée, les réparations vont plus vite ⇒ Toolbox found, repairs are faster
+Champs ⇒ Fields
+Chemin ⇒ Dirt road
+Clouer une planche ({0}) ⇒ Nail a plank ({0})
+Clous trouvés, les planches tiennent mieux ⇒ Nails found, planks hold better
+Compagnons ⇒ Companions
+Couleur ⇒ Colour
+Cour ⇒ Yard
+De 1 à 4 survivants contre les morts ⇒ 1 to 4 survivors against the dead
+Debout ⇒ Back on your feet
+Difficulté ⇒ Difficulty
+Démarrer le groupe électrogène ⇒ Start the generator
+En pleine tête ⇒ Headshot
+Extraction réussie après {0} vagues ⇒ Escaped after {0} waves
+Extraction ⇒ Extraction
+Ferme isolée, la nuit ⇒ Isolated farm, at night
+Fin de la survie ⇒ Survival over
+Fuyez : tous au pick-up ⇒ Escape, everyone to the pickup
+Le chien robot est prêt ⇒ The robot dog is ready
+Le courant revient ⇒ The power is back
+Le groupe électrogène cale ⇒ The generator stalls
+Le pick-up démarre ⇒ The pickup starts
+Lisière ⇒ Treeline
+Mort abattu ⇒ Dead put down
+Mort ⇒ Dead
+Morts abattus ⇒ Dead put down
+Munitions ({0} points) ⇒ Ammunition ({0} points)
+Noir et blanc ⇒ Black and white
+Objectif ⇒ Objective
+Objectifs ⇒ Objectives
+Pas assez de points ⇒ Not enough points
+Planche ⇒ Plank
+Planches clouées ⇒ Planks nailed
+Points ⇒ Points
+Poser le meuble ⇒ Set the furniture down
+Pour fuir, rétablissez le courant et réparez le pick-up ⇒ To escape, restore the power and repair the pickup
+Pousser le meuble ⇒ Push the furniture
+Prendre des planches ⇒ Take planks
+Prendre la caisse à outils ⇒ Take the toolbox
+Prendre le ravitaillement ⇒ Take the supplies
+Prendre les clous ⇒ Take the nails
+Prochaine vague dans {0} s ⇒ Next wave in {0} s
+Préparation ⇒ Preparation
+Préparez la ferme avant la nuit ⇒ Get the farm ready before nightfall
+Ravitaillement largué au loin ⇒ Supplies dropped in the distance
+Rejoignez le pick-up ⇒ Get to the pickup
+Relever {0} ⇒ Revive {0}
+Réparation ⇒ Repair
+Réparations ⇒ Repairs
+Réparer la barricade ⇒ Repair the barricade
+Réparer le pick-up ⇒ Repair the pickup
+Sans fin ⇒ Endless
+Survie en coopération ⇒ Co-op survival
+Survie ⇒ Survival
+Survivants ⇒ Survivors
+Tenez près du pick-up : {0} s ⇒ Hold near the pickup, {0} s
+Tenir la ferme contre les morts, seul ou à quatre ⇒ Hold the farm against the dead, alone or with up to four
+Tous les survivants sont tombés, {0} vagues tenues ⇒ Every survivor has fallen, {0} waves held
+Une horde arrive par {0} ⇒ A horde is coming from {0}
+Une tourelle est prête ⇒ A turret is ready
+Vague {0} tenue ⇒ Wave {0} held
+Vague {0} ⇒ Wave {0}
+Vagues tenues ⇒ Waves held
+Vagues à tenir ⇒ Waves to hold
+Vous revenez à la prochaine vague ⇒ You return with the next wave
+Véranda ⇒ Porch
+clous ⇒ nails
+le nord ⇒ the north
+le sud ⇒ the south
+mort ⇒ dead
+outils ⇒ tools
+vagues ⇒ waves
+{0} morts restants ⇒ {0} dead left
+{0} planches ⇒ {0} planks
+{0} points ⇒ {0} points
+À terre : un équipier peut vous relever ⇒ Down, a teammate can revive you
+À terre ⇒ Down
+Équipier relevé ⇒ Teammate revived
+Équipiers relevés ⇒ Teammates revived
+à terre ⇒ down

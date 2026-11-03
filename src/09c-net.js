@@ -643,7 +643,7 @@ function netMatchEnded() {
 
 /* ---------- Bots simulés par l'hôte ---------- */
 function netRebalanceBots() {
-  if (NET.role !== 'host' || !NET.on) return;
+  if (NET.role !== 'host' || !NET.on || MATCH.mode === 'zombie') return; // (survie en ligne : pas de bots)
   const hum = [0, 0];
   for (const pl of NET.players.values()) if (pl.ig) hum[pl.t]++;
   const ffa = NET.cfg.mode === 'ffa'; // chacun pour soi : un seul groupe, complété jusqu'à NET_MAX joueurs
@@ -771,6 +771,7 @@ function netClientMsg(m) {
       for (const it of m.l) if (Array.isArray(it) && typeof it[0] === 'string') netApply(it[0], it[1]);
       if (typeof m.tl === 'number' && isFinite(m.tl)) { MATCH.timeLeft = m.tl; cdNetIn(m.cd); } // (tl : l'envoi de l'hôte lui-même, pas un état relayé)
       if (m.dm && MATCH.mode === 'dom') domNetApply(m.dm);
+      if (m.sv && MATCH.mode === 'zombie') survNetSnapIn(m.sv); // (survie : morts, vague, barricades, 09ia-survie.js)
       if (m.ws) dmgNetSnapIn(m.ws); // état du décor (04c-degats.js)
       break;
     case 'gone': if (typeof m.id === 'string') netRemoveById(m.id); break;
@@ -785,7 +786,7 @@ function netClientMsg(m) {
 function netPhase(ph) { return ph === 'playing' || ph === 'loading' ? ph : 'lobby'; }
 function netCfg(c) {
   c = c || {};
-  const map = mapById(c.map).id, mode = MODE_IDS.includes(c.mode) && (c.mode !== 'dom' || MAP_DEFS[map].dom) ? c.mode : 'tdm'; // la domination demande une carte à points
+  const map = mapById(c.map).id, mode = MODE_IDS.includes(c.mode) && modeMapOk(c.mode, map) ? c.mode : MAP_DEFS[map] && MAP_DEFS[map].zombie ? 'zombie' : 'tdm'; // la domination demande une carte à points, la survie une carte de survie
   const L = MODES[mode].limits, limit = L.includes(+c.limit) ? +c.limit : L[1];
   const time = [5, 10, 15].includes(+c.time) ? +c.time : 10;
   const diff = [0, 1, 2].includes(+c.diff) ? +c.diff : 2;
@@ -955,6 +956,7 @@ function netApply(id, P) {
 }
 function netEventIn(e, ev) {
   if (!ev || typeof ev !== 'object') return;
+  if (MATCH.mode === 'zombie' && survNetEvent(e, ev)) return; // (survie, 09ia-survie.js)
   const dir = new V3(clamp(numOr(ev.x), -1e3, 1e3), 0, clamp(numOr(ev.z), -1e3, 1e3));
   if (ev.k === 'hit') {
     const tgt = netLocal(ev.to);
@@ -1206,7 +1208,7 @@ function netUpdate(dt) {
     if (NET.role === 'host') {
       const l = [[NET.me, netPresence(PL.ent, now)]];
       for (const b of entities) if (b.netBot) l.push([b.netId, netPresence(b, now)]);
-      netBroadcast({ t: 'ps', l, tl: Math.round(MATCH.timeLeft * 100) / 100, cd: cdNetOut(), dm: MATCH.mode === 'dom' ? domNetState() : undefined, ws: MATCH.state === 'playing' ? dmgNetSnap((now - (NET.lastWs || now)) / 1000) : undefined }, true); NET.lastWs = now; // cd : décompte du départ (09y-decompte.js)
+      netBroadcast({ t: 'ps', l, tl: Math.round(MATCH.timeLeft * 100) / 100, cd: cdNetOut(), dm: MATCH.mode === 'dom' ? domNetState() : undefined, sv: MATCH.mode === 'zombie' ? survNetSnap(now) : undefined, ws: MATCH.state === 'playing' ? dmgNetSnap((now - (NET.lastWs || now)) / 1000) : undefined }, true); NET.lastWs = now; // cd : décompte du départ (09y-decompte.js)
     } else netSend({ t: 'p', p: netPresence(PL.ent, now) });
   }
   const live = MATCH.state === 'playing' || MATCH.state === 'paused';

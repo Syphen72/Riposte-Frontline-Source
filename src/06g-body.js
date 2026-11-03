@@ -440,7 +440,7 @@ function soldierGeometry(skin, lod) {
   const mark = (n) => { st.push(n + ':' + (B.idx.length / 3 - st.reduce((a, x) => a + (+x.split(':')[1] || 0), 0))); };
   soldierBase(B, skin, hi, mark); mark('fin-base');
   soldierBoots(B, skin, hi); mark('bottes');
-  soldierVest(B, skin, hi); mark('gilet');
+  if (Pp.vest !== false) soldierVest(B, skin, hi); mark('gilet'); // (Breachline : vest false, sans gilet : les morts de la survie)
   if (Pp.helmet) soldierHelmet(B, skin, hi);
   if (Pp.glasses !== false) soldierGlasses(B, skin, hi);
   if (Pp.mask) skinMask(B, skin, hi);
@@ -454,7 +454,7 @@ function soldierGeometry(skin, lod) {
   if (Pp.ghillie) skinGhillie(B, skin, hi); // après tout ce qui porte de la toile camouflée (feuilles accrochées à ses sommets)
   if (!hi && SKINS[skin].cloth && !Pp.poncho) clothStaticInto(B, clothTpl(skin), 2); // tissu simulé, figé dans le modèle allégé (06gb-tissu.js)
   mark('tenue');
-  skinTags(B, skin, hi); mark('bandes');
+  if (Pp.tags !== false) skinTags(B, skin, hi); mark('bandes'); // (tags false : sans bandes de reconnaissance)
   SOLDIER_GEOS['stats' + key] = st;
   const geo = B.build();
   soldierBakeAO(geo);

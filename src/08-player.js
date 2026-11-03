@@ -57,7 +57,7 @@ function onKey(e, down) {
   else if (c === 'KeyQ' && e.getModifierState && !e.getModifierState('Control')) quickSwap();
   else if (c === 'KeyF') knifeButton(true, true);
   else if (c === 'KeyG') cookNade();
-  else if (c === 'KeyE') { if (!mechaUse()) swapWithDrop(); } // à portée de son mecha : on monte à bord
+  else if (c === 'KeyE') { if (!survUse() && !mechaUse()) swapWithDrop(); } // survie : clouer, réparer, pousser (08m-barricades.js) ; à portée de son mecha : on monte à bord
   else if (c === 'KeyC') { if (!trySlide()) PL.crouchToggle = !PL.crouchToggle; }
   else if (c === 'ControlLeft') trySlide();
   else if (c === 'Digit4') useKs(0);
@@ -525,6 +525,7 @@ function applyCamera(dt, now, scoped) {
 }
 function updateDeadPlayer(dt) {
   PL.deathT += dt;
+  if (survSpectate(dt)) return; // survie : on regarde un équipier jusqu'à la vague suivante (09ia-survie.js)
   if (KC.active && KC.live) return; // relecture en ligne : la caméra et l'arme sont celles du tueur (09b-killcam.js), la suite vient de endKillcam
   const e = PL.ent, k = smoothstep(0, 0.8, PL.deathT);
   if (e.voidDead) {

@@ -31,6 +31,8 @@ const MAPS = [
     desc: _t('Des îles suspendues au-dessus des nuages, reliées par des ponts de cordes. Personne ne les a jamais fait réviser.') },
   { id: 'simoun', name: 'Simoun', tag: _t('Mer de dunes'), ok: true,
     desc: _t('Une oasis au milieu des dunes. Au-delà, il n\u0027y a que du sable et ceux qui sont partis vérifier.') },
+  { id: 'ferme', name: 'Holloway', tag: _t('Ferme isolée, la nuit'), ok: true, modes: ['zombie'],
+    desc: _t('Une ferme au bout d\u0027un chemin de terre. La radio ne capte plus rien depuis mardi.') },
   { id: 'lotissement', name: 'French Dream', tag: _t('Lotissement pavillonnaire'), ok: true,
     desc: _t('Un lotissement où toutes les maisons se ressemblent. Le syndic décline toute responsabilité.') },
 ];

@@ -18,6 +18,7 @@ let finTimer = 0;
 
 /* Résultat du match tel qu'il est à cet instant : result (win, loss ou draw), winner (équipe, -1 sans vainqueur d'équipe), sub (phrase de score) */
 function matchOutcome() {
+  if (MATCH.mode === 'zombie') return survOutcome(); // (09ia-survie.js)
   const me = PL.ent, [a, b] = MATCH.score;
   if (MATCH.mode === 'ffa') { // le vainqueur est le premier du classement, personne d'autre ne gagne avec lui
     const top = ffaList().sort(ffaCmp)[0], win = top === me;
@@ -32,6 +33,7 @@ function finByLimit() {
   return ffaDone || (MATCH.mode !== 'ffa' && (MATCH.score[0] >= MATCH.limit || MATCH.score[1] >= MATCH.limit));
 }
 function finKicker() {
+  if (MATCH.mode === 'zombie') return survKicker();
   if (!finByLimit()) return _t('Temps écoulé');
   return MATCH.mode === 'dom' ? _t('Score atteint') : _t('Limite d\u0027éliminations atteinte');
 }

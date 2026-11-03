@@ -74,6 +74,7 @@ function startRagdoll(e) {
 function ragKnock(e, R, f) {
   const P = R.p, V = R.v;
   if (!f) f = { dir: new V3(rand(-1, 1), 0, rand(-1, 1)), mag: 2, lift: 0.5, part: 'body' };
+  if (!(f.lift >= 0)) f = { ...f, lift: 0.5 }; // (Breachline : une force sans poussée verticale, celle de killEnt par défaut, donnait des vitesses NaN et un corps qui partait à l'infini)
   const dir = _rg.a.set(f.dir.x, 0, f.dir.z); if (dir.lengthSq() < 1e-6) dir.set(0, 0, 1); dir.normalize();
   const dx = dir.x, dz = dir.z, mag = f.mag;
   const idx = f.part === 'head' ? J_HEAD : f.part === 'legs' ? (Math.random() < 0.5 ? J_KNL : J_KNR) : J_CHE;

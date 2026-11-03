@@ -5,8 +5,9 @@
    ========================================================================== */
 const J_PEL = 0, J_CHE = 1, J_HEAD = 2, J_SHL = 3, J_ELL = 4, J_HAL = 5, J_SHR = 6, J_ELR = 7, J_HAR = 8, J_HIL = 9, J_KNL = 10, J_FTL = 11, J_HIR = 12, J_KNR = 13, J_FTR = 14;
 function setSoldierGun(model, key) {
-  gunSoundPrepare(weaponDefByKey(key).sound);
   if (model.gun) model.root.remove(model.gun);
+  if (!key) { model.gun = null; model.muzzleLocal = null; model.gunKey = null; model.kind = 'none'; model.grips = null; return; } // (Breachline : un mort n'a pas d'arme, 07g-zombies.js)
+  gunSoundPrepare(weaponDefByKey(key).sound);
   const g = buildWorldGun(key);
   setGunLod(g.group, !!(model.lod && model.lod.hiOn), model.shadowOnly);
   model.root.add(g.group); model.gun = g.group; model.muzzleLocal = g.muzzle; model.gunKey = key; model.kind = g.kind; model.grips = gripsFor(key);

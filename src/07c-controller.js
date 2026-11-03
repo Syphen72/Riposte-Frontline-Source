@@ -71,6 +71,7 @@ function ctlMove(ent, dt) {
   let spd = MOVE_SPEED * (A.knife ? KNIFE_MOVE : d.move);
   if (sprint) spd *= SPRINT_MUL; else if (A.adsW > 0.5) spd *= d.scope ? 0.4 : 0.58;
   if (ent.crouch) spd *= 0.6;
+  if (ent.downed) { spd *= 0.3; sprint = false; ent.crouch = true; } // (survie : à terre, on rampe, 09ia-survie.js)
   const fx = -Math.sin(ent.yaw), fz = -Math.cos(ent.yaw), rx = Math.cos(ent.yaw), rz = -Math.sin(ent.yaw);
   let wx = fx * I.mz + rx * I.mx, wz = fz * I.mz + rz * I.mx; const wl = hyp(wx, wz);
   if (wl > 1) { wx /= wl; wz /= wl; }
@@ -92,7 +93,7 @@ function ctlMove(ent, dt) {
     if (ent.slideT <= 0) { ent.slideT = 0; ent.slideCd = SLIDE.cd; }
   } else { ent.vel.x = damp(ent.vel.x, wx * spd, acc, dt); ent.vel.z = damp(ent.vel.z, wz * spd, acc, dt); }
   let jumped = false;
-  if (I.jump && ent.onGround && !ent.jumpHeld) { // on saute même en lançant une grenade ou en changeant d'arme
+  if (I.jump && ent.onGround && !ent.jumpHeld && !ent.downed) { // on saute même en lançant une grenade ou en changeant d'arme
     if (sliding) { ent.slideT = 0; ent.slideCd = SLIDE.cd; ent.crouch = false; sliding = false; ent.vy = 6.3; ent.onGround = false; jumped = true; } // saut de glissade : l'élan est gardé
     else if (ent.crouch) ent.crouch = false; else { ent.vy = 6.3; ent.onGround = false; jumped = true; }
   }
