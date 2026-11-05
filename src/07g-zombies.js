@@ -11,9 +11,15 @@
    Ce qu'ils font : sans proie, ils errent et marchent vers la maison (là où vivent les vivants) ; ils repèrent un vivant à la vue (26 m la
    nuit, 7 m à l'odeur, sans ligne de vue), entendent les tirs (55 m, 15 m pour une arme silencieuse) et les explosions (90 m), et vont voir ;
    ils suivent le réseau des bots (findPath), s'écartent les uns des autres (ils se répartissent autour de leur proie) et frappent au
-   contact. Quand le chemin vers leur proie est fermé (une porte clouée, des meubles poussés), ils vont à l'ouverture la plus proche
-   (survOpenings, 08m-barricades.js) et arrachent les planches une à une ; une fenêtre ouverte, ils l'enjambent. Une balle les fait
-   tressaillir, un gros coup les fait chanceler, une explosion les renverse (ragdoll s'ils en meurent).
+   contact (une proie juchée jusqu'à 1,9 m au-dessus d'eux : ils l'attrapent aux jambes). Ils montent les escaliers (le réseau les suit,
+   03-nav.js). Quand le chemin vers leur proie est fermé (une porte clouée, un meuble poussé), ils prennent le chemin qui passe par ce qu'il
+   faudrait abattre, ou une fenêtre (le moins coûteux, en évitant l'ouverture où d'autres se pressent déjà : zombiePlan), puis s'attaquent
+   à l'obstacle : la tôle, les planches une à une, le meuble (qui cède et recule, ou éclate) ; un meuble bas, ils l'enjambent ; une fenêtre
+   libre, ils l'enjambent. Une chaise, une table de la salle (props physiques), ils la bousculent en forçant le passage (zombieShove).
+   Coincés (ils veulent avancer et n'avancent pas), ils réagissent par paliers : nouveau chemin, l'obstacle à portée attaqué, le chemin
+   « soft », un détour par un point voisin, et en dernier recours (hors de la vue des vivants, jamais vers eux) un pas vers le nœud libre
+   le plus proche, ou le retour au bois (zombieUnstick). Une balle les fait tressaillir, un gros coup les fait chanceler, une explosion les
+   renverse (ragdoll s'ils en meurent).
    Coût : la simulation et l'animation tournent chez l'hôte (en solo : ici) ; au-delà de 40 m de tout vivant, un mort ne repasse son
    chemin que toutes les 3 s et n'anime que son tronc à mi-cadence. ZOMBIE.max morts debout à la fois ; la réserve (ZOMBIES) est créée au
    départ de la partie et réutilisée (pas de corps construit en pleine vague).
@@ -23,7 +29,7 @@ const ZKIND = {
   shambler: { hp: 100, spd: [0.95, 1.45], dmg: 20, rate: 1.35, reach: 1.25, barr: 1, k: 1, score: 60, skins: ['zfarmer', 'zcivil', 'zworker'], lean: 0.3 },
   runner: { hp: 70, spd: [4.6, 5.4], dmg: 13, rate: 0.75, reach: 1.2, barr: 0.8, k: 0.98, score: 90, skins: ['zcivil', 'zworker'], lean: 0.5 },
   crawler: { hp: 55, spd: [0.65, 0.95], dmg: 11, rate: 1.0, reach: 1.05, barr: 0.4, k: 1, score: 70, skins: ['zfarmer', 'zcivil'], lean: 1.35, low: true },
-  brute: { hp: 460, spd: [1.35, 1.65], charge: 3.6, dmg: 38, rate: 1.9, reach: 1.6, barr: 3.5, k: 1.06, score: 250, skins: ['zworker'], lean: 0.22 },
+  brute: { hp: 460, spd: [1.35, 1.65], charge: 3.6, dmg: 38, rate: 1.9, reach: 1.6, barr: 1.8, k: 1.06, score: 250, skins: ['zworker'], lean: 0.22 },
   screamer: { hp: 85, spd: [2.0, 2.4], dmg: 10, rate: 1.1, reach: 1.2, barr: 0.5, k: 0.95, score: 150, skins: ['zcivil'], lean: 0.35, scream: true },
 };
 const ZOMBIE = { max: 24, pool: 30, sight: 26, smell: 7, hear: 55, hearQuiet: 15, boom: 90, scream: 40, sep: 0.62, r: 0.32, far: 40, stuck: 2.2 };
@@ -49,7 +55,8 @@ function zombieMake() {
     id: entities.length, name: _t('Mort'), team: 2, isPlayer: false, isZombie: true, pos: new V3(), vel: new V3(), vy: 0, yaw: 0, pitch: 0,
     alive: false, off: true, health: 0, crouch: false, crouchAmt: 0, kills: 0, deaths: 0, score: 0, assists: 0, streak: 0, lastShotT: -9, protT: 0,
     dmgBy: new Map(), lastForce: null, aw: new Map(), respawnT: Infinity, onGround: true, eyeH: 1.5, spawnAt: 0, skin: 'zfarmer', weapon: ZWEAPON, mag: 0,
-    zk: 'shambler', zs: 'wander', zt: 0, zTgt: null, zGoal: new V3(), zPath: null, zPathI: 0, zRepT: 0, zAtkT: 0, zAtk: 0, zStag: 0, zFlinch: 0, zOp: null, zClimb: 0,
+    zk: 'shambler', zs: 'wander', zt: 0, zTgt: null, zGoal: new V3(), zPath: null, zPathI: 0, zRepT: 0, zAtkT: 0, zAtk: 0, zStag: 0, zFlinch: 0, zOb: null, zClimb: 0, zClimbT: 1.1, zClimbH: 1, zClimbA: new V3(), zClimbB: new V3(),
+    zStuck: 0, zForceSoft: false, zDetour: null, zDetourT: 0, zShoveT: 0, zNearT: 0, zClimbCd: 0,
     zSpd: 1, zPh: 0, zSeed: 0, zProg: new V3(), zProgT: 0, zHeard: null, zHeardT: -99, zScream: false, zFar: false, zAnimT: 0, zNet: null, zHeadOff: false, zLimb: 0,
   };
   z.model = makeSoldier('zfarmer', 1, null); z.model.root.visible = false;
@@ -73,7 +80,8 @@ function zombieSpawn(kind, x, z, yaw, mul = {}) {
   e.zk = kind; e.off = false; e.alive = true; e.health = K.hp * (mul.hp || 1); e.maxHp = e.health; e.zDmg = K.dmg * (mul.dmg || 1);
   e.zSpd = lerp(K.spd[0], K.spd[1], R()) * (mul.spd || 1); e.zPh = R(); e.zSeed = R(); e.zScream = false; e.zLimb = R() < 0.5 ? 1 : -1;
   e.pos.set(x, groundHeight(x, z, 2, 0.3), z); e.vel.set(0, 0, 0); e.vy = 0; e.yaw = yaw; e.spawnAt = MATCH.time;
-  e.zs = 'wander'; e.zt = 0; e.zTgt = null; e.zPath = null; e.zRepT = R() * 0.5; e.zAtkT = 0; e.zAtk = 0; e.zStag = 0; e.zFlinch = 0; e.zOp = null; e.zClimb = 0; e.zHeard = null;
+  e.zs = 'wander'; e.zt = 0; e.zTgt = null; e.zPath = null; e.zRepT = R() * 0.5; e.zAtkT = 0; e.zAtk = 0; e.zStag = 0; e.zFlinch = 0; e.zOb = null; e.zClimb = 0; e.zHeard = null;
+  e.zStuck = 0; e.zForceSoft = false; e.zDetour = null; e.zDetourT = 0; e.zShoveT = 0; e.zNearT = 0; e.zClimbCd = 0;
   e.zProg.copy(e.pos); e.zProgT = 0; e.dmgBy.clear(); e.lastForce = null; e.respawnT = 0; e.zHeadOff = false;
   const skin = K.skins[Math.floor(R() * K.skins.length)]; e.skin = skin; soldierLook(e.model, skin, 1);
   e.model.root.scale.setScalar(1); e.model.rag = null; e.model.sink = 0; e.model.root.visible = true; e.model.cyc = undefined;
@@ -81,7 +89,7 @@ function zombieSpawn(kind, x, z, yaw, mul = {}) {
   return e;
 }
 /* Retour à la réserve (corps enfoncé dans le sol, ou fin de vague) */
-function zombieStow(e) { e.alive = false; e.off = true; e.respawnT = Infinity; e.model.rag = null; e.model.root.visible = false; e.zTgt = null; e.zPath = null; }
+function zombieStow(e) { e.alive = false; e.off = true; e.respawnT = Infinity; e.model.rag = null; e.model.root.visible = false; e.zTgt = null; e.zPath = null; e.zOb = null; }
 
 /* ---------- Boucle (chez l'hôte et en solo) ---------- */
 function zombieTick(e, dt, now) {
@@ -104,22 +112,44 @@ function zombieTick(e, dt, now) {
   let goal = null, face = null;
   const T = e.zTgt;
   if (T && T.alive) {
-    const tp = T.pos, d = hyp(tp.x - e.pos.x, tp.z - e.pos.z), dy = Math.abs(tp.y - e.pos.y);
+    const tp = T.pos, d = hyp(tp.x - e.pos.x, tp.z - e.pos.z), dy = tp.y - e.pos.y;
     if (K.charge && d < 9) speed = Math.max(speed, K.charge * (e.zStag > 0 ? 0.2 : 1));
     if (K.scream && !e.zScream && d < 30) zombieScream(e);
-    if (d < K.reach && dy < 1.3 && lineClear(_zA.set(e.pos.x, e.pos.y + 1.1, e.pos.z), _zB.set(tp.x, tp.y + 1.0, tp.z))) { // au contact : il frappe
+    if (d < K.reach && dy < 1.9 && dy > -1.3 && lineClear(_zA.set(e.pos.x, e.pos.y + 1.1, e.pos.z), _zB.set(tp.x, Math.min(tp.y + 1.0, e.pos.y + 1.6), tp.z))) { // au contact : il frappe
       face = tp; speed = 0;
       if (e.zAtkT <= 0 && e.zStag <= 0) { e.zAtkT = K.rate; e.zAtk = 1; zombieHit(e, T); }
-    } else goal = zombieRoute(e, tp, dt);
+      e.zNearT = 0;
+    } else {
+      // juché tout près, hors de portée (capot, toit d'un pick-up, lit, botte de foin, clôture) : au bout d'un instant, il grimpe le rejoindre
+      e.zClimbCd -= dt; e.zNearT = d < 2.4 && dy > 0.5 && dy < 2.1 ? e.zNearT + dt : 0;
+      if (e.zNearT > 0.8 && e.zClimbCd <= 0 && !K.low && e.zStag <= 0) { e.zClimbCd = 2.5; if (zombieClamber(e, T)) { zombieAnimate(e, dt); return; } }
+      goal = zombieRoute(e, tp, dt);
+    }
   } else {
     // sans proie : vers ce qu'il a entendu, sinon vers la maison (ou une ouverture), en errant un peu
-    goal = e.zHeard && now - e.zHeardT < 20 ? zombieRoute(e, e.zHeard, dt) : zombieRoute(e, survHomeOf(e), dt);
+    const home = e.zHeard && now - e.zHeardT < 20 ? e.zHeard : survHomeOf(e);
+    goal = zombieRoute(e, home, dt);
+    if (!e.zHeard && hyp(home.x - e.pos.x, home.z - e.pos.z) < 1.5) { e.zSeed = Math.random(); e.zRepT = 0; } // arrivé : il fait le tour de la maison
     speed *= 0.75;
   }
-  if (e.zOp && e.zs === 'breach') { // à l'ouverture fermée : il arrache les planches
-    face = survOpenFace(e.zOp, _zC); speed = 0;
-    if (e.zAtkT <= 0 && e.zStag <= 0) { e.zAtkT = K.rate * 0.9; e.zAtk = 1; survOpenHit(e.zOp, e.zDmg * K.barr * 2.4, e); }
-    if (survOpenClear(e.zOp)) { if (e.zOp.kind === 'fenetre') zombieClimbStart(e, e.zOp); e.zs = 'hunt'; e.zOp = null; }
+  if (e.zOb && e.zs === 'breach') { // devant l'obstacle : il frappe (la tôle, les planches, le meuble) jusqu'à ce qu'il cède
+    const ob = e.zOb; face = ob.t === 'open' ? survOpenFace(ob.op, _zC) : _zC.set(ob.p.x, ob.p.y + 1, ob.p.z); speed = 0;
+    // toutes les 3 s : un chemin ouvert vers sa proie (une autre entrée vient de céder) qui ne passe pas par cet obstacle, et plus court que ce
+    // qu'il lui reste à abattre (le temps de le finir, compté en mètres de marche) ? il le lâche. Un chemin qui y passe quand même : un obstacle
+    // que le réseau ignore, il continue de frapper ; un détour par l'autre bout de la maison pour un meuble presque cassé, aussi
+    if ((e.zRepT -= dt) <= 0) {
+      e.zRepT = 3; const T2 = e.zTgt, p = T2 && T2.alive && NAV.nx ? findPath(e.pos, T2.pos) : null;
+      const via = p && p.some((q, i) => i > 0 && i < 6 && (ob.t === 'open' ? survOpenDist(ob.op, q) : survPropDist(ob.p, q)) < 1.0);
+      const left = ob.t === 'open' ? survOpenHp(ob.op) : ob.p.hp, dps = (e.zDmg * K.barr * BARR.zk) / (K.rate * 0.9);
+      if (p && !via && zombiePathLen(p) < T2.pos.distanceTo(e.pos) + 2 + (left / Math.max(1, dps)) * e.zSpd) { e.zOb = null; e.zs = 'hunt'; e.zPath = p; e.zPathI = 1; }
+    }
+    if (!e.zOb) { /* (lâché : il repart) */ } else if (zombieObGone(e)) zombieObDone(e);
+    else if (e.zAtkT <= 0 && e.zStag <= 0) {
+      e.zAtkT = K.rate * 0.9; e.zAtk = 1;
+      const dmg = e.zDmg * K.barr * BARR.zk;
+      if (ob.t === 'open') survOpenHit(ob.op, dmg, e); else survPropHit(ob.p, dmg, e, _zD.set(ob.p.x - e.pos.x, 0, ob.p.z - e.pos.z));
+      if (zombieObGone(e)) zombieObDone(e);
+    }
   }
   zombieSteer(e, goal, face, speed, dt);
   zombieMove(e, dt);
@@ -136,8 +166,9 @@ function zombieNearest(e) {
 function zombieSense(e, near, now) {
   if ((e.zSenseT = (e.zSenseT || 0) - 1) > 0) return; e.zSenseT = e.zFar ? 20 : 6; // une fois toutes les quelques images
   if (near) {
-    const p = near.e, d = near.d, eye = _zA.set(e.pos.x, e.pos.y + (ZKIND[e.zk].low ? 0.5 : 1.55), e.pos.z);
-    const see = d < ZOMBIE.smell || (d < ZOMBIE.sight && lineClear(eye, entChest(p, _zB)));
+    const p = near.e, d = near.d, eye = _zA.set(e.pos.x, e.pos.y + (ZKIND[e.zk].low ? 0.5 : 1.55), e.pos.z), room = survRoomAt(e.pos);
+    // l'odeur passe les planchers (distance vraie) ; dans le même bâtiment, il entend les pas
+    const see = p.pos.distanceTo(e.pos) < ZOMBIE.smell || (room && room === survRoomAt(p.pos)) || (d < ZOMBIE.sight && lineClear(eye, entChest(p, _zB)));
     if (see) { if (e.zTgt !== p) zombieGroan(e, 'spot'); e.zTgt = p; e.zLostT = now; e.zs = e.zs === 'wander' ? 'hunt' : e.zs; }
     else if (e.zTgt && now - (e.zLostT || 0) > 6) e.zTgt = null;
   }
@@ -148,33 +179,111 @@ function zombieSense(e, near, now) {
     if (d < r) { e.zHeard = (e.zHeard || new V3()).copy(s.pos); e.zHeardT = now; break; }
   }
 }
-/* Route vers g : le réseau des bots ; si le chemin est fermé (barricade, meubles), l'ouverture la plus proche (on la casse ou on l'enjambe) */
+/* Route vers g. Un plan (zombiePlan) à chaque recherche ; entre deux, il suit son chemin ; arrivé devant l'obstacle de son plan, il l'enjambe
+   (meuble bas) ou l'attaque (état breach) */
 function zombieRoute(e, g, dt) {
   e.zRepT -= dt;
-  if (e.zRepT <= 0) { // (sans chemin trouvé, on attend aussi la prochaine recherche : un chemin introuvable cherché à chaque image coûtait tout)
-    e.zRepT = (e.zFar ? 3 : rand(0.9, 1.6));
-    e.zPath = NAV.nx ? findPath(e.pos, g) : null; e.zPathI = 1; e.zOp = null; e.zs = e.zTgt ? 'hunt' : 'wander';
-    if (!e.zPath && NAV.nx) {
-      // chemin fermé : une ouverture du bâtiment où se trouve la proie, la plus proche de lui
-      const op = survOpenFor(e, g);
-      if (op) {
-        const a = survOpenAnchor(op, 'out', _zD);
-        if (hyp(a.x - e.pos.x, a.z - e.pos.z) < 0.7) { e.zs = 'breach'; e.zOp = op; e.zPath = null; return null; }
-        e.zPath = findPath(e.pos, a); e.zPathI = 1; e.zOp = op; e.zs = 'toOpen';
-        if (survOpenClear(op) && op.kind !== 'fenetre') e.zs = 'hunt';
-      }
-    }
+  if (e.zDetourT > 0) { e.zDetourT -= dt; if (e.zDetourT <= 0 || (e.zDetour && hyp(e.zDetour.x - e.pos.x, e.zDetour.z - e.pos.z) < 0.6)) { e.zDetour = null; e.zDetourT = 0; e.zRepT = 0; } }
+  if (e.zRepT <= 0 && e.zs !== 'breach') { // (sans chemin trouvé, on attend aussi la prochaine recherche : un chemin introuvable cherché à chaque image coûtait tout)
+    e.zRepT = e.zFar ? 3 : rand(0.9, 1.6);
+    zombiePlan(e, e.zDetour || g);
   }
-  if (e.zs === 'toOpen' && e.zOp) {
-    const a = survOpenAnchor(e.zOp, 'out', _zD);
-    if (hyp(a.x - e.pos.x, a.z - e.pos.z) < 0.6) { e.zs = 'breach'; e.zPath = null; return null; }
+  if (e.zs === 'toObs' && e.zOb) {
+    if (zombieObGone(e)) zombieObDone(e);
+    else if (zombieAtOb(e)) { if (!zombieVaultTry(e)) { e.zs = 'breach'; e.zPath = null; } return null; }
   }
   const P = e.zPath;
   if (P && P.length > 1) {
-    while (e.zPathI < P.length - 1 && hyp(P[e.zPathI].x - e.pos.x, P[e.zPathI].z - e.pos.z) < 0.6) e.zPathI++;
-    const n = P[Math.min(e.zPathI, P.length - 1)]; return _zE.set(n.x, n.y, n.z);
+    while (e.zPathI < P.length - 1 && hyp(P[e.zPathI].x - e.pos.x, P[e.zPathI].z - e.pos.z) < 0.6 && Math.abs(P[e.zPathI].y - e.pos.y) < 1.0) e.zPathI++;
+    const n = P[Math.min(e.zPathI, P.length - 1)], end = e.zPathI >= P.length - 1 && hyp(n.x - e.pos.x, n.z - e.pos.z) < 0.7;
+    if (e.zs === 'toObs' && e.zOb && end) return zombieObPoint(e, _zE); // au bout du chemin : jusqu'à l'obstacle
+    if (end && e.zs === 'hunt' && zombieCloseIn(e, g)) return _zE.copy(g); // au bout du chemin : les derniers mètres, droit sur la proie
+    return _zE.set(n.x, n.y, n.z);
   }
-  return e.zs === 'toOpen' && e.zOp ? survOpenAnchor(e.zOp, 'out', _zE) : _zE.copy(g);
+  if (e.zs === 'hunt' && zombieCloseIn(e, g)) return _zE.copy(g);
+  return e.zs === 'toObs' && e.zOb ? zombieObPoint(e, _zE) : _zE.copy(e.zDetour || g);
+}
+/* Les derniers mètres : le chemin finit au nœud le plus proche de la proie, à une case d'elle (sur une clôture, un meuble, une botte de foin :
+   les nœuds s'écartent des obstacles) ; il va droit sur elle si rien ne l'en sépare */
+function zombieCloseIn(e, g) {
+  return hyp(g.x - e.pos.x, g.z - e.pos.z) < 2.6 && g.y - e.pos.y < 1.95 && g.y - e.pos.y > -1.2 && lineClear(_zA.set(e.pos.x, e.pos.y + 1.0, e.pos.z), _zB.set(g.x, Math.min(g.y, e.pos.y + 0.9) + 1.0, g.z));
+}
+const zombiePathLen = (P) => { let L = 0; for (let i = 1; i < P.length; i++) L += hyp3(P[i].x - P[i - 1].x, P[i].y - P[i - 1].y, P[i].z - P[i - 1].z); return L; };
+/* Le plan : le chemin ouvert ; sinon le moins coûteux de ce qu'il faudrait franchir (le premier obstacle du chemin « soft » : barricade de
+   porte, meuble ; ou une fenêtre du bâtiment de g, que le réseau ne traverse pas), en comptant les morts qui s'y pressent déjà */
+function zombiePlan(e, g) {
+  e.zOb = null; e.zs = e.zTgt ? 'hunt' : 'wander';
+  if (!NAV.nx) { e.zPath = null; return; }
+  // (la proie dans un bâtiment dont toutes les portes sont closes, lui dehors : le chemin ouvert n'existe pas, et le chercher parcourait tout le
+  // réseau avant d'échouer ; on passe directement au plan qui franchit)
+  const room = survRoomAt(g), sealed = room && survRoomAt(e.pos) !== room && SURV.open.every((o) => o.room !== room || o.kind === 'fenetre' || survOpenShut(o));
+  if (!e.zForceSoft && !sealed) { e.zPath = findPath(e.pos, g); e.zPathI = 1; if (e.zPath) return; }
+  e.zForceSoft = false;
+  let best = null, bc = 1e9;
+  if (NAV.gate && SURV.open.length + SURV.props.length) {
+    const sp = findPath(e.pos, g, -1, survSoftCost), sid = NAV.softId;
+    if (sp && sid >= 0) {
+      const i = sp.findIndex((p) => p.soft), ob = survObstacleOf(sid);
+      if (ob && i > 0) {
+        const app = sp.slice(0, i), hp = ob.t === 'open' ? survOpenHp(ob.op) : ob.p.hp, crowd = Math.max(0, (ob.t === 'open' ? ob.op.crowd : ob.p.crowd) - 2);
+        bc = zombiePathLen(app) + hp / 45 + crowd * 3; best = { ob, path: app };
+      }
+    }
+  }
+  const op = survOpenFor(e, g, best ? 'fenetre' : null);
+  if (op && (!best || best.ob.op !== op)) {
+    const a = survOpenAnchor(op, survOpenSide(op, e.pos), _zD, zombieLat(e, op)), near = hyp(a.x - e.pos.x, a.z - e.pos.z) < 1;
+    const p = near ? null : findPath(e.pos, a);
+    if (p || near) {
+      const c = (p ? zombiePathLen(p) : 0) + survOpenHp(op) / 45 + (op.kind === 'fenetre' ? 2 : 0) + Math.max(0, op.crowd - 2) * 3;
+      if (c < bc) { best = { ob: { t: 'open', op, p: null }, path: p }; bc = c; }
+    }
+  }
+  if (!best) { e.zPath = null; return; }
+  e.zOb = best.ob; e.zPath = best.path; e.zPathI = 1; e.zs = 'toObs';
+}
+/* Places devant une ouverture : les morts se répartissent le long du mur (trois de front, plus devant un portail) */
+function zombieLat(e, op) { const w = op.a1 - op.a0, n = op.kind === 'portail' ? 5 : 3; return ((e.id % n) - (n - 1) / 2) * Math.min(0.5, w / n); }
+/* Le point où aller pour frapper l'obstacle */
+function zombieObPoint(e, out) {
+  const ob = e.zOb;
+  if (ob.t === 'open') return survOpenAnchor(ob.op, survOpenSide(ob.op, e.pos), out, zombieLat(e, ob.op));
+  const b = survPropBox(ob.p), x = clamp(e.pos.x, b.x0, b.x1), z = clamp(e.pos.z, b.z0, b.z1), dx = e.pos.x - x, dz = e.pos.z - z, l = hyp(dx, dz) || 1;
+  return out.set(x + (dx / l) * 0.45, ob.p.y, z + (dz / l) * 0.45);
+}
+/* À portée de l'obstacle (au même étage) */
+function zombieAtOb(e) {
+  const ob = e.zOb, R = ZKIND[e.zk].reach + 0.35;
+  if (ob.t === 'open') return survOpenDist(ob.op, e.pos) < R && e.pos.y < ob.op.b0 + 1.2 && e.pos.y > ob.op.b0 - 1.6;
+  return survPropDist(ob.p, e.pos) < R && Math.abs(ob.p.y - e.pos.y) < 1.0;
+}
+/* L'obstacle n'en est plus un : ouverture dégagée, meuble éclaté, emporté ou poussé hors de portée */
+function zombieObGone(e) {
+  const ob = e.zOb; if (!ob) return true;
+  if (ob.t === 'open') return survOpenClear(ob.op);
+  return ob.p.hp <= 0 || !!ob.p.carried || (e.zs === 'breach' && survPropDist(ob.p, e.pos) > ZKIND[e.zk].reach + 0.8);
+}
+function zombieObDone(e) {
+  const ob = e.zOb; e.zOb = null; e.zs = e.zTgt ? 'hunt' : 'wander'; e.zPath = null; e.zRepT = 0;
+  if (ob && ob.t === 'open' && ob.op.kind === 'fenetre' && survOpenClear(ob.op) && survOpenDist(ob.op, e.pos) < 2.2) { // la fenêtre libre : il l'enjambe
+    const side = survOpenSide(ob.op, e.pos);
+    zombieClimbStart(e, survOpenAnchor(ob.op, side, _zA), survOpenAnchor(ob.op, side === 'out' ? 'in' : 'out', _zB), ob.op.b0 + 0.1, 1.1);
+  }
+}
+/* Un meuble bas (commode, canapé) : le marcheur, le coureur, le hurleur l'enjambent si la place est libre de l'autre côté (le rampant et la brute
+   le cassent) */
+function zombieVaultTry(e) {
+  const ob = e.zOb; if (!ob || ob.t !== 'prop' || !ob.p.low || e.zk === 'crawler' || e.zk === 'brute' || e.zSeed > 0.75) return false;
+  const p = ob.p, top = p.y + p.h; if (top - e.pos.y > 1.05) return false;
+  const b = survPropBox(p), cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2, dx = cx - e.pos.x, dz = cz - e.pos.z, l = hyp(dx, dz); if (l < 0.05) return false;
+  const ux = dx / l, uz = dz / l, ext = Math.abs(ux) * (b.x1 - b.x0) / 2 + Math.abs(uz) * (b.z1 - b.z0) / 2;
+  const L = _zB.set(cx + ux * (ext + 0.6), 0, cz + uz * (ext + 0.6)); L.y = groundHeight(L.x, L.z, p.y + 0.3, 0.25);
+  if (Math.abs(L.y - p.y) > 0.3) return false;
+  _zC.copy(L); collideCircle(_zC, ZOMBIE.r, 1.7); if (hyp(_zC.x - L.x, _zC.z - L.z) > 0.05) return false; // de la place pour retomber
+  if (!lineClear(_zA.set(e.pos.x, top + 0.45, e.pos.z), _zD.set(L.x, top + 0.45, L.z))) return false;
+  zombieClimbStart(e, _zA.set(e.pos.x, e.pos.y, e.pos.z), L, top - Math.min(e.pos.y, L.y) + 0.2, 1.0);
+  e.zOb = null; e.zs = e.zTgt ? 'hunt' : 'wander'; SV.vaults = (SV.vaults || 0) + 1;
+  return true;
 }
 /* Direction voulue, cap, et séparation : les morts s'écartent les uns des autres (ils se répartissent autour de la proie) */
 function zombieSteer(e, goal, face, speed, dt) {
@@ -194,14 +303,66 @@ function zombieSteer(e, goal, face, speed, dt) {
 }
 /* Déplacement : collisions du décor par pas de 25 cm (comme les soldats), sol, gravité ; coincé : nouveau chemin et un écart de côté */
 function zombieMove(e, dt) {
-  const mx = e.vel.x * dt, mz = e.vel.z * dt, n = Math.min(6, Math.max(1, Math.ceil(hyp(mx, mz) / 0.25))), h = ZKIND[e.zk].low ? 0.9 : 1.75;
+  const ox = e.pos.x, oz = e.pos.z, mx = e.vel.x * dt, mz = e.vel.z * dt, n = Math.min(6, Math.max(1, Math.ceil(hyp(mx, mz) / 0.25))), h = ZKIND[e.zk].low ? 0.9 : 1.75;
   for (let k = 0; k < n; k++) { e.pos.x += mx / n; e.pos.z += mz / n; collideCircle(e.pos, ZOMBIE.r, h); }
   e.vy -= 19 * dt; e.pos.y += e.vy * dt;
   const g = groundHeight(e.pos.x, e.pos.z, e.pos.y + 0.1, 0.25);
   if (e.pos.y <= g) { e.pos.y = g; e.vy = 0; e.onGround = true; } else if (e.pos.y - g < STEP + 0.05 && e.vy <= 0) { e.pos.y = g; e.vy = 0; e.onGround = true; } else e.onGround = false;
-  if ((e.zProgT += dt) > ZOMBIE.stuck) {
-    if (e.zs !== 'breach' && e.zs !== 'wander' && e.zProg.distanceTo(e.pos) < 0.5 && hyp(e.vel.x, e.vel.z) > 0.1) { e.zRepT = 0; e.vel.x += rand(-2, 2); e.vel.z += rand(-2, 2); }
+  // une chaise, une table (props physiques) en travers : il force le passage
+  e.zShoveT -= dt;
+  if (e.zShoveT <= 0 && hyp(mx, mz) > 1e-3 && hyp(e.pos.x - (ox + mx), e.pos.z - (oz + mz)) > hyp(mx, mz) * 0.5) zombieShove(e, mx, mz);
+  // coincé : il veut avancer et, en une seconde, n'a pas fait 30 cm
+  if ((e.zProgT += dt) > 1) {
+    const wants = e.zs !== 'breach' && e.zClimb <= 0 && hyp(e.vel.x, e.vel.z) > 0.25;
+    e.zStuck = wants && e.zProg.distanceTo(e.pos) < 0.3 ? e.zStuck + 1 : 0;
     e.zProgT = 0; e.zProg.copy(e.pos);
+    if (e.zStuck > 1) zombieUnstick(e);
+  }
+}
+/* Pousse le prop physique qu'il heurte (02k-dynprops.js : il se réveille, glisse, tombe) ; vu de tous en ligne (événement 'prop') */
+function zombieShove(e, mx, mz) {
+  const l = hyp(mx, mz), ux = mx / l, uz = mz / l, px = e.pos.x + ux * 0.45, pz = e.pos.z + uz * 0.45;
+  for (const c of queryBoxes(px - 0.35, pz - 0.35, px + 0.35, pz + 0.35)) {
+    const b = c.prop; if (!b || !b.d || b.state === 0 || c.y1 < e.pos.y + 0.1 || c.y0 > e.pos.y + 1.5) continue;
+    const P = _zC.set(clamp(px, c.x0, c.x1), clamp(e.pos.y + 0.6, c.y0, c.y1), clamp(pz, c.z0, c.z1)), dir = _zD.set(ux, 0.15, uz).normalize(), dmg = e.zk === 'brute' ? 60 : 22;
+    propShot(b, P, dir, dmg, e);
+    if (MATCH.online && survLocal()) netEvent({ k: 'prop', n: b.id, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), dx: +dir.x.toFixed(2), dy: +dir.y.toFixed(2), dz: +dir.z.toFixed(2), d: dmg }, PL.ent);
+    e.zShoveT = 0.6; e.zAtk = 1; sfxBarr(P, 'thud'); SV.shoves = (SV.shoves || 0) + 1;
+    return true;
+  }
+  e.zShoveT = 0.25;
+  return false;
+}
+/* Coincé depuis zStuck secondes : des réponses de plus en plus fortes. Jamais de saut vers les vivants : le dernier recours (hors de leur vue,
+   à plus de 8 m d'eux) remet le mort sur le nœud libre le plus proche (au plus 2,5 m, dans la même pièce), ou le renvoie au bois */
+function zombieUnstick(e) {
+  const n = e.zStuck;
+  if (n === 2) { SV.stuckN = (SV.stuckN || 0) + 1; e.zRepT = 0; e.vel.x += rand(-2, 2); e.vel.z += rand(-2, 2); return; }
+  if (n === 3) { // un obstacle à portée : il s'y attaque
+    const R = ZKIND[e.zk].reach + 0.45;
+    for (const p of SURV.props) if (p.hp > 0 && !p.carried && survPropDist(p, e.pos) < R && Math.abs(p.y - e.pos.y) < 1) { e.zOb = { t: 'prop', p, op: null }; e.zs = 'breach'; e.zPath = null; return; }
+    for (const op of SURV.open) if (survOpenShut(op) && survOpenDist(op, e.pos) < R && e.pos.y < op.b0 + 1.2) { e.zOb = { t: 'open', op, p: null }; e.zs = 'breach'; e.zPath = null; return; }
+    e.zForceSoft = true; e.zRepT = 0; return;
+  }
+  if (n === 4) { e.zForceSoft = true; e.zRepT = 0; return; }
+  if (n === 5 || n === 8) { // un détour : un point du réseau à quelques mètres, qu'un chemin rejoint
+    for (let k = 0; k < 6; k++) {
+      const a = Math.random() * TAU, r = rand(2, 5), id = navNode(e.pos.x + Math.cos(a) * r, e.pos.y, e.pos.z + Math.sin(a) * r);
+      if (id < 0) continue;
+      const q = new V3(NAV.nx[id], NAV.ny[id], NAV.nz[id]); if (q.distanceTo(e.pos) < 1.5 || !findPath(e.pos, q)) continue;
+      e.zDetour = q; e.zDetourT = 3; e.zRepT = 0; e.zOb = null; return;
+    }
+    return;
+  }
+  if (n >= 10 && n % 3 === 1) { // dernier recours
+    const seen = entities.some((p) => p.alive && !p.isZombie && !p.off && p.team !== 2 && (hyp(p.pos.x - e.pos.x, p.pos.z - e.pos.z) < 8 || (p.pos.distanceTo(e.pos) < 30 && lineClear(_zA.set(p.pos.x, p.pos.y + 1.5, p.pos.z), _zB.set(e.pos.x, e.pos.y + 1.2, e.pos.z)))));
+    if (seen) return;
+    const id = navNode(e.pos.x, e.pos.y, e.pos.z), room = survRoomAt(e.pos);
+    if (id >= 0) {
+      const d = hyp(NAV.nx[id] - e.pos.x, NAV.nz[id] - e.pos.z);
+      if (d < 2.5 && d > 0.4 && survRoomAt(_zA.set(NAV.nx[id], 0, NAV.nz[id])) === room) { e.pos.set(NAV.nx[id], NAV.ny[id], NAV.nz[id]); e.vel.set(0, 0, 0); e.zRepT = 0; SV.unstuck = (SV.unstuck || 0) + 1; return; }
+    }
+    if (n >= 16) { zombieStow(e); if (survLocal() && SV.phase !== 'over') SV.toSpawn++; SV.unstuck = (SV.unstuck || 0) + 1; }
   }
 }
 /* Coup : sur un vivant à portée (dégâts pesés par la difficulté de la survie) */
@@ -218,15 +379,42 @@ function zombieScream(e) {
   for (const o of ZOMBIES) if (o.alive && o !== e && o.pos.distanceTo(e.pos) < ZOMBIE.scream) { o.zTgt = e.zTgt; o.zRepT = 0; }
   survScreamCall(e);
 }
-/* Fenêtre ouverte : enjambée en 1,1 s de l'ancre du dehors à celle du dedans */
-function zombieClimbStart(e, op) {
-  e.zClimb = 1.1; e.zClimbOp = op; e.zClimbA = survOpenAnchor(op, 'out', new V3()); e.zClimbB = survOpenAnchor(op, 'in', new V3());
-  e.yaw = Math.atan2(-(e.zClimbB.x - e.zClimbA.x), -(e.zClimbB.z - e.zClimbA.z)); e.vel.set(0, 0, 0); zombieGroan(e, 'climb');
+/* Enjamber (une fenêtre libre, un meuble bas) : un pas scripté de A à B en dur secondes, le corps passe à h au-dessus de A */
+function zombieClimbStart(e, A, B, h, dur) {
+  e.zClimb = dur; e.zClimbT = dur; e.zClimbH = h; e.zClimbA.copy(A); e.zClimbB.copy(B);
+  e.yaw = Math.atan2(-(B.x - A.x), -(B.z - A.z)); e.vel.set(0, 0, 0); zombieGroan(e, 'climb');
 }
 function zombieClimbStep(e, dt) {
-  e.zClimb -= dt; const k = smoothstep(0, 1, 1 - e.zClimb / 1.1), op = e.zClimbOp;
-  e.pos.lerpVectors(e.zClimbA, e.zClimbB, k); e.pos.y = lerp(e.zClimbA.y, e.zClimbB.y, k) + Math.sin(k * Math.PI) * (op.b0 + 0.1);
-  if (e.zClimb <= 0) { e.zClimb = 0; e.pos.copy(e.zClimbB); e.pos.y = groundHeight(e.pos.x, e.pos.z, e.pos.y + 0.3, 0.25); e.zPath = null; e.zRepT = 0; }
+  e.zClimb -= dt; const k = smoothstep(0, 1, 1 - e.zClimb / e.zClimbT);
+  e.pos.lerpVectors(e.zClimbA, e.zClimbB, k); e.pos.y = lerp(e.zClimbA.y, e.zClimbB.y, k) + Math.sin(k * Math.PI) * e.zClimbH;
+  if (e.zClimb <= 0) { e.zClimb = 0; e.pos.copy(e.zClimbB); e.pos.y = groundHeight(e.pos.x, e.pos.z, e.pos.y + 0.3, 0.25); e.zPath = null; e.zRepT = 0; e.zProg.copy(e.pos); e.zStuck = 0; }
+}
+/* Grimper rejoindre une proie juchée : posé sur sa surface, à 55 cm d'elle de son côté, s'il y a la place pour son corps et rien en travers
+   au-dessus du rebord (les barreaux d'une fenêtre comptent : on ne grimpe pas au travers) */
+function zombieClamber(e, T) {
+  const dx = e.pos.x - T.pos.x, dz = e.pos.z - T.pos.z, l = hyp(dx, dz) || 1, L = _zB.set(T.pos.x + (dx / l) * 0.55, 0, T.pos.z + (dz / l) * 0.55);
+  L.y = groundHeight(L.x, L.z, T.pos.y + 0.1, 0.2); if (Math.abs(L.y - T.pos.y) > 0.15) return false;
+  _zC.copy(L); collideCircle(_zC, ZOMBIE.r, 1.75); if (hyp(_zC.x - L.x, _zC.z - L.z) > 0.05) return false;
+  if (ceilingAbove(L.x, L.z, L.y + 0.3, 0.3) < L.y + 1.75) return false;
+  if (zombieSegBlocked(e.pos.x, e.pos.z, L.x, L.z, L.y + 0.05, L.y + 1.4)) return false;
+  const h = L.y - e.pos.y;
+  zombieClimbStart(e, _zA.set(e.pos.x, e.pos.y, e.pos.z), L, h + 0.25, 0.9 + h * 0.35); e.zNearT = 0; SV.clambers = (SV.clambers || 0) + 1;
+  return true;
+}
+/* Quelque chose du décor coupe-t-il le segment à plat entre y0 et y1 (les boîtes des seules balles ne comptent pas, les barreaux si) */
+function zombieSegBlocked(ax, az, bx, bz, y0, y1) {
+  const dx = bx - ax, dz = bz - az;
+  for (const c of queryBoxes(Math.min(ax, bx), Math.min(az, bz), Math.max(ax, bx), Math.max(az, bz))) {
+    if (c.ray || c.y1 <= y0 || c.y0 >= y1) continue;
+    let t0 = 0, t1 = 1;
+    for (let a = 0; a < 2; a++) {
+      const o = a ? az : ax, d = a ? dz : dx, lo = a ? c.z0 : c.x0, hi = a ? c.z1 : c.x1;
+      if (Math.abs(d) < 1e-9) { if (o <= lo || o >= hi) { t0 = 2; break; } continue; }
+      const u = (lo - o) / d, v = (hi - o) / d; t0 = Math.max(t0, Math.min(u, v)); t1 = Math.min(t1, Math.max(u, v));
+    }
+    if (t0 < t1) return true;
+  }
+  return false;
 }
 /* Touché (applyDamage, 09-game.js) : tressaillement ; un gros coup ou une explosion le fait chanceler */
 function zombieHurt(e, dmg, head) {

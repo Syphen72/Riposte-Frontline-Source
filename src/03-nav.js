@@ -1,8 +1,11 @@
 /* ==========================================================================
    NAVIGATION : grille 1 m multi-niveaux générée depuis les collisions
    ========================================================================== */
-const NAV = { x0: MAP.x0, z0: MAP.z0, W: MAP.x1 - MAP.x0, H: MAP.z1 - MAP.z0, cells: null, nx: null, ny: null, nz: null, adjStart: null, adj: null, adjCost: null, count: 0, gate: null, bgate: null }; // bgate : nœuds d'une porte que ferme une barricade (08m-barricades.js) // gate : nœuds fermés par une brèche (04d-breches.js)
+const NAV = { x0: MAP.x0, z0: MAP.z0, W: MAP.x1 - MAP.x0, H: MAP.z1 - MAP.z0, cells: null, nx: null, ny: null, nz: null, adjStart: null, adj: null, adjCost: null, count: 0, gate: null, bgate: null, pblock: null, softId: -1 }; // pblock : nœuds couverts par un meuble de la survie (08m-barricades.js) // bgate : nœuds d'une porte que ferme une barricade (08m-barricades.js) // gate : nœuds fermés par une brèche (04d-breches.js)
 const NAV_DH = 0.62, NAV_R = 0.42;
+/* Escaliers raides (Breachline) : d'une case à l'autre, une rampe monte jusqu'à NAV_RAMP_DH (l'escalier de la ferme : 0,9 m par mètre). Le lien
+   n'est gardé que si la marche est continue (navStepOk) : la marge ne vaut que pour les nœuds posés sur une rampe, jamais pour un rebord. */
+const NAV_RAMP_DH = 1.05;
 
 function navClear(x, z, h) {
   for (const c of queryBoxes(x - NAV_R, z - NAV_R, x + NAV_R, z + NAV_R)) {
@@ -77,7 +80,7 @@ function navEdgeOk(x, z, h) {
 function buildNav() {
   Object.assign(NAV, { x0: MAP.x0, z0: MAP.z0, W: MAP.x1 - MAP.x0, H: MAP.z1 - MAP.z0 });
   const W = NAV.W, H = NAV.H;
-  const xs = [], ys = [], zs = [], cellList = new Array(W * H);
+  const xs = [], ys = [], zs = [], rampL = [], cellList = new Array(W * H);
   for (let cz = 0; cz < H; cz++) {
     for (let cx = 0; cx < W; cx++) {
       const x = NAV.x0 + cx + 0.5, z = NAV.z0 + cz + 0.5;
@@ -91,6 +94,7 @@ function buildNav() {
       cand.sort((a, b) => a - b);
       const list = [];
       let prev = -9;
+      const onRamp = (h) => RAMPS.some((rp) => x >= rp.x0 && x <= rp.x1 && z >= rp.z0 && z <= rp.z1 && Math.abs(rampHeight(rp, x, z) - h) < 0.06);
       for (const h of cand) {
         if (h - prev < 0.1) continue;
         // la surface doit être la plus haute sous ce point à cette hauteur
@@ -98,7 +102,7 @@ function buildNav() {
         if (!navClear(x, z, h)) continue;
         if (VOID.on && !navEdgeOk(x, z, h)) continue;
         prev = h;
-        list.push(xs.length); xs.push(x); ys.push(h); zs.push(z);
+        list.push(xs.length); xs.push(x); ys.push(h); zs.push(z); rampL.push(onRamp(h) ? 1 : 0);
       }
       cellList[cz * W + cx] = list;
     }
@@ -107,20 +111,20 @@ function buildNav() {
   NAV.count = N; NAV.cells = cellList;
   NAV.nx = new Float32Array(xs); NAV.ny = new Float32Array(ys); NAV.nz = new Float32Array(zs);
   const adjStart = new Int32Array(N + 1), adj = [], cost = [];
-  const nodeAt = (cx, cz, h) => {
+  const nodeAt = (cx, cz, h, rp) => { // rp : le nœud de départ est sur une rampe (plus haute marche admise vers une case de rampe)
     if (cx < 0 || cz < 0 || cx >= W || cz >= H) return -1;
-    let best = -1, bd = NAV_DH;
-    for (const id of cellList[cz * W + cx]) { const d = Math.abs(ys[id] - h); if (d <= bd) { bd = d; best = id; } }
+    let best = -1, bd = 1e9;
+    for (const id of cellList[cz * W + cx]) { const d = Math.abs(ys[id] - h); if ((d <= NAV_DH || (d <= NAV_RAMP_DH && (rp || rampL[id]))) && d <= bd) { bd = d; best = id; } }
     return best;
   };
   for (let cz = 0; cz < H; cz++) for (let cx = 0; cx < W; cx++) {
     for (const id of cellList[cz * W + cx]) {
       adjStart[id] = adj.length;
-      const h = ys[id];
+      const h = ys[id], rp = rampL[id];
       for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dz) continue;
-        const n = nodeAt(cx + dx, cz + dz, h); if (n < 0) continue;
-        if (dx && dz) { if (nodeAt(cx + dx, cz, h) < 0 || nodeAt(cx, cz + dz, h) < 0) continue; }
+        const n = nodeAt(cx + dx, cz + dz, h, rp); if (n < 0) continue;
+        if (dx && dz) { if (nodeAt(cx + dx, cz, h, rp) < 0 || nodeAt(cx, cz + dz, h, rp) < 0) continue; }
         if (!navLinkClear(xs[id], zs[id], h, xs[n], zs[n], ys[n])) continue; // une cloison mince entre les deux
         if (!navStepOk(xs[id], zs[id], h, xs[n], zs[n], ys[n])) continue; // un ressaut à sauter
         adj.push(n); cost.push(hyp3(dx, dz, (ys[n] - h) * 1.5));
@@ -230,7 +234,7 @@ function navLeaps() {
 
 /* Déchargement de la carte */
 function navUnload() {
-  for (const k of ['cells', 'nx', 'ny', 'nz', 'adjStart', 'adj', 'adjCost', 'adjKind', 'adjLead', 'kind', 'lead', 'g', 'f', 'from', 'stamp', 'closed', 'comp', 'gate', 'bgate']) NAV[k] = null;
+  for (const k of ['cells', 'nx', 'ny', 'nz', 'adjStart', 'adj', 'adjCost', 'adjKind', 'adjLead', 'kind', 'lead', 'g', 'f', 'from', 'stamp', 'closed', 'comp', 'gate', 'bgate', 'pblock']) NAV[k] = null;
   NAV.count = 0;
 }
 /* Composantes connexes : sert à éviter les nœuds isolés (dessus de caisses) */
@@ -250,10 +254,13 @@ function computeComponents() {
   NAV.comp = comp; NAV.mainComp = big;
 }
 
+/* Le nœud du réseau le plus proche d'un point (la hauteur compte trois fois : le même étage d'abord). On cherche anneau par anneau tant qu'un
+   anneau plus large peut encore faire mieux (Breachline : on s'arrêtait au premier anneau non vide, et près d'un lit de l'étage le seul nœud de
+   la case était celui du rez-de-chaussée, 3,25 m plus bas : un mort qui chassait un vivant à l'étage visait le plancher sous ses pieds) */
 function navNode(x, y, z) {
   const cx0 = Math.floor(x - NAV.x0), cz0 = Math.floor(z - NAV.z0);
   let best = -1, bd = 1e9;
-  for (let r = 0; r <= 4 && best < 0; r++) {
+  for (let r = 0; r <= 4 && !(best >= 0 && bd < r - 0.5); r++) {
     for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
       if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
       const cx = cx0 + dx, cz = cz0 + dz;
@@ -285,8 +292,10 @@ function heapPop() {
   }
   return top;
 }
-/* sid : nœud de départ imposé (le plus proche qu'on rejoint en ligne droite), à défaut le plus proche tout court */
-function findPath(from, to, sid = -1) {
+/* sid : nœud de départ imposé (le plus proche qu'on rejoint en ligne droite), à défaut le plus proche tout court.
+   soft (Breachline, survie) : les nœuds fermés (navGated) ne sont plus interdits mais coûtent soft(id) (négatif : interdit) ; le chemin passe alors
+   par ce qu'il faudrait abattre (barricade, meuble) et son premier point fermé porte .soft (NAV.softId : son nœud) */
+function findPath(from, to, sid = -1, soft = null) {
   const s = sid >= 0 ? sid : navNode(from.x, from.y, from.z), e = navNode(to.x, to.y, to.z);
   if (s < 0 || e < 0) return null;
   const gen = ++NAV.gen, g = NAV.g, f = NAV.f, fr = NAV.from, st = NAV.stamp, cl = NAV.closed, kd = NAV.kind;
@@ -298,8 +307,10 @@ function findPath(from, to, sid = -1) {
     if (cl[n] === gen) continue; cl[n] = gen;
     if (n === e) { found = true; break; }
     for (let j = NAV.adjStart[n]; j < NAV.adjStart[n + 1]; j++) {
-      const m = NAV.adj[j]; if (cl[m] === gen || (NAV.gate && navGated(m))) continue;
-      const ng = g[n] + NAV.adjCost[j];
+      const m = NAV.adj[j]; if (cl[m] === gen) continue;
+      let add = 0;
+      if (NAV.gate && navGated(m)) { if (!soft) continue; add = soft(m); if (add < 0) continue; }
+      const ng = g[n] + NAV.adjCost[j] + add;
       if (st[m] !== gen || ng < g[m]) {
         st[m] = gen; g[m] = ng; fr[m] = n; kd[m] = NAV.adjKind[j]; NAV.lead[m] = NAV.adjLead[j];
         f[m] = ng + hyp3(NAV.nx[m] - ex, NAV.nz[m] - ez, (NAV.ny[m] - ey)) * 1.05;
@@ -310,11 +321,16 @@ function findPath(from, to, sid = -1) {
   if (!found) return null;
   const ids = []; for (let n = e; n >= 0; n = fr[n]) ids.push(n);
   ids.reverse();
-  const pts = ids.map((id) => { const v = new V3(NAV.nx[id], NAV.ny[id], NAV.nz[id]); v.pin = v.jump = v.drop = false; v.lead = 0; return v; });
+  const pts = ids.map((id) => { const v = new V3(NAV.nx[id], NAV.ny[id], NAV.nz[id]); v.pin = v.jump = v.drop = v.soft = false; v.lead = 0; return v; });
+  NAV.softId = -1;
+  if (soft && NAV.gate) for (let i = 1; i < ids.length; i++) if (navGated(ids[i])) { NAV.softId = ids[i]; pts[i].soft = pts[i].pin = pts[i - 1].pin = true; break; } // (le point d'approche et le premier point fermé restent dans le chemin lissé)
   for (let i = 1; i < ids.length; i++) { const k = kd[ids[i]]; if (k) { pts[i].pin = pts[i - 1].pin = true; if (k === 2) pts[i].drop = true; else { pts[i].jump = true; pts[i].lead = NAV.lead[ids[i]]; } } } // pin : un point de saut ou de chute ne se coupe pas
   return smoothPath(pts);
 }
 function navWalkable(a, b) {
+  // (Breachline) un garde-corps mince entre deux cases de hauteurs voisines (le haut d'un escalier et le plancher de l'étage) ne retire aucun
+  // nœud : le raccourci le traversait. Le segment ne coupe aucun mur à hauteur de corps
+  if (!navLinkClear(a.x, a.z, a.y, b.x, b.z, b.y)) return false;
   const d = hyp(b.x - a.x, b.z - a.z), steps = Math.ceil(d / 0.45);
   let h = a.y;
   for (let i = 1; i <= steps; i++) {

@@ -1,5 +1,53 @@
 [
   {
+    "version": "6.2.0",
+    "date": "2026-11-05",
+    "title": "Survie : munitions et passages",
+    "title_en": "Survival: ammo and routes",
+    "changes": [
+      {
+        "t": "fixed",
+        "x": "Les munitions reviennent entre les vagues. La remise à niveau de fin de vague et la caisse de la salle ne rendaient rien jusqu'ici, et l'on finissait toujours à sec.",
+        "x_en": "Ammo comes back between waves. The end-of-wave top-up and the crate in the living room gave nothing until now, so every run ended out of ammo."
+      },
+      {
+        "t": "new",
+        "x": "Caisses de munitions à l'étage, sous le fenil, dans l'appentis et sur la véranda, qui se rechargent avec le temps. Les morts laissent des cartouchières, plus souvent quand l'équipe est à court, et un chargeur de secours attend celui qui est à sec.",
+        "x_en": "Ammo crates upstairs, under the hayloft, in the tool shed and on the porch, refilling over time. The dead drop ammo pouches, more often when the team runs low, and a spare magazine turns up when you are bone dry."
+      },
+      {
+        "t": "new",
+        "x": "Un largage une vague sur deux à partir de la quatrième, loin de la maison, avec le plein pour chaque survivant qui va le chercher. Un objectif rempli rend aussi le plein à toute l'équipe.",
+        "x_en": "A supply drop every other wave from the fourth, far from the house, with a full refill for every survivor who goes out for it. Completing an objective also refills the whole team."
+      },
+      {
+        "t": "fixed",
+        "x": "Les morts montent à l'étage de la ferme et au fenil. L'escalier de la maison finit sur un palier ouvert, et les morts suivent désormais les escaliers raides.",
+        "x_en": "The dead climb to the farmhouse upstairs and to the hayloft. The house stairs now end on an open landing, and the dead follow steep stairs."
+      },
+      {
+        "t": "improved",
+        "x": "Les meubles comptent pour les morts. Ils contournent un meuble s'ils le peuvent, sinon l'abattent, le repoussent ou enjambent les meubles bas, et bousculent chaises et tables. Bibliothèques, armoire, commodes et canapé s'abîment à vue d'œil puis éclatent.",
+        "x_en": "Furniture matters to the dead. They walk around it when they can, otherwise they smash it, shove it aside or climb over low pieces, and push chairs and tables out of the way. Bookcases, the wardrobe, dressers and the couch wear down visibly, then break apart."
+      },
+      {
+        "t": "new",
+        "x": "Tôles de la grange pour renforcer une ouverture barricadée. Les morts s'y attaquent d'abord, elle se cabosse et sonne sous les coups.",
+        "x_en": "Metal sheets from the barn to reinforce a boarded opening. The dead hit the sheet first, and it dents and rings under the blows."
+      },
+      {
+        "t": "improved",
+        "x": "Les morts coincés s'en aperçoivent et cherchent une autre voie, se répartissent entre les ouvertures au lieu de s'entasser à une porte, et grimpent rejoindre un survivant juché sur un capot, un lit ou une clôture.",
+        "x_en": "Stuck dead notice it and look for another way, spread across the openings instead of piling up at one door, and climb up to a survivor perched on a car, a bed or a fence."
+      },
+      {
+        "t": "fixed",
+        "x": "Plus de refuge hors de portée. La fenêtre de l'étage qui donne sur le toit de la véranda a des barreaux, et le dessous des escaliers est plein sur toutes les cartes. Planches plus solides, réparation planche par planche.",
+        "x_en": "No more unreachable hideouts. The upstairs window over the porch roof has bars, and the space under stairs is solid on every map. Sturdier planks, repaired one at a time."
+      }
+    ]
+  },
+  {
     "version": "6.1.0",
     "date": "2026-11-03",
     "title": "Survie",

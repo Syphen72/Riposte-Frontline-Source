@@ -10,7 +10,13 @@
    - BARRICADE : l'invité demande une planche, l'hôte la cloue, elle apparaît chez les deux ; les réserves (planches) suivent ;
    - COUPS : un mort de l'hôte collé à l'invité le frappe, chez l'invité ;
    - À TERRE : l'invité tombe à terre ; l'hôte le voit à terre, le relève ; l'invité est relevé ;
-   - FIN DE VAGUE : la préparation suivante chez les deux.
+   - FIN DE VAGUE : la préparation suivante chez les deux ; l'invité, à sec, est ravitaillé chez lui ;
+   - MUNITIONS : l'invité prend à une caisse (l'hôte décompte la prise, l'invité reçoit sa part, la caisse suit chez les deux) ; une cartouchière
+     posée par l'hôte apparaît chez l'invité, qui la ramasse en marchant dessus (disparue des deux côtés, munitions chez lui) ; l'invité annonce
+     sa réserve à l'hôte ;
+   - TÔLE ET MEUBLE : l'invité demande une tôle, posée chez les deux ; l'hôte la cabosse, l'invité le voit ; un meuble éclaté chez l'hôte
+     éclate chez l'invité (plus de collision) ;
+   - LARGAGE : vu chez l'invité, qui le prend (le plein chez lui, une seule fois) ; l'hôte le prend à son tour, il disparaît chez les deux.
    C'est une simulation : pas de vrai réseau (latence, pertes) ; elle vérifie les messages et leur effet de part et d'autre. */
 const { openGame } = require('./common');
 const MOCK = `
@@ -129,11 +135,77 @@ const MOCK = `
     out.releve = { action: await H.evaluate(() => window.__rv), invite: await C.evaluate(() => !PL.ent.downed && PL.ent.alive), sante: await C.evaluate(() => PL.ent.health), releveParHote: await H.evaluate(() => SVSTAT.revives) };
     if (!out.releve.action) fail('l’hôte n’a pas d’action pour relever l’invité');
     if (!out.releve.invite) fail('l’invité n’est pas relevé');
-    // fin de vague : on abat tout chez l'hôte, la préparation suivante chez les deux
+    // fin de vague : on abat tout chez l'hôte, la préparation suivante chez les deux (l'invité à sec d'abord)
+    await C.evaluate(() => { for (const w of PL.ent.arms.slots.filter(ammoUsable)) { w.mag = 0; w.reserve = 0; } });
     for (let i = 0; i < 40; i++) { await H.evaluate(() => { for (const z of zombiesUp()) applyDamage(z, 999, PL.ent, 'M4A1', false, new V3(0, 0, -1), PL.ent.pos.clone()); }); await tick(0.5); if (await H.evaluate(() => SV.phase === 'prep')) break; }
     await tick(1.5);
     out.finVague = { hote: await H.evaluate(() => SV.phase + ' ' + SV.wave), invite: await C.evaluate(() => SV.phase + ' ' + SV.wave) };
     if (!out.finVague.hote.startsWith('prep') || out.finVague.hote !== out.finVague.invite) fail('la fin de vague ne suit pas chez l’invité : ' + JSON.stringify(out.finVague));
+    out.finVague.munitionsInvite = await C.evaluate(() => PL.ent.arms.slots.filter(ammoUsable).map((w) => w.reserve + '/' + ammoMaxOf(w)));
+    if (await C.evaluate(() => PL.ent.arms.slots.filter(ammoUsable).some((w) => w.reserve < Math.ceil(ammoMaxOf(w) * 0.5)))) fail('la fin de vague ne ravitaille pas l’invité : ' + out.finVague.munitionsInvite);
+    await H.evaluate(() => { SV.t = 1e9; });
+    const res = () => C.evaluate(() => PL.ent.arms.slots.filter(ammoUsable).reduce((a, w) => a + w.reserve, 0));
+    const drainC = () => C.evaluate(() => { for (const w of PL.ent.arms.slots.filter(ammoUsable)) { w.mag = 0; w.reserve = 0; } });
+    // une caisse de munitions, demandée par l'invité
+    const box = await H.evaluate(() => SURV.caches.findIndex((c) => c.kind === 'ammo'));
+    await drainC(); await C.evaluate((i) => { const c = SURV.caches[i]; PL.ent.pos.set(c.x + 0.6, c.y, c.z); }, box); await tick(0.5);
+    const left0 = await H.evaluate((i) => SURV.caches[i].left, box);
+    await C.evaluate((i) => survReq('take', i), box); await tick(1.2);
+    out.caisse = { avant: left0, hote: await H.evaluate((i) => SURV.caches[i].left, box), invite: await C.evaluate((i) => SURV.caches[i].left, box), reserveInvite: await res() };
+    if (out.caisse.hote !== left0 - 1 || out.caisse.invite !== left0 - 1) fail('la caisse ne décompte pas la prise de l’invité chez les deux : ' + JSON.stringify(out.caisse));
+    if (!(out.caisse.reserveInvite > 0)) fail('l’invité ne reçoit pas les munitions de la caisse');
+    await tick(3.5); const af = await H.evaluate(() => entities.find((e) => e.isRemote).svAmmo), afC = await C.evaluate(() => ammoFracOf(PL.ent));
+    out.reserveAnnoncee = { hote: af, invite: +afC.toFixed(2) };
+    if (af === undefined || Math.abs(af - afC) > 0.08) fail('l’hôte ne connaît pas la réserve de l’invité : ' + JSON.stringify(out.reserveAnnoncee));
+    // une cartouchière de l'hôte, ramassée par l'invité
+    await drainC(); await C.evaluate(() => PL.ent.pos.set(-1, 0, 0)); await tick(0.3);
+    await H.evaluate(() => { for (const l of SAMMO.loot.slice()) survLootRemove(l); survLootAdd(-3.5, 0, 1.5, 'ammo'); });
+    await tick(0.6); const seen = await C.evaluate(() => SAMMO.loot.length);
+    await C.evaluate(() => PL.ent.pos.set(-3.5, 0, 1.5)); await tick(1.5);
+    out.cartouchiere = { vueInvite: seen, hote: await H.evaluate(() => SAMMO.loot.length), invite: await C.evaluate(() => SAMMO.loot.length), reserveInvite: await res() };
+    if (seen !== 1) fail('la cartouchière de l’hôte n’apparaît pas chez l’invité');
+    if (out.cartouchiere.hote || out.cartouchiere.invite || !(out.cartouchiere.reserveInvite > 0)) fail('l’invité ne ramasse pas la cartouchière : ' + JSON.stringify(out.cartouchiere));
+    // une tôle demandée par l'invité, cabossée par l'hôte
+    await H.evaluate(() => { SURV_RES.metal = 2; survPub('r'); }); await tick(0.5);
+    await C.evaluate((id) => survReq('plate', id), op); await tick(1.2);
+    const pl1 = await H.evaluate((id) => SURV.open[id].plate.hp, op), pc1 = await C.evaluate((id) => SURV.open[id].plate.hp, op);
+    await H.evaluate((id) => survOpenHit(SURV.open[id], 200, ZOMBIES[0]), op); await tick(1.2);
+    out.tole = { hote: [pl1, await H.evaluate((id) => SURV.open[id].plate.hp, op)], invite: [pc1, await C.evaluate((id) => SURV.open[id].plate.hp, op)], visibleInvite: await C.evaluate((id) => !!(SURV.open[id].plate.mesh && SURV.open[id].plate.mesh.visible), op) };
+    if (!(pl1 > 0) || pc1 !== pl1) fail('la tôle demandée par l’invité n’est pas posée chez les deux : ' + JSON.stringify(out.tole));
+    if (out.tole.invite[1] !== out.tole.hote[1] || !(out.tole.hote[1] < pl1) || !out.tole.visibleInvite) fail('la tôle cabossée chez l’hôte ne suit pas chez l’invité : ' + JSON.stringify(out.tole));
+    // un meuble porté par l'invité, posé contre la porte de la cuisine (de l'intérieur) : chez l'hôte aussi, il y ferme la porte
+    // (le regard du joueur, PL.yaw, mène son corps à chaque image : on tourne les deux)
+    {
+      const kd = await H.evaluate(() => SURV.open.findIndex((o) => o.room === 'maison' && o.kind === 'porte' && o.out < 0));
+      const bi = await H.evaluate(() => SURV.props.findIndex((q) => q.kind === 'bookcase'));
+      await C.evaluate((bi) => { const q = SURV.props[bi]; PL.ent.pos.set(q.x + 0.8, q.y, q.z); PL.ent.yaw = PL.yaw = Math.PI / 2; }, bi); await tick(0.4);
+      await C.evaluate((bi) => survPropTake(PL.ent, SURV.props[bi]), bi); await tick(1.2);
+      const carriedH = await H.evaluate((bi) => { const q = SURV.props[bi]; return !!q.carried && q.carried.isRemote && q.c.x0 > 1e5; }, bi), carriedC = await C.evaluate((bi) => SACT.carry === SURV.props[bi], bi);
+      await C.evaluate((kd) => { const a = survOpenAnchor(SURV.open[kd], 'in', new V3()); PL.ent.pos.set(a.x, 0, a.z + 1.4); PL.ent.yaw = PL.yaw = 0; }, kd); await tick(0.6);
+      await C.evaluate(() => survPropDrop(PL.ent)); await tick(1.5);
+      const st = async (P) => P.evaluate(([bi, kd]) => { const q = SURV.props[bi]; return { x: +q.x.toFixed(2), z: +q.z.toFixed(2), porte: SURV.open[kd].prop === q, porte2: survOpenShut(SURV.open[kd]), porteur: !!q.carried, collision: q.c.x0 < 1e5 }; }, [bi, kd]);
+      out.meublePorte = { porteHote: carriedH, porteInvite: carriedC, hote: await st(H), invite: await st(C) };
+      const h = out.meublePorte.hote, c = out.meublePorte.invite;
+      if (!carriedH || !carriedC) fail('le meuble pris par l’invité n’est pas porté chez les deux : ' + JSON.stringify(out.meublePorte));
+      if (!h.porte || h.porteur || !h.collision || Math.hypot(h.x - c.x, h.z - c.z) > 0.05 || !c.porte || c.porteur) fail('le meuble posé par l’invité ne ferme pas la porte chez les deux : ' + JSON.stringify(out.meublePorte));
+    }
+    // un meuble éclaté chez l'hôte
+    await H.evaluate(() => { const p = SURV.props.find((q) => q.kind === 'couch'); survPropHit(p, 9999, ZOMBIES[0], null); });
+    await tick(1.2);
+    out.meuble = await C.evaluate(() => { const p = SURV.props.find((q) => q.kind === 'couch'); return { pv: p.hp, visible: !!(p.mesh && p.mesh.visible), collision: p.c.x0 < 1e5 }; });
+    if (out.meuble.pv > 0 || out.meuble.visible || out.meuble.collision) fail('le meuble éclaté chez l’hôte reste chez l’invité : ' + JSON.stringify(out.meuble));
+    // le largage
+    await H.evaluate(() => { SV.drop = null; survAirdrop(); }); await tick(1);
+    const dropC = await C.evaluate(() => ({ vu: !!SV.drop, maillage: !!(SV.dropMesh && SV.dropMesh.visible), id: SURV.caches.findIndex((c) => c.kind === 'drop'), x: SV.drop && SV.drop[0], z: SV.drop && SV.drop[1] }));
+    await drainC(); await C.evaluate((d) => { PL.ent.pos.set(d.x + 0.8, groundHeight(d.x, d.z, 2, 0.3), d.z); }, dropC); await tick(0.3);
+    await C.evaluate((i) => survReq('take', i), dropC.id); await tick(1.2);
+    const full = await C.evaluate(() => PL.ent.arms.slots.filter(ammoUsable).every((w) => w.reserve === ammoMaxOf(w)));
+    await drainC(); await C.evaluate((i) => survReq('take', i), dropC.id); await tick(1.2); const twice = (await res()) > 0;
+    await H.evaluate((i) => survApply('take', i, PL.ent), dropC.id); await tick(1.2);
+    out.largage = { vuInvite: dropC.vu, maillage: dropC.maillage, pleinInvite: full, deuxFois: twice, apres: { hote: await H.evaluate(() => !!SV.drop), invite: await C.evaluate(() => !!SV.drop) } };
+    if (!dropC.vu || !dropC.maillage) fail('le largage n’apparaît pas chez l’invité');
+    if (!full) fail('le largage ne donne pas le plein à l’invité'); if (twice) fail('l’invité prend le largage deux fois');
+    if (out.largage.apres.hote || out.largage.apres.invite) fail('le largage pris par les deux reste en place : ' + JSON.stringify(out.largage.apres));
   } catch (e) { fail('exception : ' + String(e && e.stack || e).slice(0, 400)); }
   console.log(JSON.stringify(out, null, 1));
   for (const [n, L] of [['hôte', A.logs], ['invité', B.logs]]) { const errs = L.filter((l) => l.includes('pageerror') || l.includes('mock')); if (errs.length) { console.log(n + ' :\n' + errs.slice(0, 8).join('\n')); fails.push('erreurs dans la page de l’' + n); } }

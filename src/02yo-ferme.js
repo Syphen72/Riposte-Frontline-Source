@@ -8,6 +8,8 @@
    Ce que l'on peut tenir : la maison (six ouvertures du rez-de-chaussée à barricader, deux portes et quatre fenêtres : survOpening, 08m-barricades.js),
    la grange (son grand portail et sa porte de côté), l'appentis. Rien n'est praticable au-dessus des toits : tuiles et combles sont pleins
    (Maker.capEnd), le grappin est retiré de la survie, et les morts n'ont aucun chemin vers un toit (règles du propriétaire, novembre 2026).
+   Aucun refuge hors de portée des morts : l'étage et le fenil se rejoignent par leurs escaliers (le réseau des bots les suit), la fenêtre
+   de l'étage qui donne sur le toit plat de la véranda a des barreaux, le dessous des escaliers est plein (tools/dev/visual/survie-nav.js).
    Lumière : une nuit de lune, brume basse ; la lampe de la véranda, la cuisine et la grange éclairées ; les fenêtres de la maison allumées.
    Matières et sol : le nécessaire de French Dream (lotissement, 02ym-pavillons-kit.js : pelouse, terre, gravillons, arbres, herbe), la pierre
    et les tuiles de Khamsin.
@@ -18,6 +20,7 @@ const FRM_H = { x0: -6, x1: 6, z0: -4.5, z1: 4.5, t: 0.4, SL: 3.25, H2: 2.6 };
 function fermeLevel() {
   FRM.R = rngOf(6203);
   fermeHouse(); fermeBarn(); fermeShed(); fermeYard(); fermeFields(); fermeWoods(); fermeGround();
+  survAmmoSpots(MAP_DEFS.ferme.ammo); // caisses de munitions et place du largage (08n-ravitaillement.js)
 }
 
 /* ---------- La maison ---------- */
@@ -28,28 +31,37 @@ function fermeHouse() {
   const door = (a0, a1) => ({ a0, a1, b0: 0, b1: 2.25 }), win = (a0, a1) => ({ a0, a1, b0: 0.95, b1: 2.2 });
   // (portes de 1,2 m centrées sur un centre de case de 1 m : le réseau des bots les traverse, navigation.js)
   wallOpen('stone', 'x', zs, t, x0, x1, 0, SL, [win(-5.3, -4.3), door(-3.1, -1.9), win(2.4, 3.6)], wall);
-  wallOpen('stone', 'x', zn, t, x0, x1, 0, SL, [win(-1.6, -0.4), door(2.9, 4.1)], wall);
+  wallOpen('stone', 'x', zn, t, x0, x1, 0, SL, [win(-1.2, 0.0), door(2.9, 4.1)], wall);
   wallOpen('stone', 'z', xe, t, z0 + t, z1 - t, 0, SL, [win(-0.6, 0.6)], wall);
   wallOpen('stone', 'z', xw, t, z0 + t, z1 - t, 0, SL, [win(-1.6, -0.4)], wall);
   for (const [k, axis, fixed, a0, a1, b0, b1, out] of [
     ['porte', 'x', zs, -3.1, -1.9, 0, 2.25, 1], ['fenetre', 'x', zs, -5.3, -4.3, 0.95, 2.2, 1], ['fenetre', 'x', zs, 2.4, 3.6, 0.95, 2.2, 1],
-    ['porte', 'x', zn, 2.9, 4.1, 0, 2.25, -1], ['fenetre', 'x', zn, -1.6, -0.4, 0.95, 2.2, -1],
+    ['porte', 'x', zn, 2.9, 4.1, 0, 2.25, -1], ['fenetre', 'x', zn, -1.2, 0.0, 0.95, 2.2, -1],
     ['fenetre', 'z', xe, -0.6, 0.6, 0.95, 2.2, 1], ['fenetre', 'z', xw, -1.6, -0.4, 0.95, 2.2, -1],
   ]) survOpening({ kind: k, axis, fixed, t, a0, a1, b0, b1, out, room: 'maison' });
   // cloison de la salle et de la cuisine, sa porte
   wallOpen('plaster', 'z', 0.8, 0.2, z0 + t, z1 - t, 0, SL, [{ a0: -3.1, a1: -1.9, b0: 0, b1: 2.2 }], { tint: [0.92, 0.88, 0.8], frames: false });
-  // escalier contre le mur nord de la salle, de la cloison vers le mur ouest ; dessous maçonné (pas de recoin sous les marches)
-  ramp(-5.55, -2.0, z0 + t, z0 + t + 1.1, 'x', SL, 0, 'wood', [0.66, 0.52, 0.38], { mat: 'wood' });
-  // plancher de l'étage, trémie au-dessus de l'escalier, garde-corps
+  // escalier contre le mur nord de la salle : il part près de la cloison et monte vers l'ouest jusqu'à un palier maçonné (1,6 m, au niveau de
+  // l'étage) qui s'ouvre au sud sur la chambre ; dessous plein (pas de recoin sous les marches). 0,9 m de montée par mètre : le réseau des
+  // bots le suit (NAV_RAMP_DH, 03-nav.js), les morts montent à l'étage par là (novembre 2026 : l'ancien escalier finissait contre le mur
+  // ouest, fermé par le garde-corps, et l'étage n'était relié à rien)
+  const SX = -4.0, SB = -0.4, zs0 = z0 + t, zs1 = z0 + t + 1.1;
+  ramp(SX, SB, zs0, zs1, 'x', SL, 0, 'wood', [0.66, 0.52, 0.38], { mat: 'wood' });
+  box('plaster', x0 + t, SX, 0, SL - 0.04, zs0, zs1, { tint: [0.84, 0.8, 0.74] }); box('wood', x0 + t, SX, SL - 0.04, SL, zs0, zs1, { tint: [0.62, 0.48, 0.34], m: 'wood' });
+  // plancher de l'étage, trémie au-dessus de l'escalier (de SX à -1,4 m : de quoi passer la tête), garde-corps le long de la trémie et à son bout
   M.save().color([0.62, 0.48, 0.34]).world(1);
-  box('wood', x0 + t, x1 - t, SL - 0.25, SL, z0 + t + 1.1, z1 - t, { tint: [0.62, 0.48, 0.34], m: 'wood' });
-  box('wood', -2.0, x1 - t, SL - 0.25, SL, z0 + t, z0 + t + 1.1, { tint: [0.62, 0.48, 0.34], m: 'wood' });
+  box('wood', x0 + t, x1 - t, SL - 0.25, SL, zs1, z1 - t, { tint: [0.62, 0.48, 0.34], m: 'wood' });
+  box('wood', -1.4, x1 - t, SL - 0.25, SL, zs0, zs1, { tint: [0.62, 0.48, 0.34], m: 'wood' });
   M.restore();
-  ceilingJoists(x0 + t, x1 - t, z0 + t + 1.1, z1 - t, SL - 0.25);
-  railing(z0 + t + 1.12, 0, SL, -5.55, -2.0, 'x', null, [0.3, 0.24, 0.18]); DECOR.col(-5.55, -2.0, SL, SL + 1.0, z0 + t + 1.08, z0 + t + 1.16, 'wood');
+  ceilingJoists(x0 + t, x1 - t, zs1, z1 - t, SL - 0.25);
+  railing(zs1 + 0.02, 0, SL, SX, -1.4, 'x', null, [0.3, 0.24, 0.18]); DECOR.col(SX, -1.4, SL, SL + 1.0, zs1 - 0.02, zs1 + 0.06, 'wood');
+  railing(-1.42, 0, SL, zs0, zs1, 'z', null, [0.3, 0.24, 0.18]); DECOR.col(-1.46, -1.38, SL, SL + 1.0, zs0, zs1, 'wood');
   // étage : deux chambres, fenêtres sur chaque face, plafond, puis le toit de tuiles (combles pleins, Maker.capEnd)
   const up = { tint: [0.9, 0.86, 0.8], m: 'concrete', floorY: SL }, uwin = (a0, a1) => ({ a0, a1, b0: 0.9, b1: 2.0 });
   wallOpen('stone', 'x', zs, t, x0, x1, SL, H2, [uwin(-4.4, -3.4), uwin(2.6, 3.6)], up);
+  // barreaux à la fenêtre qui donne sur le toit de la véranda : on tire entre eux, on ne sort pas sur ce toit plat où les morts n'arrivent pas
+  for (const bx of [-4.15, -3.9, -3.65]) box('steel', bx - 0.016, bx + 0.016, SL + 0.9, SL + 2.0, zs - 0.03, zs + 0.03, { tint: [0.22, 0.22, 0.22], collide: false });
+  DECOR.col(-4.4, -3.4, SL + 0.9, SL + 2.0, zs - t / 2, zs + t / 2, 'metal', false, false, { noRay: true });
   wallOpen('stone', 'x', zn, t, x0, x1, SL, H2, [uwin(-1.5, -0.5), uwin(3.0, 4.0)], up);
   wallOpen('stone', 'z', xe, t, z0 + t, z1 - t, SL, H2, [uwin(-0.5, 0.5)], up);
   wallOpen('stone', 'z', xw, t, z0 + t, z1 - t, SL, H2, [uwin(0.4, 1.4)], up);
@@ -65,14 +77,17 @@ function fermeHouse() {
   // dedans : table et chaises, tapis, buffet et étagères (des meubles à pousser), cuisinière, évier ; à l'étage, les lits
   tableSet(DECOR, -2.8, 0.8, 0.1, [[-0.4, 0.72], [0.45, -0.72]], [0.52, 0.38, 0.26]);
   DECOR.place(PF.rugFloor(), -2.8, 0.035, 0.8, 0.1);
-  box('wood', 1.2, 2.0, 0, 0.92, z1 - t - 0.6, z1 - t, { tint: [0.5, 0.38, 0.28], m: 'wood' }); // buffet sous la fenêtre de la cuisine
   box('steel', 4.4, 5.4, 0, 0.9, z0 + t, z0 + t + 0.65, { tint: [0.3, 0.3, 0.32], m: 'metal' }); // cuisinière
   box('plaster', 1.2, 3.0, 0, 0.9, z0 + t, z0 + t + 0.6, { tint: [0.86, 0.84, 0.8] }); // évier et plan de travail
   DECOR.place(PF.hangLamp(false, 0.5), 3.2, SL - 0.25, 0, 0, { nocol: true });
   DECOR.place(PF.hangLamp(false, 0.5), -2.8, SL - 0.25, 0.8, 0, { nocol: true });
   for (const [bx, bz] of [[-3.8, 2.6], [3.6, 2.6]]) { box('wood', bx - 1.0, bx + 1.0, SL, SL + 0.5, bz - 0.7, bz + 0.7, { tint: [0.56, 0.42, 0.3], m: 'wood' }); box('canvas', bx - 0.95, bx + 0.95, SL + 0.5, SL + 0.62, bz - 0.65, bz + 0.65, { tint: [0.82, 0.8, 0.74], collide: false }); }
   box('crate', -1.45, -0.55, 0, 0.62, 3.25, 3.95, { tint: [0.55, 0.6, 0.42], m: 'wood' }); box('steel', -1.4, -0.6, 0.62, 0.66, 3.3, 3.9, { tint: [0.25, 0.27, 0.22], collide: false }); // la caisse de munitions (SURV_AMMO)
-  survProp('bookcase', -5.25, 0, 2.4, Math.PI / 2); survProp('bookcase', 5.25, 0, 2.6, -Math.PI / 2); survProp('table', -2.8, 0, 0.8, 0.1, true);
+  // meubles à pousser (survProp, 08m-barricades.js) : lourds, les morts les abattent ; les chaises et la table de la salle sont légères (props
+  // physiques : un coup de feu, un mort qui force le passage les écartent)
+  survProp('bookcase', -5.25, 0, 2.4, Math.PI / 2); survProp('bookcase', 5.25, 0, 2.6, -Math.PI / 2);
+  survProp('couch', -3.4, 0, -1.6, 0); survProp('dresser', 1.6, 0, 3.8, Math.PI);
+  survProp('wardrobe', -1.0, SL, 3.75, Math.PI); survProp('dresser', 5.3, SL, -2.4, -Math.PI / 2);
 }
 
 /* ---------- La grange : ouverte jusqu'au toit, fenil au fond, escalier raide ---------- */
@@ -92,7 +107,7 @@ function fermeBarn() {
   DECOR.place(PF.hangLamp(false, 0.8), -21, H - 0.1, -12.5, 0, { nocol: true });
   // foin, planches (matériaux), le groupe électrogène (objectif : rendre le courant), fûts
   for (const [x, z, y, r] of [[-25.6, -19.6, 3.05, 0], [-24.6, -19.6, 3.05, 0], [-25.6, -18.8, 3.05, 0.1], [-25.8, -11.2, 0, 0.3], [-25.8, -10.4, 0, 0.2], [-25.8, -10.8, 0.45, 0.25]]) DECOR.place(PF.hayBale(), x, y, z, r);
-  survCache('planks', -16.4, 0, -19.6, Math.PI / 2); survCache('planks', -24.8, 0, -15.2, 0);
+  survCache('planks', -16.4, 0, -19.6, Math.PI / 2); survCache('planks', -24.8, 0, -15.2, 0); survCache('metal', -21.5, 0, -20.3, 0);
   DECOR.place(PF.generator(), -16.6, 0, -17.2, -Math.PI / 2); survObjective('power', -16.6, -17.2);
   for (const [x, z] of [[-26.2, -13.6], [-26.2, -14.4]]) DECOR.dyn('barrel', x, 0, z, 0, { tint: [0.35, 0.42, 0.3] });
 }
@@ -107,7 +122,7 @@ function fermeShed() {
   survOpening({ kind: 'porte', axis: 'z', fixed: X0 + t / 2, t, a0: -16.1, a1: -14.9, b0: 0, b1: 2.2, out: -1, room: 'appentis' });
   pitchedRoof(X0, X1, Z0, Z1, H, [0.48, 0.42, 0.36], rngOf(811));
   box('wood', X1 - t - 0.6, X1 - t, 0, 0.95, Z0 + 0.4, Z1 - 0.4, { tint: [0.5, 0.4, 0.3], m: 'wood' }); // établi
-  survCache('tools', X1 - t - 0.3, 0.95, -15.5, 0); survCache('nails', X1 - t - 0.3, 0.95, -14.4, 0); survCache('planks', 15.9, 0, -16.6, 0);
+  survCache('tools', X1 - t - 0.3, 0.95, -15.5, 0); survCache('nails', X1 - t - 0.3, 0.95, -14.4, 0); survCache('planks', 17.1, 0, -16.6, Math.PI / 2); // (le long du mur du fond : posée devant la porte, elle fermait l'appentis au réseau)
 }
 
 /* ---------- La cour : puits, pick-up, bois, clôtures, chemin ---------- */
@@ -222,6 +237,8 @@ MAP_DEFS.ferme = {
   unload() { FRM.splat = null; FRM.R = null; },
   // apparitions des survivants : dans la maison et sur la véranda (miroir inutile : un seul camp)
   spawns: [[-3.5, 2.5], [-1.5, 2.5], [2.5, 2.0], [3.5, -1.5], [-3.5, -1.0], [-1.5, 5.6], [0.5, 5.6], [-4.4, 5.6]],
+  // caisses de munitions (08n-ravitaillement.js) : à l'étage, sous le fenil, dans l'appentis, sur la véranda (la caisse de la salle se paie en points)
+  ammo: [[4.4, FRM_H.SL, -3.75, 0], [-26.3, 0, -18.5, Math.PI / 2], [17.2, 0, -13.92, Math.PI], [0.9, 0.3, 4.85, Math.PI]],
   // où naissent les morts : sous les arbres de la lisière, tout autour
   zspawns: [[-29, 30], [-10, 32], [10, 32], [29, 30], [30, 12], [30, -8], [29, -30], [8, -32], [-8, -32], [-29, -30], [-30, -6], [-30, 14], [-29, -24], [24, -31]],
   poi: [[0, 0, 0, 'M'], [-3, 0, 6, 'M'], [-21, 0, -12, 'L'], [17, 0, -15, 'E'], [9, 0, 6, 'E'], [-8, 0, 10, 'L']],

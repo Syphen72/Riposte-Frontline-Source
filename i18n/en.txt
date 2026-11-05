@@ -1807,7 +1807,6 @@ Prendre les clous ⇒ Take the nails
 Prochaine vague dans {0} s ⇒ Next wave in {0} s
 Préparation ⇒ Preparation
 Préparez la ferme avant la nuit ⇒ Get the farm ready before nightfall
-Ravitaillement largué au loin ⇒ Supplies dropped in the distance
 Rejoignez le pick-up ⇒ Get to the pickup
 Relever {0} ⇒ Revive {0}
 Réparation ⇒ Repair
@@ -1843,3 +1842,18 @@ vagues ⇒ waves
 Équipier relevé ⇒ Teammate revived
 Équipiers relevés ⇒ Teammates revived
 à terre ⇒ down
+Renforcer avec une tôle ({0}) ⇒ Reinforce with a metal sheet ({0})
+Prendre une tôle ⇒ Take a metal sheet
+Prendre des munitions ({0}) ⇒ Take ammo ({0})
++1 tôle, de quoi renforcer une ouverture barricadée ⇒ +1 metal sheet, enough to reinforce a boarded opening
+Au fond d'une poche, un chargeur de secours ⇒ At the bottom of a pocket, a spare magazine
++1 grenade ⇒ +1 grenade
++{0} munitions, +{1} grenade ⇒ +{0} rounds, +{1} grenade
++{0} munitions ⇒ +{0} rounds
+Ravitaillement largué vers {0}, des munitions pour tous ⇒ Supplies dropped to {0}, ammo for everyone
++3 planches, +1 tôle pour l'équipe ⇒ +3 planks, +1 metal sheet for the team
+Munitions basses : des caisses à l'étage, sous le fenil, dans l'appentis et sur la véranda ⇒ Low ammo: crates upstairs, under the hayloft, in the tool shed and on the porch
+Tôle ⇒ Metal sheet
+Munitions pleines ⇒ Ammo full
+{0} tôles ⇒ {0} metal sheets
+Ravitaillement : {0} m ⇒ Supplies: {0} m

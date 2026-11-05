@@ -113,6 +113,9 @@ function ramp(x0, x1, z0, z1, axis, h0, h1, key = 'pavers', tint = [0.8, 0.78, 0
     const hTop = Math.max(0.05, lerp(h0, h1, (t0 + t1) / 2) + Math.abs(h1 - h0) / steps / 2);
     const bx0 = axis === 'x' ? x0 + len * t0 : x0, bx1 = axis === 'x' ? x0 + len * t1 : x1, bz0 = axis === 'x' ? z0 : z0 + len * t0, bz1 = axis === 'x' ? z1 : z0 + len * t1;
     M.col(bx0, bx1, 0, hTop, bz0, bz1, 'concrete', true);
+    // (Breachline) le dessous de l'escalier est plein : une rampe ne fait que hausser le sol (rampHeight), et rien n'empêchait d'entrer de côté
+    // dans le volume des marches, au niveau du sol, pour s'y cacher. Un noyau de collision 55 cm sous les marches (on y marche sans le sentir)
+    if (hTop > 0.6) M.col(bx0, bx1, 0, hTop - 0.55, bz0, bz1, 'concrete');
     // marche : contremarche pleine et giron débordant (nez)
     M.save().color(tint).world(1);
     M.aoFn = (x, y) => lerp(0.72, 1, smoothstep(0, 0.6, y - hTop + 0.6));
