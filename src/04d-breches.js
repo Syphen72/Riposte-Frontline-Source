@@ -64,6 +64,7 @@ function breachBlast(p, r, maxDmg, owner) {
 }
 /* Ouvre (ou referme, nouvelle partie) un pan ; fx : poussière, éclats, fracas */
 function breachSet(b, open, fx) {
+  SURV.ver++; // (la survie : un passage de plus, 08m-barricades.js)
   if (b.open === open) return;
   b.open = open; BRCH.open[b.id] = open ? 1 : 0;
   dmgColsOn([b.col], !open); b.g.visible = !open; b.w.visible = open;

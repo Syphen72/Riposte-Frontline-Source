@@ -2,7 +2,7 @@
    CARTE : infrastructure commune à toutes les cartes. Limites, liste des cartes, collisions en boîtes
    alignées (COL) et rampes (RAMPS), requêtes (sol, glissement, plafond, rayons), blocs simples et escaliers.
    Le décor est construit par l'atelier (02a-kit.js) et ses bibliothèques ; le plan de chaque carte est dans
-   son propre fichier (Khamsin : 02s-sable.js, Val-Blanc : 02t-givre.js, Kervénec : 02u-embruns.js, Hortus : 02v-floreal.js, Meltem : 02yb à 02yf, Tephra : 02yg et 02yh, Stratus : 02yi et 02yj, French Dream : 02ym et 02yn ; le nom d'une carte est un nom propre, le même dans les deux langues), qui déclare sa
+   son propre fichier (Khamsin : 02s-sable.js, Val-Blanc : 02t-givre.js, Kervénec : 02u-embruns.js, Hortus : 02v-floreal.js, Meltem : 02yb à 02yf, Tephra : 02yg et 02yh, Stratus : 02yi et 02yj, French Dream : 02ym et 02yn, Holloway : 02yo, Halcyon : 02yp ; le nom d'une carte est un nom propre, le même dans les deux langues), qui déclare sa
    définition (MAP_DEFS) ; l'eau d'une carte portuaire est dans 02m-water.js ;
    le chargement est dans 09a-loading.js, les réglages propres à chaque carte (ambiance, zones...) dans 02z-load.js.
    ========================================================================== */
@@ -33,6 +33,8 @@ const MAPS = [
     desc: _t('Une oasis au milieu des dunes. Au-delà, il n\u0027y a que du sable et ceux qui sont partis vérifier.') },
   { id: 'ferme', name: 'Holloway', tag: _t('Ferme isolée, la nuit'), ok: true, modes: ['zombie'],
     desc: _t('Une ferme au bout d\u0027un chemin de terre. La radio ne capte plus rien depuis mardi.') },
+  { id: 'galerie', name: 'Halcyon', tag: _t('Centre commercial, la nuit'), ok: true, modes: ['zombie'],
+    desc: _t('Une galerie marchande de deux étages, fermée pour inventaire. Les soldes ont attiré du monde dehors.') },
   { id: 'lotissement', name: 'French Dream', tag: _t('Lotissement pavillonnaire'), ok: true,
     desc: _t('Un lotissement où toutes les maisons se ressemblent. Le syndic décline toute responsabilité.') },
 ];
@@ -142,6 +144,16 @@ function buildHash() {
         const k = x * 1000 + z; let a = HASH.get(k); if (!a) HASH.set(k, a = []); a.push(i);
       }
   }
+}
+/* Une boîte déplacée en partie (un meuble de la survie) : rangée en plus dans les cases de sa nouvelle place (les anciennes la gardent, ses bornes
+   la départagent). Un buildHash complet rangeait toutes les boîtes de la carte une fois de plus à chaque meuble poussé : les cases grossissaient
+   au fil de la partie, et chaque requête avec elles */
+function hashCol(i) {
+  const c = COL[i]; if (!c || c.x0 > 1e5) return;
+  for (let x = Math.floor(c.x0 / HCELL); x <= Math.floor(c.x1 / HCELL); x++)
+    for (let z = Math.floor(c.z0 / HCELL); z <= Math.floor(c.z1 / HCELL); z++) {
+      const k = x * 1000 + z; let a = HASH.get(k); if (!a) HASH.set(k, a = []); if (!a.includes(i)) a.push(i);
+    }
 }
 /* Une boîte rangée dans plusieurs cases n'est rendue qu'une fois : elle garde le numéro de la dernière requête qui l'a rendue
    (_qstamp). Un Set vidé à chaque requête réallouait sa table : les lignes de vue des bots en faisaient une bonne part des

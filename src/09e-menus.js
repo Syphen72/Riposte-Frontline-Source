@@ -22,7 +22,8 @@ function uiOpen(name = 'main', stack = []) {
 }
 function uiHide() { $('ui').classList.add('hidden'); }
 function uiGo(name, push = true, fresh = push) {
-  if (name === 'survie') { Settings.map = 'ferme'; Settings.mode = 'zombie'; saveSettings(); name = netInLobby() ? 'multi' : 'solo'; } // (Breachline : la survie, 09ia-survie.js ; en salon, l'hôte choisit la carte)
+  // (une carte de survie déjà choisie, la galerie : on la garde ; sinon la ferme)
+  if (name === 'survie') { if (!(MAP_DEFS[Settings.map] && MAP_DEFS[Settings.map].zombie)) Settings.map = 'ferme'; Settings.mode = 'zombie'; saveSettings(); name = netInLobby() ? 'multi' : 'solo'; } // (Breachline : la survie, 09ia-survie.js ; en salon, l'hôte choisit la carte)
   const toLobby = name === 'play' && netInLobby(); if (toLobby) name = 'multi'; // déjà dans un salon : Jouer y ramène
   // un salon ouvert sans passer par la liste des salons (Jouer, Entre amis, le groupe qui suit son chef) : le quitter ramène à l'écran d'avant
   if (name === 'multi' && UI.screen !== 'multi') UI.lobbyBack = toLobby;

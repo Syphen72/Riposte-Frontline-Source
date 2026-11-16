@@ -157,15 +157,18 @@ function survLootSync(L) {
 }
 
 /* ---------- Largage ---------- */
-/* Une caisse tombe à 17-25 m de la maison, dehors, sur un nœud libre que les vivants peuvent rejoindre ; fumée rouge, et les morts l'entendent */
+/* Une caisse tombe dehors, sur un nœud libre que les vivants peuvent rejoindre : à 17-25 m de la maison, ou dans l'une des zones de largage de la
+   carte (surv.drops : [x0, x1, z0, z1], le parking de la galerie) ; fumée rouge, et les morts l'entendent */
 function survAirdrop() {
   if (!survLocal()) return;
   const c = SURV.caches.find((q) => q.kind === 'drop'); if (!c) return;
-  const H = survStanding()[0] || PL.ent;
+  const H = survStanding()[0] || PL.ent, Z = CURMAP.def && CURMAP.def.surv && CURMAP.def.surv.drops;
   for (let k = 0; k < 24; k++) {
-    const a = Math.random() * TAU, r = rand(17, 25), id = navNode(Math.cos(a) * r, 0, Math.sin(a) * r); if (id < 0) continue;
+    let px, pz; if (Z) { const r = Z[Math.floor(Math.random() * Z.length)]; px = rand(r[0], r[1]); pz = rand(r[2], r[3]); } else { const a = Math.random() * TAU, r = rand(17, 25); px = Math.cos(a) * r; pz = Math.sin(a) * r; }
+    const id = navNode(px, 0, pz); if (id < 0) continue;
     const x = NAV.nx[id], z = NAV.nz[id], y = NAV.ny[id];
-    if (survRoomAt(_saA.set(x, 0, z)) || hyp(x, z) < 15 || Math.abs(x) > 29 || Math.abs(z) > 30) continue;
+    if (survRoomAt(_saA.set(x, y, z)) || ceilingAbove(x, z, y + 0.3, 0.3) < y + 30) continue; // (à ciel ouvert)
+    if (!Z && (hyp(x, z) < 15 || Math.abs(x) > 29 || Math.abs(z) > 30)) continue;
     if (H && !findPath(H.pos, new V3(x, y, z))) continue;
     c.x = x; c.y = y; c.z = z; c.left = 1; c.t = 90; c.claims = new Set(); c.first = true;
     SV.drop = [+x.toFixed(2), +z.toFixed(2)]; SV.dropId = (SV.dropId || 0) + 1; SV.dirty = true;

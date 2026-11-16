@@ -26,10 +26,10 @@ killstreaks. Everything is procedural code in `src/`, with no new asset files.
 Multiplayer follows the existing model: the shooter or owner simulates, decor that changes collision (vehicles, barrels, breach
 walls) is decided by the host, and the host's state packets carry the decor state for players who join mid-match.
 
-### Survival (6.1, 6.2)
+### Survival (6.1 to 6.3)
 
-A co-op mode against waves of the dead, on its own map (Holloway, an isolated farm at night). It is reached from the main menu
-(Survie) or by picking the farm in a lobby; the other modes stay as they were.
+A co-op mode against waves of the dead, on its own maps (Holloway, an isolated farm at night; Halcyon, a two-storey shopping mall).
+It is reached from the main menu (Survie) or by picking a survival map in a lobby; the other modes stay as they were.
 
 | System | Where | In play |
 | --- | --- | --- |
@@ -37,14 +37,21 @@ A co-op mode against waves of the dead, on its own map (Holloway, an isolated fa
 | Ammunition | `src/08n-ravitaillement.js` | Each weapon gets its own share of its full reserve (launchers half as much). End of wave: a top-up to 70/55/45 % by difficulty, a full refill every fifth wave. Ammo crates placed on the map (`ammo` in the map definition): two takes each (three with three survivors or more), a take comes back over time, all at the end of the wave. Pouches dropped by the dead, more often when the team is low (guests report their reserve). An emergency magazine after 5 s dry. A supply drop every other wave from wave 4, 17-25 m out, a full refill per survivor. Full refill for points at the house crate and for every objective. Online, the host owns crates, pouches and drops and sends each guest its share. |
 | The dead | `src/07g-zombies.js` | Ordinary entities of team 2 built on the soldier body (same hit zones and ragdoll), with civilian clothes and their own gait, perception (sight, smell through floors, footsteps in the same building, gunshots, explosions), pathing, separation and melee. Shambler, runner, crawler, brute, screamer. When the open path is closed, a plan (`zombiePlan`) picks the cheapest thing to get through: the first obstacle on a "soft" path (barricade, furniture) or a window, avoiding openings where others already crowd. They attack it, shove it, climb over low furniture, push physics props aside, and clamber up to a target perched within 2.1 m. Stuck detection escalates: new path, attack what is in reach, soft path, a detour, and as a last resort (out of sight, never towards the living) a step back onto the network or a return to the woods. |
 | Barricades | `src/08m-barricades.js` | Planks are real collision boxes nailed one by one on windows and doors (shoot between them, nobody walks through), damaged in visible stages, torn off by the dead. A metal sheet over the boards takes the first blows. A closed door closes its nodes in the bot network (`NAV.bgate`). Heavy furniture (bookcase, wardrobe, dresser, couch) can be carried anywhere; wherever it stands it closes the network nodes it covers (`NAV.pblock`), and it wears down, shoves back and breaks, freeing its collision and its nodes. Caches of planks, tools, nails and metal sheets. One action key for everything. |
+| Doors and shutters | `src/08m-barricades.js` | An opening can carry a leaf (`SGATE`, `gate` in `survOpening`): a shop's open-mesh shutter (you shoot through it, nobody walks through), a dock roll-up door (goes up only with power), a steel door, a glass door (blows, bullets and blasts shatter it for good), a fire shutter (only the security office moves it). Closed, it closes the doorway's nodes like a plank and takes blows after the metal sheet and the boards; at zero it gives way for good. Openings carry their floor height (`fl`), so upper-floor doors close the network too. Maps declare their rooms (`rooms`: name, box, height range, building). |
 | The farm | `src/02yo-ferme.js` | Stone farmhouse (two floors joined by stairs with an open landing, solid attic), barn with a hayloft, tool shed, yard, fields, treeline. Collision defined with the map: nothing walkable above the roofs, bars on the upstairs window over the flat porch roof. |
+| The mall | `src/02yp-galerie.js` | Two public floors around an open atrium (two stopped escalators, a bridge, glass balustrades), nineteen shops with a shutter on the concourse and, on the ground floor and the upper north row, a back door onto the service corridors; a department store (two floors, stockroom, padlocked cage), a food court (four counters and kitchens), a receiving dock (two roll-up doors, service stairs, a mezzanine to the upper corridor, the generator). Fire shutters and fire doors at the limits of the two wings, closed from the security office. Glass entrances, steel emergency exits, a staff entrance, two service corridor walls that give way mid-run. Parking lot, delivery yard and truck (the escape). The map's `surv` block: siege, wave weight, texts, buy point, named entrances for hordes, collapsing walls, drop zones, zombie clothing. |
 
 The bot network links steep stairs (up to 1.05 m per cell, `NAV_RAMP_DH`, only on ramps and only where the climb is continuous),
 finds the nearest node by score rather than stopping at the first non-empty ring, and does not let a smoothed path cross a thin wall
 between levels. Stairs everywhere have a solid core under their steps.
 
 Online, the host simulates the dead, the waves, the stockpiles, planks and furniture, and sends them in its state packet; guests
-send their hits, requests, downed state and revives. If the host leaves, its replacement takes the dead over where they stand.
+send their hits, requests, downed state and revives. If the host leaves, its replacement takes the dead over where they stand. Between
+two full packets (once a second), the host sends only the openings that changed (`s.bx`).
+
+On a siege map (`surv.siege`), the dead who sense no one walk to one of the exterior entrances of the survivors' building (each its own,
+mostly a near one), from the inside: when it is shut, their path goes through it and they force it. Before searching an open path, a
+zombie checks the open components of the network (`survOpenComp`, rebuilt when a passage opens or closes): no open path, no search.
 
 The grapple is removed from survival through a per-mode rule (`modeAllows`, `MODES.<id>.ban`), applied to every input and to other
 players' ropes.
@@ -61,7 +68,10 @@ Headless benches for these systems are in `tools/dev/visual/`: `degats.js`, `lou
 `tourelle.js`, `grappin.js`, `breches.js`, `chien.js`, `helico.js`; for survival and collision, `survie.js`, `survie-nav.js` (the farm: every floor on the network, the dead upstairs and in the hayloft,
 furniture across the landing and a doorway, a fully fortified house, a stale path, and a search for any place a player can stand that the
 dead cannot reach), `survie-munitions.js` (every ammo source, then a twelve-wave solo session), `survie-reseau.js` (two game
-pages joined through a stand-in for PeerJS), `toits.js` (roof cavities on a map) and `grappin-toits.js` (grapples, high-speed movement
+pages joined through a stand-in for PeerJS), `survie-galerie.js` (the mall: network, shutters and doors, breaking in from the back,
+spilling onto the concourse, both routes upstairs, a sealed wing, the siege, the cage, a collapsing wall, the escape, the refuge search, the
+cost of 24 dead, a ten-wave session), `survie-galerie-reseau.js` (the mall online: shutters, glass, lockdown, adrenaline, walls, escape,
+and the changed-openings packet), `toits.js` (roof cavities on a map) and `grappin-toits.js` (grapples, high-speed movement
 and ray symmetry on a map). `docs/BREACHLINE-ASSETS.md` lists what remains to replace
 before a commercial release.
 

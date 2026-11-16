@@ -1755,7 +1755,7 @@ Un chien robot armé vous suit et attaque les ennemis qu'il voit pendant 50 seco
 Votre hélicoptère est en perdition ⇒ Your helicopter is going down
 Grappin indisponible dans ce mode ⇒ Grapple unavailable in this mode
 
-Barricadez la ferme et tenez les vagues. La touche d'action cloue une planche, répare, pousse un meuble ou relève un équipier. ⇒ Barricade the farm and hold out against the waves. The action key nails a plank, repairs, pushes furniture or revives a teammate.
+Barricadez les lieux et tenez les vagues. La touche d'action cloue une planche, répare, pousse un meuble, ferme un rideau ou relève un équipier. ⇒ Barricade the place and hold out against the waves. The action key nails a plank, repairs, pushes furniture, closes a shutter or revives a teammate.
 Un hurlement : d'autres arrivent ⇒ A scream, more of them are coming
 Une ferme au bout d'un chemin de terre. La radio ne capte plus rien depuis mardi. ⇒ A farm at the end of a dirt road. The radio has picked up nothing since Tuesday.
 l'est ⇒ the east
@@ -1857,3 +1857,68 @@ Tôle ⇒ Metal sheet
 Munitions pleines ⇒ Ammo full
 {0} tôles ⇒ {0} metal sheets
 Ravitaillement : {0} m ⇒ Supplies: {0} m
+Centre commercial, la nuit ⇒ Shopping mall at night
+Une galerie marchande de deux étages, fermée pour inventaire. Les soldes ont attiré du monde dehors. ⇒ A two-storey shopping mall, closed for stocktaking. The sale has drawn a crowd outside.
+L'entrée principale ⇒ The main entrance
+Une issue de secours ⇒ An emergency exit
+L'entrée du personnel ⇒ The staff entrance
+Un rideau du quai ⇒ A loading dock door
+La porte de la réserve ⇒ The stockroom door
+L'entrée de la restauration ⇒ The food court entrance
+L'entrée du grand magasin ⇒ The department store entrance
+Le mur du couloir de service nord ⇒ The north service corridor wall
+Le mur du couloir de service sud ⇒ The south service corridor wall
+Le rideau de {0} ⇒ The {0} shutter
+Le rideau du poste de sécurité ⇒ The security office shutter
+L'arrière de {0} ⇒ The back of {0}
+L'arrière du poste de sécurité ⇒ The back of the security office
+Fermer l'aile ouest (rideaux coupe-feu) ⇒ Seal the west wing (fire shutters)
+Rouvrir l'aile ouest ⇒ Reopen the west wing
+Aile ouest fermée, les rideaux coupe-feu tombent ⇒ West wing sealed, the fire shutters come down
+Aile ouest rouverte ⇒ West wing reopened
+Fermer l'aile est (rideaux coupe-feu) ⇒ Seal the east wing (fire shutters)
+Rouvrir l'aile est ⇒ Reopen the east wing
+Aile est fermée, les rideaux coupe-feu tombent ⇒ East wing sealed, the fire shutters come down
+Aile est rouverte ⇒ East wing reopened
+Le rideau coupe-feu de l'aile ouest ⇒ The west wing fire shutter
+Le rideau coupe-feu de l'aile est ⇒ The east wing fire shutter
+Une porte coupe-feu ⇒ A fire door
+La grille du hall d'entrée ⇒ The entrance hall gate
+La porte du quai ⇒ The receiving door
+La porte de la mezzanine ⇒ The mezzanine door
+Une porte de service ⇒ A service door
+Les rideaux du quai se lèvent ⇒ The loading dock doors are going up
+Hall d'entrée ⇒ Entrance hall
+Atrium ⇒ Atrium
+Restauration ⇒ Food court
+Quai de réception ⇒ Receiving dock
+Couloir de service ⇒ Service corridor
+Boutiques ⇒ Shops
+Cour de livraison ⇒ Delivery yard
+Abords ⇒ Grounds
+Fermez la galerie avant la nuit ⇒ Lock down the mall before nightfall
+Fuyez : tous au camion du quai ⇒ Escape, everyone to the dock truck
+Pour fuir, rétablissez le courant et réparez le camion du quai ⇒ To escape, restore the power and repair the dock truck
+Réparer le camion de livraison ⇒ Repair the delivery truck
+Le camion de livraison démarre ⇒ The delivery truck starts
+Tenez près du camion : {0} s ⇒ Hold near the truck, {0} s
+Rejoignez le camion du quai ⇒ Get to the dock truck
+l'entrée principale ⇒ the main entrance
+le quai de livraison ⇒ the loading dock
+la restauration ⇒ the food court
+le grand magasin ⇒ the department store
+{0} vole en éclats ⇒ {0} shatters
+{0} a cédé ⇒ {0} gave way
+Sans courant, le rideau ne se lève pas ⇒ Without power, the shutter will not go up
+Lever le rideau ⇒ Raise the shutter
+Ouvrir la porte ⇒ Open the door
+Baisser le rideau ⇒ Lower the shutter
+Fermer la porte ⇒ Close the door
+Prendre une seringue d'adrénaline ({0}) ⇒ Take an adrenaline shot ({0})
+Quelque chose bloque le passage ⇒ Something is in the way
+Adrénaline : vous vous relèverez seul une fois ⇒ Adrenaline, you will get back up on your own once
+{0} s'effondre ⇒ {0} collapses
+Le poste de sécurité est sans courant ⇒ The security office has no power
+Forcer la cage de la réserve ⇒ Break open the stockroom cage
+La cage est cadenassée, il faut des outils ⇒ The cage is padlocked, you need tools
+La cage est ouverte, planches, tôles, clous et munitions ⇒ The cage is open, planks, metal sheets, nails and ammo

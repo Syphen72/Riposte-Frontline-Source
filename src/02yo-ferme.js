@@ -245,6 +245,8 @@ MAP_DEFS.ferme = {
   lane: (x) => (x < -8 ? 'L' : x > 8 ? 'E' : 'M'),
   sniper: [-3.5, FRM_H.SL, 2.5], coverZ: 30, heli: [26, 28], cam: 34,
   surface: (p) => fermeSurface(p),
+  // pièces de la survie (08m-barricades.js : survRoomAt) : chaque bâtiment est la sienne
+  rooms: [['maison', -6, 6, -4.5, 4.5], ['grange', -27, -15, -21, -9], ['appentis', 15, 19.5, -17.5, -13.5]],
   zones: [
     [_t('Maison'), -6, 6, -4.5, 4.5], [_t('Véranda'), -5.5, 2, 4.5, 7.2], [_t('Grange'), -27, -15, -21, -9], [_t('Appentis'), 15, 19.5, -17.5, -13.5],
     [_t('Cour'), -12, 14, -8, 14], [_t('Champs'), -32, -12, -6, 32], [_t('Champs'), 14, 32, -6, 32], [_t('Chemin'), -3, 3, 14, 34], [_t('Lisière'), -32, 32, -34, 34],

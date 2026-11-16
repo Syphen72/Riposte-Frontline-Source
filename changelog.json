@@ -1,5 +1,48 @@
 [
   {
+    "version": "6.3.0",
+    "date": "2026-11-06",
+    "title": "Survie : la galerie marchande",
+    "title_en": "Survival: the shopping mall",
+    "changes": [
+      {
+        "t": "new",
+        "x": "Halcyon, une galerie marchande de deux étages à tenir la nuit. Un mail ouvert sur un atrium, dix-neuf boutiques, un grand magasin, une restauration, un quai de livraison, des couloirs de service derrière les boutiques, et le parking où se massent les morts.",
+        "x_en": "Halcyon, a two-storey shopping mall to hold through the night. A concourse around an open atrium, nineteen shops, a department store, a food court, a loading dock, service corridors behind the shops, and the parking lot where the dead gather."
+      },
+      {
+        "t": "new",
+        "x": "Rideaux et portes. Chaque boutique a son rideau sur le mail, qu'on baisse et qu'on lève, et sa porte du fond sur le couloir de service. Portes d'acier, portes vitrées qui volent en éclats (coups, balles, souffles), rideaux du quai qui ne se lèvent qu'avec le courant. Tout se cloue par-dessus.",
+        "x_en": "Shutters and doors. Every shop has a shutter on the concourse that you lower and raise, and a back door onto the service corridor. Steel doors, glass doors that shatter under blows, bullets and blasts, dock doors that only go up with power. Everything can be boarded over."
+      },
+      {
+        "t": "new",
+        "x": "Les morts font le siège. Ceux qui ne sentent personne marchent sur une entrée et la forcent. Quand le mail est fermé, ils passent par les couloirs de service, forcent la porte du fond d'une boutique et en sortent sur le mail.",
+        "x_en": "The dead lay siege. Those who smell no one walk up to an entrance and force it. When the concourse is shut, they go through the service corridors, force a shop's back door and come out onto the concourse."
+      },
+      {
+        "t": "new",
+        "x": "Le poste de sécurité ferme une aile avec ses rideaux et portes coupe-feu, une fois le courant rétabli. La cage de la réserve s'ouvre avec les outils. Des seringues d'adrénaline à la pharmacie et au cabinet médical. Les murs des couloirs de service cèdent en cours de partie, et l'on fuit par le camion du quai.",
+        "x_en": "The security office seals a wing with its fire shutters and fire doors once the power is back. The stockroom cage opens with the tools. Adrenaline shots at the pharmacy and the clinic. The service corridor walls give way during the run, and you escape in the dock truck."
+      },
+      {
+        "t": "improved",
+        "x": "Les morts cherchent leur chemin plus vite. Ils savent tout de suite quand aucun chemin ouvert ne mène à leur proie, et ne parcourent plus tout le réseau pour le découvrir.",
+        "x_en": "The dead find their way faster. They know at once when no open path leads to their prey, instead of searching the whole network to find out."
+      },
+      {
+        "t": "improved",
+        "x": "En ligne, l'hôte n'envoie plus que les ouvertures qui changent, l'état complet une fois par seconde.",
+        "x_en": "Online, the host only sends the openings that change, and the full state once a second."
+      },
+      {
+        "t": "fixed",
+        "x": "Le pick-up de la ferme se répare même sans courant. Les ouvertures de l'étage ferment bien le réseau des bots. Les meubles poussés en pleine partie ne ralentissent plus le jeu au fil des vagues.",
+        "x_en": "The farm pickup can be repaired before the power is back. Upstairs openings now close the bot network properly. Furniture pushed during a run no longer slows the game down wave after wave."
+      }
+    ]
+  },
+  {
     "version": "6.2.0",
     "date": "2026-11-05",
     "title": "Survie : munitions et passages",

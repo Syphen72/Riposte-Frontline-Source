@@ -307,6 +307,7 @@ function heavyNearMiss(owner, origin, dir, endT) {
 function dmgWorldShot(box, end, dir, dmg, shooter, type = 'bullet') {
   if (box && box.brch) { if (type === 'heavy') breachDamage(box.brch, dmg * BREACH.heavy, shooter, shooter === PL.ent || !!(shooter && shooter.netBot)); return false; } // pan à brèche (04d-breches.js)
   if (box && box.veh) { vehShot(box.veh, dmg * (type === 'heavy' ? DMG_VEH.heavy : DMG_VEH.bullet), shooter); return false; }
+  if (box && box.sgate !== undefined) { const op = SURV.open[box.sgate]; if (op && op.gate) { if (op.gate.type === 'glass') { if (shooter === PL.ent || survLocal()) survGateShot(op, dmg); } else for (let i = 0; i < 3; i++) FX.add.spawn(end.x, end.y, end.z, rand(-1.5, 1.5), rand(0.2, 2), rand(-1.5, 1.5), rand(0.04, 0.09), 0.03, 0.01, 4, 2.6, 1.1, 1, 0, 9, 0.3); return true; } return false; } // porte vitrée de la survie (08m-barricades.js)
   if (DMG.panes.length && (!box || !box.prop)) {
     if (dir.x * dir.x + dir.z * dir.z < 1e-4) return false;
     const p = glassAt(end.x, end.y, end.z, 0.05, 0.75, 0.01);
@@ -319,6 +320,7 @@ function dmgBlast(p, r, maxDmg, owner) {
   glassBlast(p, r * 1.6);
   vehBlast(p, r, maxDmg, owner);
   breachBlast(p, r, maxDmg, owner);
+  survGateBlast(p, r);
 }
 /* Une image de partie */
 function dmgTick(dt) {

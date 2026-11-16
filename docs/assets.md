@@ -2,7 +2,7 @@
 
 Produite à partir du code par `python3 tools/dev/assets.py`, que `build.py` lance à chaque construction : ne pas la modifier à la main. Tout le jeu est construit par le code (README, « Direction artistique : tout en code ») ; seules les textures photo, les ciels et les HDRI viennent de fichiers, tous en CC0. La description d'un asset est le commentaire écrit au-dessus de sa définition : pour la changer, changer le commentaire.
 
-221 prefabs, 39 props physiques, 47 surfaces photo, 62 surfaces procédurales, 14 atlas dessinés au chargement, 8 ciels photographiés, 3 HDRI, 19 armes, 18 accessoires.
+223 prefabs, 40 props physiques, 47 surfaces photo, 62 surfaces procédurales, 15 atlas dessinés au chargement, 8 ciels photographiés, 3 HDRI, 19 armes, 18 accessoires.
 
 ## Cartes
 
@@ -17,6 +17,8 @@ Produite à partir du code par `python3 tools/dev/assets.py`, que `build.py` lan
 | Stratus | `src/02yj-stratus.js` | wood, stone, strata, lawn, dirt, flagstone, humus, canvas, burlap, timber, bark | qwantani_dawn |
 | Simoun | `src/02yl-simoun.js` | stone, wood, sand, dirt, pise, adobe, galets, vase, strata, reg, canvas, laine, steel, burlap, timber, palmbark | quarry_01 |
 | French Dream | `src/02yn-french-dream.js` | plaster, slate, rooftiles, asphalt, concrete, pavers, lawn, pathgravel, wood, paintwood, rollshutter, steel, timber, bark, dirt, sand, canvas, cardboard | kloofendal_48d |
+| Holloway | `src/02yo-ferme.js` | plaster, slate, asphalt, sand, stone, rooftiles, concrete, pavers, lawn, pathgravel, wood, paintwood, steel, timber, bark, dirt, canvas, crate, burlap, cardboard, ashlar, rollshutter |  |
+| Halcyon | `src/02yp-galerie.js` | plaster, concrete, steel, asphalt, pavers, lawn, wood, paintwood, crate, cardboard, canvas, rollshutter, stone, slate, bark, dirt, pathgravel, rooftiles, timber |  |
 
 ## Prefabs du décor
 
@@ -29,7 +31,7 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
 | `crate` | s = 1.1 | Caisse en planches : panneaux, tasseaux sur les arêtes, écharpes en diagonale | 02k-dynprops, 02yi-stratus-kit, 02yj-stratus (Stratus) |
-| `pallet` |  | Palette en bois (1,2 x 0,8) | 02l-port, 02s-sable (Khamsin), 02t-givre (Val-Blanc), 02u-embruns (Kervénec) |
+| `pallet` |  | Palette en bois (1,2 x 0,8) | 02l-port, 02s-sable (Khamsin), 02t-givre (Val-Blanc), 02u-embruns (Kervénec), 02yp-galerie (Halcyon) |
 | `barrel` |  | Fût métallique de 200 L : cerclages de roulement, bondes | 02k-dynprops |
 | `jerrycan` |  | Jerrican (20 L, modèle militaire d'après photos) : caisse à bords arrondis, X emboutis sur les flancs, cordon de soudure tout autour, trois poignées en travers du dessus, bec et bouchon à levier sur... | 02k-dynprops |
 | `gasBottle` |  | Bouteille de gaz butane (bleue ou orange) | 02k-dynprops |
@@ -57,12 +59,12 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
-| `lampPost` | lit = litOn() | Lampadaire : socle, fût conique, crosse, lanterne ; allumé (lit, par défaut selon l'ambiance) : verre lumineux et lumière cuite sous la lanterne, rabattue vers le sol | 02s-sable (Khamsin), 02t-givre (Val-Blanc) |
+| `lampPost` | lit = litOn() | Lampadaire : socle, fût conique, crosse, lanterne ; allumé (lit, par défaut selon l'ambiance) : verre lumineux et lumière cuite sous la lanterne, rabattue vers le sol | 02s-sable (Khamsin), 02t-givre (Val-Blanc), 02yo-ferme (Holloway), 02yp-galerie (Halcyon) |
 | `manhole` |  | Bouche d'égout (plaque en fonte) et grille d'avaloir, affleurantes | 02s-sable (Khamsin), 02yn-french-dream (French Dream) |
 | `drain` |  |  | 02s-sable (Khamsin), 02yn-french-dream (French Dream) |
 | `pebbles` | seed = 1 | Gravillons et petits débris épars (menus détails) | 02s-sable (Khamsin) |
 | `bollard` |  | Borne anti-stationnement | 02u-embruns (Kervénec) |
-| `dumpster` |  | Benne à ordures à chargement frontal (d'après photos) : cuve à face avant inclinée et dos droit, rebord, nervures verticales, fourreaux de levage sur les bouts, deux couvercles de plastique noir... | 02s-sable (Khamsin), 02u-embruns (Kervénec) |
+| `dumpster` |  | Benne à ordures à chargement frontal (d'après photos) : cuve à face avant inclinée et dos droit, rebord, nervures verticales, fourreaux de levage sur les bouts, deux couvercles de plastique noir... | 02s-sable (Khamsin), 02u-embruns (Kervénec), 02yp-galerie (Halcyon) |
 | `tire` |  | Pile de pneus | 02k-dynprops |
 | `pole` |  | Poteau électrique en bois avec traverse et isolateurs | 02t-givre (Val-Blanc) |
 
@@ -83,7 +85,7 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
 | `rack` | L | Rayonnage à palettes : échelles bleues, lisses orange, charges | 02s-sable (Khamsin) |
-| `generator` |  | Groupe électrogène insonorisé (d'après photos de groupes de chantier) : châssis en U sur patins, capot à toit arrondi, grille de radiateur à persiennes en +x, sortie d'air chaud en -x, portes de... | 02s-sable (Khamsin), 02t-givre (Val-Blanc), 02yh-tephra (Tephra), 02yl-simoun (Simoun) |
+| `generator` |  | Groupe électrogène insonorisé (d'après photos de groupes de chantier) : châssis en U sur patins, capot à toit arrondi, grille de radiateur à persiennes en +x, sortie d'air chaud en -x, portes de... | 02s-sable (Khamsin), 02t-givre (Val-Blanc), 02yh-tephra (Tephra), 02yl-simoun (Simoun), 02yo-ferme (Holloway), 02yp-galerie (Halcyon) |
 
 **Café, marché**
 
@@ -99,17 +101,17 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
 | `table` |  | Table en bois (2 x 1 m, d'après photos de tables de ferme) : plateau de quatre planches à joints, ceinture sous le plateau, pieds fuselés, entretoise ; ses chaises sont des props physiques posées... | 02k-dynprops |
-| `rugFloor` |  | Tapis posé au sol (2,4 x 1,6 m) | 02s-sable (Khamsin), 02t-givre (Val-Blanc) |
+| `rugFloor` |  | Tapis posé au sol (2,4 x 1,6 m) | 02s-sable (Khamsin), 02t-givre (Val-Blanc), 02yo-ferme (Holloway) |
 | `fountain` |  | Fontaine octogonale : bassin, margelle moulurée, eau, colonne et vasque | 02s-sable (Khamsin) |
-| `forklift` |  | Chariot élévateur jaune (frontal à contrepoids, classe 1,5 t, d'après des photos de chariots thermiques) : caisse au profil découpé sur les roues, contrepoids arrondi, capot et siège, colonne de... | 02s-sable (Khamsin), 02u-embruns (Kervénec) |
+| `forklift` |  | Chariot élévateur jaune (frontal à contrepoids, classe 1,5 t, d'après des photos de chariots thermiques) : caisse au profil découpé sur les roues, contrepoids arrondi, capot et siège, colonne de... | 02s-sable (Khamsin), 02u-embruns (Kervénec), 02yp-galerie (Halcyon) |
 | `tent` |  | Tente militaire (7 x 4,4 m) : parois de toile, toit à deux pans, mâts, haubans, porte roulée. | 02s-sable (Khamsin), 02t-givre (Val-Blanc), 02yl-simoun (Simoun) |
 | `gateLeaf` |  | Vantail de portail : planches cloutées, pentures en fer (ouvert, plaqué contre le mur ; épaisseur en x) | 02s-sable (Khamsin) |
 | `iBeam` | h | Poutre en I (poteau), hauteur h | 02s-sable (Khamsin) |
 | `truss` | L | Ferme de toiture en treillis (le long de z, longueur L), en acier | 02s-sable (Khamsin) |
 | `column` | h | Colonne du souk : base moulurée, fût, chapiteau, sur hauteur h (teintable) | 02s-sable (Khamsin) |
 | `counter` |  | Comptoir de marchand (1,6 x 2,4 m) : caisson en planches verticales dans un cadre (montants d'angle, traverse haute), socle en retrait, plateau débordant, marchandises | 02s-sable (Khamsin) |
-| `lantern` |  | Lanterne marocaine en laiton suspendue par une chaîne (d'après photos) : maillons, dôme en bulbe et sa flèche, corps à six pans vitrés entre des montants, coupelle et goutte en bas ; flamme cuite... | 02s-sable (Khamsin), 02t-givre (Val-Blanc) |
-| `hangLamp` | cool, len = 0.8 | Suspension sous un plafond (posée au plafond, pend de len m) : câble, abat-jour émaillé, ampoule ; sa lumière est cuite dans le volume d'éclairage. | 02s-sable (Khamsin) |
+| `lantern` |  | Lanterne marocaine en laiton suspendue par une chaîne (d'après photos) : maillons, dôme en bulbe et sa flèche, corps à six pans vitrés entre des montants, coupelle et goutte en bas ; flamme cuite... | 02s-sable (Khamsin), 02t-givre (Val-Blanc), 02yo-ferme (Holloway) |
+| `hangLamp` | cool, len = 0.8 | Suspension sous un plafond (posée au plafond, pend de len m) : câble, abat-jour émaillé, ampoule ; sa lumière est cuite dans le volume d'éclairage. | 02s-sable (Khamsin), 02yo-ferme (Holloway), 02yp-galerie (Halcyon) |
 | `stall` | color | Étal de marché (2,4 x 1,2 m) : table, montants, toile tendue (simulée : Maker.toile, tenue aux bords avant et arrière et sur les montants, son lambrequin bat au vent), marchandises. | 02s-sable (Khamsin) |
 
 ### `src/02g-vehicles.js`
@@ -118,7 +120,7 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
-| `car` | model = 'sedan', o = {} | Voiture : model 'sedan' (berline), 'hatch' (citadine), 'suv', 'mpv', 'cross' (familiales hautes), 'offroad' (4x4) ; o : { dust, wreck, rack } (voir carBuild, offroadBuild). | 02g-vehicles, 02s-sable (Khamsin), 02yl-simoun (Simoun) |
+| `car` | model = 'sedan', o = {} | Voiture : model 'sedan' (berline), 'hatch' (citadine), 'suv', 'mpv', 'cross' (familiales hautes), 'offroad' (4x4) ; o : { dust, wreck, rack } (voir carBuild, offroadBuild). | 02g-vehicles, 02s-sable (Khamsin), 02yl-simoun (Simoun), 02yo-ferme (Holloway), 02yp-galerie (Halcyon) |
 | `bicycle` |  |  | 02k-dynprops |
 | `moped` |  | Mobylette (cyclomoteur) sur sa béquille | 02s-sable (Khamsin), 02u-embruns (Kervénec) |
 
@@ -126,7 +128,7 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
-| `truck` | model = 'army', o = {} | Camion : model 'army' (militaire à cabine avancée, façon GBC), 'cargo' (porteur à cabine avancée), 'box' (fourgon de livraison) ; o : { load, reefer, dust, wreck }. Ancienne écriture : PF.truck()... | 02g-vehicles, 02s-sable (Khamsin), 02u-embruns (Kervénec), 02yl-simoun (Simoun), 02yn-french-dream (French Dream) |
+| `truck` | model = 'army', o = {} | Camion : model 'army' (militaire à cabine avancée, façon GBC), 'cargo' (porteur à cabine avancée), 'box' (fourgon de livraison) ; o : { load, reefer, dust, wreck }. Ancienne écriture : PF.truck()... | 02g-vehicles, 02s-sable (Khamsin), 02u-embruns (Kervénec), 02yl-simoun (Simoun), 02yn-french-dream (French Dream), 02yp-galerie (Halcyon) |
 | `busWreck` |  | Bus incendié (11 m) : carcasse percée de baies vides, intérieur calciné, sur les jantes |  |
 
 ### `src/02h-nature.js`
@@ -136,7 +138,7 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
 | `palm` | h = 7, seed = 1, o = {} | Palmier dattier : tronc losangé à pied évasé, couronne dense de palmes arquées en V, palmes sèches pendantes, régimes de dattes ; variantes par o.v (PALM_KINDS) ; o.lite : version allégée pour une... | 02s-sable (Khamsin), 02yl-simoun (Simoun) |
-| `bush` | s = 1 | Buisson (cartes croisées) | 02s-sable (Khamsin) |
+| `bush` | s = 1 | Buisson (cartes croisées) | 02s-sable (Khamsin), 02yo-ferme (Holloway), 02yp-galerie (Halcyon) |
 | `grass` | s = 1 | Touffe d'herbes sèches | 02s-sable (Khamsin) |
 | `bougainvillea` | w = 2.2, h = 2.6 | Bougainvillier grimpant sur une façade (repère de façade : plan du mur en z = 0) | 02s-sable (Khamsin) |
 | `rubble` | seed = 1, r = 1.2 | Gravats : blocs de béton et de brique chanfreinés, poussière | 02s-sable (Khamsin) |
@@ -169,7 +171,7 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
 | `woodpile` | L = 2.4, H = 1.2, D = 0.5 | Bûcher : rondins fendus empilés (bois de bout en façade), petit toit de planches ; longueur L, hauteur H, profondeur D | 02i-hiver, 02t-givre (Val-Blanc) |
-| `fence` | L = 4 | Barrière de bois (poteaux et deux lisses), longueur L le long de x ; sans collision (posée hors des passages) |  |
+| `fence` | L = 4 | Barrière de bois (poteaux et deux lisses), longueur L le long de x ; sans collision (posée hors des passages) | 02yo-ferme (Holloway) |
 | `sled` |  | Luge de bois | 02k-dynprops |
 | `snowman` |  | Bonhomme de neige : trois boules, yeux de charbon, nez en carotte, bras en branches, écharpe et bonnet | 02k-dynprops |
 | `skiOne` |  | Un ski (175 x 8 cm) debout, spatule en +y : teinte de l'estampille. | 02k-dynprops |
@@ -187,8 +189,8 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
 | `xmasTree` | h = 6, base = 0 | Sapin de Noël décoré : épicéa, guirlande en spirale, boules et étoile | 02t-givre (Val-Blanc) |
-| `plankStack` | L = 4, W = 1.2, H = 1.2 | Pile de planches sciées, lits séparés par des liteaux, longueur L le long de z |  |
-| `hayBale` |  | Botte de foin rectangulaire (petite botte, d'après photos) : tranches pressées qui se décalent un peu, deux ficelles qui en font le tour, brins qui dépassent des bouts. | 02k-dynprops, 02yf-meltem (Meltem) |
+| `plankStack` | L = 4, W = 1.2, H = 1.2 | Pile de planches sciées, lits séparés par des liteaux, longueur L le long de z | 02yo-ferme (Holloway), 08m-barricades |
+| `hayBale` |  | Botte de foin rectangulaire (petite botte, d'après photos) : tranches pressées qui se décalent un peu, deux ficelles qui en font le tour, brins qui dépassent des bouts. | 02k-dynprops, 02yf-meltem (Meltem), 02yo-ferme (Holloway) |
 
 ### `src/02j-rail.js`
 
@@ -205,7 +207,7 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
-| `platformBench` |  | Banc de quai : pieds en fonte, lattes de bois, dossier | 02t-givre (Val-Blanc), 02u-embruns (Kervénec) |
+| `platformBench` |  | Banc de quai : pieds en fonte, lattes de bois, dossier | 02t-givre (Val-Blanc), 02u-embruns (Kervénec), 02yp-galerie (Halcyon) |
 | `stationClock` |  | Horloge de quai à deux cadrans, sur potence (accrochée à un mur ou une colonne, repère de façade : mur en z = 0) | 02t-givre (Val-Blanc) |
 | `luggageCart` |  | Chariot à bagages : plateau sur quatre roues, timon, malles, valises et sacs postaux | 02t-givre (Val-Blanc) |
 | `railSignal` |  | Signal ferroviaire : mât, cible ronde, feux (le rouge allumé), échelle | 02t-givre (Val-Blanc) |
@@ -285,7 +287,7 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 
 | Prefab | Paramètres | Description | Posé dans |
 | --- | --- | --- | --- |
-| `tree` | kind, h = 9, r = 3.4, seed = 1, o = {} | Arbre : kind, h (hauteur totale), r (rayon de couronne), seed ; o : shape ('round', 'spread', 'tall'), th (hauteur du tronc nu), lean, n (cartes), trunk ('bark'), sz (taille des cartes) | 02r-serre, 02v-floreal (Hortus), 02w-jardins, 02y-paris, 02yj-stratus (Stratus), 02yn-french-dream (French Dream) |
+| `tree` | kind, h = 9, r = 3.4, seed = 1, o = {} | Arbre : kind, h (hauteur totale), r (rayon de couronne), seed ; o : shape ('round', 'spread', 'tall'), th (hauteur du tronc nu), lean, n (cartes), trunk ('bark'), sz (taille des cartes) | 02r-serre, 02v-floreal (Hortus), 02w-jardins, 02y-paris, 02yj-stratus (Stratus), 02yn-french-dream (French Dream), et 2 autres |
 | `willow` | h = 8, r = 3.4, seed = 1 | Saule pleureur : couronne claire et rideau de brins qui retombent jusqu'à l'eau | 02w-jardins |
 
 **Palmiers, fougères arborescentes, bananiers, bambous**
@@ -500,6 +502,20 @@ Construits une fois en coordonnées locales (posés sur y = 0, face principale v
 | `fdBlockPallet` |  | Palette de parpaings filmée (1,2 x 1,0, 1 m) | 02yn-french-dream (French Dream) |
 | `fdSkip` |  | Benne de chantier (3,6 x 1,8) : tôle jaune, côtés évasés, gravats | 02yn-french-dream (French Dream) |
 
+### `src/02yp-galerie.js` (Halcyon)
+
+**Mannequin de vitrine : socle, jambes, buste, tête lisse (sans visage)**
+
+| Prefab | Paramètres | Description | Posé dans |
+| --- | --- | --- | --- |
+| `galMannequin` |  |  | 02yp-galerie (Halcyon) |
+
+**Chariot de supermarché (prop physique : les morts et les balles le déplacent, il roule)**
+
+| Prefab | Paramètres | Description | Posé dans |
+| --- | --- | --- | --- |
+| `galCart` |  |  | 02yp-galerie (Halcyon) |
+
 ## Props physiques
 
 Objets qui tombent, roulent et volent en éclats (`propType`, README « Props physiques »).
@@ -545,6 +561,7 @@ Objets qui tombent, roulent et volent en éclats (`propType`, README « Props ph
 | `fdNain` | `fdNain` | 4 | clay | `src/02ym-pavillons-kit.js` |
 | `fdMixer` | `fdMixer` |  |  | `src/02ym-pavillons-kit.js` |
 | `fdBrouette` | `fdBrouette` |  |  | `src/02ym-pavillons-kit.js` |
+| `galCart` | `galCart` | 14 | metal | `src/02yp-galerie.js` |
 
 ## Surfaces photo
 
@@ -554,51 +571,51 @@ Photos CC0 ramenées à une plage commune (`tools/build_assets.py`), un fichier 
 | --- | --- | --- | --- | --- |
 | `adobe` | clay_block_wall | Poly Haven | CC0 1.0 | Simoun |
 | `ash` | gravel_stones | Poly Haven | CC0 1.0 | Tephra |
-| `ashlar` | seaworn_sandstone_brick | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Hortus |
-| `asphalt` | Asphalt021 | ambientCG | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Tephra, French Dream |
-| `bark` | bark_willow_02 | Poly Haven | CC0 1.0 | Hortus, Stratus, French Dream |
+| `ashlar` | seaworn_sandstone_brick | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Hortus, Holloway |
+| `asphalt` | Asphalt021 | ambientCG | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Tephra, French Dream, Holloway, Halcyon |
+| `bark` | bark_willow_02 | Poly Haven | CC0 1.0 | Hortus, Stratus, French Dream, Holloway, Halcyon |
 | `barkw` | pine_bark | Poly Haven | CC0 1.0 | Val-Blanc |
 | `boards` | wooden_planks | Poly Haven | CC0 1.0 | Val-Blanc, Kervénec |
 | `brick` | Bricks066 | ambientCG | CC0 1.0 | Khamsin, Kervénec |
-| `burlap` | hessian_230 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Meltem, Stratus, Simoun |
-| `canvas` | Fabric066 | ambientCG | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Meltem, Stratus, Simoun, French Dream |
-| `cardboard` | Cardboard004 | ambientCG | CC0 1.0 | Khamsin, French Dream |
+| `burlap` | hessian_230 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Meltem, Stratus, Simoun, Holloway |
+| `canvas` | Fabric066 | ambientCG | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Meltem, Stratus, Simoun, French Dream, Holloway, Halcyon |
+| `cardboard` | Cardboard004 | ambientCG | CC0 1.0 | Khamsin, French Dream, Holloway, Halcyon |
 | `cobble` | cobblestone_floor_001 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Meltem |
-| `concrete` | concrete_wall_009 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, French Dream |
-| `crate` | brown_planks_09 | Poly Haven | CC0 1.0 | Khamsin, Kervénec |
-| `dirt` | forest_ground_04 | Poly Haven | CC0 1.0 | Stratus, Simoun, French Dream |
+| `concrete` | concrete_wall_009 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, French Dream, Holloway, Halcyon |
+| `crate` | brown_planks_09 | Poly Haven | CC0 1.0 | Khamsin, Kervénec, Holloway, Halcyon |
+| `dirt` | forest_ground_04 | Poly Haven | CC0 1.0 | Stratus, Simoun, French Dream, Holloway, Halcyon |
 | `drystone` | stone_wall | Poly Haven | CC0 1.0 | Meltem |
 | `flagstone` | stone_pathway | Poly Haven | CC0 1.0 | Hortus, Stratus |
 | `galets` | dry_river_pebbles | Poly Haven | CC0 1.0 | Simoun |
 | `humus` | forest_leaves_02 | Poly Haven | CC0 1.0 | Hortus, Stratus |
 | `laine` | Fabric031 | ambientCG | CC0 1.0 | Simoun |
-| `lawn` | aerial_grass_rock | Poly Haven | CC0 1.0 | Hortus, Stratus, French Dream |
+| `lawn` | aerial_grass_rock | Poly Haven | CC0 1.0 | Hortus, Stratus, French Dream, Holloway, Halcyon |
 | `linge` | rough_linen | Poly Haven | CC0 1.0 | Khamsin, Kervénec, Meltem |
 | `mecha` | green_metal_rust | Poly Haven | CC0 1.0 |  |
 | `mechadark` | blue_metal_plate | Poly Haven | CC0 1.0 |  |
-| `paintwood` | distressed_painted_planks | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Meltem, French Dream |
+| `paintwood` | distressed_painted_planks | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Meltem, French Dream, Holloway, Halcyon |
 | `palmbark` | palm_tree_bark | Poly Haven | CC0 1.0 | Khamsin, Simoun |
-| `pathgravel` | gravel_floor_02 | Poly Haven | CC0 1.0 | Hortus, French Dream |
-| `pavers` | Concrete012 | ambientCG | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Meltem, Tephra, French Dream |
+| `pathgravel` | gravel_floor_02 | Poly Haven | CC0 1.0 | Hortus, French Dream, Holloway, Halcyon |
+| `pavers` | Concrete012 | ambientCG | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Meltem, Tephra, French Dream, Holloway, Halcyon |
 | `pise` | excavated_soil_wall | Poly Haven | CC0 1.0 | Simoun |
 | `plaster2` | clay_plaster | Poly Haven | CC0 1.0 | Khamsin, Kervénec |
-| `plaster` | white_plaster_rough_01 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, French Dream |
+| `plaster` | white_plaster_rough_01 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, French Dream, Holloway, Halcyon |
 | `reg` | sandy_gravel_02 | Poly Haven | CC0 1.0 | Simoun |
 | `rock` | rock_face | Poly Haven | CC0 1.0 | Val-Blanc, Kervénec |
-| `rollshutter` | rusty_metal_shutter | Poly Haven | CC0 1.0 | Khamsin, Kervénec, French Dream |
-| `rooftiles` | clay_roof_tiles_03 | Poly Haven | CC0 1.0 | Khamsin, Kervénec, French Dream |
+| `rollshutter` | rusty_metal_shutter | Poly Haven | CC0 1.0 | Khamsin, Kervénec, French Dream, Holloway, Halcyon |
+| `rooftiles` | clay_roof_tiles_03 | Poly Haven | CC0 1.0 | Khamsin, Kervénec, French Dream, Holloway, Halcyon |
 | `rust` | rust_coarse_01 | Poly Haven | CC0 1.0 | Val-Blanc, Kervénec |
-| `sand` | dense_sand | Poly Haven | CC0 1.0 | Meltem, Simoun, French Dream |
+| `sand` | dense_sand | Poly Haven | CC0 1.0 | Meltem, Simoun, French Dream, Holloway |
 | `shutter` | wood_shutter | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem |
-| `slate` | roof_slates_03 | Poly Haven | CC0 1.0 | Val-Blanc, Kervénec, Hortus, French Dream |
+| `slate` | roof_slates_03 | Poly Haven | CC0 1.0 | Val-Blanc, Kervénec, Hortus, French Dream, Holloway, Halcyon |
 | `snow` | snow_02 | Poly Haven | CC0 1.0 | Val-Blanc |
 | `snowpack` | snow_01 | Poly Haven | CC0 1.0 | Val-Blanc |
-| `steel` | Metal062C | ambientCG | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, Tephra, Simoun, French Dream |
-| `stone` | rustic_stone_wall_02 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, Stratus, Simoun |
+| `steel` | Metal062C | ambientCG | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, Tephra, Simoun, French Dream, Holloway, Halcyon |
+| `stone` | rustic_stone_wall_02 | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, Stratus, Simoun, Holloway, Halcyon |
 | `strata` | cliff_side | Poly Haven | CC0 1.0 | Stratus, Simoun |
-| `timber` | rough_wood | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, Tephra, Stratus, Simoun, French Dream |
+| `timber` | rough_wood | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, Tephra, Stratus, Simoun, French Dream, Holloway, Halcyon |
 | `vase` | mud_cracked_dry_riverbed_002 | Poly Haven | CC0 1.0 | Simoun |
-| `wood` | weathered_brown_planks | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, Tephra, Stratus, Simoun, French Dream |
+| `wood` | weathered_brown_planks | Poly Haven | CC0 1.0 | Khamsin, Val-Blanc, Kervénec, Hortus, Meltem, Tephra, Stratus, Simoun, French Dream, Holloway, Halcyon |
 
 ## Surfaces procédurales
 
@@ -687,6 +704,7 @@ Générées sur le GPU au chargement de la carte (`TEXLAB`) ; une surface photo 
 | `tpSignAtlas` |  | `src/02yg-tephra-kit.js` |
 | `tpDecalAtlas` |  | `src/02yg-tephra-kit.js` |
 | `fdSignAtlas` |  | `src/02ym-pavillons-kit.js` |
+| `galSignAtlas` |  | `src/02yp-galerie.js` |
 
 ## Ciels et éclairage
 

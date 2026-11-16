@@ -21,12 +21,17 @@
    survSoftCost coûte d'autant plus que l'obstacle tient, et que d'autres morts s'y pressent déjà), et s'attaque au premier obstacle du chemin.
    - Réserve : on y prend des planches (2 par prise, la réserve s'épuise), les outils (réparations plus rapides, et le pick-up), les clous
      (planches plus solides), les tôles.
-   Réparer remet à neuf la pièce la plus abîmée de l'ouverture (une planche, ou la tôle) : tenir une barricade demande d'y revenir.
+   - VANTAUX (6.3, la galerie) : ce qui ferme l'ouverture elle-même, en plus des planches : rideau ajouré d'une boutique, rideau plein d'un
+     quai, porte d'acier, porte vitrée, rideau coupe-feu (SGATE). Fermé, il ferme les nœuds de l'embrasure et prend les coups après la tôle
+     et les planches ; à zéro il cède pour de bon.
+   Étages : une ouverture porte la hauteur de son plancher (fl) ; ses ancres, ses nœuds fermés et l'action s'y rapportent.
+   Pièces et bâtiments : la carte les déclare (rooms : [nom, x0, x1, z0, z1, y0, y1, bâtiment]) ; une ouverture ext donne sur le dehors.
+   Réparer remet à neuf la pièce la plus abîmée de l'ouverture (une planche, la tôle ou le vantail) : tenir une barricade demande d'y revenir.
    Une seule touche pour tout (E, le bouton d'action de la manette, Ramasser au doigt) : une pression lance l'action, qui va au bout tant
    qu'on reste à portée sans courir ; une autre l'annule. En ligne, l'hôte décide de tout (réserves, planches, meubles) : un invité demande,
    l'hôte applique et publie (09ia-survie.js).
    ========================================================================== */
-const SURV = { open: [], props: [], caches: [], objs: [], navDirty: false };
+const SURV = { open: [], props: [], caches: [], objs: [], navDirty: false, ver: 0 }; // ver : change dès qu'une ouverture, un meuble ou une brèche ouvre ou ferme un passage (survOpenComp)
 const BARR = { boardHp: 150, nails: 1.5, plateHp: 650, nailT: 1.1, fixT: 0.9, plateT: 2.2, takeT: 0.6, reach: 1.7, zk: 1.7, mats: null, geo: null };
 /* Meubles lourds : dimensions (w le long de la face, d en profondeur), points de vie, bas (s'enjambe) */
 const SURV_PROPS = {
@@ -38,7 +43,8 @@ const SURV_PROPS = {
 /* Matières : bois clair, bois fendu, bois éclaté ; tissu, tissu taché ; tôle, tôle cabossée, rouille */
 function survMats() {
   if (BARR.mats) return BARR.mats;
-  const mk = (c, r = 0.88, m = 0) => csmMaterial(new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m }));
+  // (éclairées par le volume cuit, comme les soldats : à l'intérieur, la lumière du ciel ne les atteint plus, elles ne luisent plus dans le noir)
+  const mk = (c, r = 0.88, m = 0) => csmMaterial(volumeLit(new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m })));
   BARR.mats = [mk(0x8a6844), mk(0x5e4630), mk(0x3e2f22), mk(0x6b5140, 0.95), mk(0x45342a, 0.95), mk(0x8a8c88, 0.62, 0.35), mk(0x5f615e, 0.7, 0.3), mk(0x5c3f2b, 0.85, 0.2)];
   BARR.geo = new THREE.BoxGeometry(1, 1, 1);
   return BARR.mats;
@@ -46,13 +52,15 @@ function survMats() {
 /* Ouverture : { kind, axis ('x' : mur le long de x, à z = fixed ; 'z' : le long de z, à x = fixed), fixed, t (épaisseur), a0, a1 (le long du mur),
    b0, b1 (hauteurs), out (+1 ou -1 : côté extérieur, en z pour axis x, en x pour axis z), room } */
 function survOpening(o) {
-  const op = { ...o, id: SURV.open.length, slots: [], prop: null, gate: false, plate: { hp: 0, max: 0, mesh: null, c: null, dent: 0 }, crowd: 0 };
-  op.max = o.kind === 'fenetre' ? 4 : o.kind === 'portail' ? 8 : 5;
+  // fl : hauteur du plancher (b0, b1 sont des hauteurs absolues) ; gate : sorte de vantail (SGATE), closed : fermé au départ ; noBoards : rien à
+  // clouer (rideau coupe-feu) ; brk : pan à brèche qui ferme l'ouverture tant qu'il tient (04d-breches.js) ; ext : donne sur le dehors ; bld : bâtiment
+  const op = { ...o, id: SURV.open.length, slots: [], prop: null, gate: null, plate: { hp: 0, max: 0, mesh: null, c: null, dent: 0 }, crowd: 0, fl: o.fl !== undefined ? o.fl : 0, brk: o.brk !== undefined ? o.brk : -1, ext: o.ext !== undefined ? !!o.ext : true, bld: o.bld || o.room };
+  op.max = o.noBoards ? 0 : o.kind === 'fenetre' ? 4 : o.kind === 'portail' ? 8 : 5;
   const w = o.a1 - o.a0, face = o.fixed + o.out * (o.t / 2 + 0.035);
   const span = (a0, a1, y0, y1, f, th) => (o.axis === 'x' ? { x0: a0, x1: a1, y0, y1, z0: f - th, z1: f + th } : { x0: f - th, x1: f + th, y0, y1, z0: a0, z1: a1 });
   for (let i = 0; i < op.max; i++) {
     let ya, aa0 = o.a0 - 0.12, aa1 = o.a1 + 0.12;
-    if (o.kind === 'portail') { const col = i % 2, row = Math.floor(i / 2); ya = lerp(0.5, o.b1 - 0.5, row / 3); aa0 = col ? o.a0 + w / 2 - 0.05 : o.a0 - 0.12; aa1 = col ? o.a1 + 0.12 : o.a0 + w / 2 + 0.05; }
+    if (o.kind === 'portail') { const col = i % 2, row = Math.floor(i / 2); ya = lerp(o.b0 + 0.5, o.b1 - 0.5, row / 3); aa0 = col ? o.a0 + w / 2 - 0.05 : o.a0 - 0.12; aa1 = col ? o.a1 + 0.12 : o.a0 + w / 2 + 0.05; }
     else ya = lerp(o.b0 + (o.kind === 'fenetre' ? 0.16 : 0.3), o.b1 - 0.16, op.max === 1 ? 0.5 : i / (op.max - 1));
     const b = span(aa0, aa1, ya - 0.08, ya + 0.08, face, 0.03);
     const c = { ...b, m: 'wood', ray: false, noTop: true, barr: op.id, o: { ...b } }; COL.push(c);
@@ -61,14 +69,20 @@ function survOpening(o) {
   // la tôle : par-dessus les planches, le bas de l'ouverture (on tire encore par le haut)
   const pf = o.fixed + o.out * (o.t / 2 + 0.095), py0 = o.b0 + 0.04, py1 = o.b0 + (o.b1 - o.b0) * 0.6, pb = span(o.a0 - 0.14, o.a1 + 0.14, py0, py1, pf, 0.016);
   op.plate.c = { ...pb, m: 'metal', ray: false, noTop: true, barr: op.id, o: { ...pb } }; COL.push(op.plate.c);
+  // le vantail : une boîte dans le plan du mur, sur toute l'ouverture (repliée tant qu'il est ouvert)
+  if (o.gate) {
+    const G = SGATE[o.gate] || SGATE.door, gb = span(o.a0, o.a1, o.b0, o.b1, o.fixed + (o.gateOff || 0), G.th);
+    op.gate = { type: o.gate, hp: 0, max: G.hp, down: false, start: !!o.closed, k: o.closed ? 1 : 0, mesh: null, c: { ...gb, m: G.m, ray: false, noRay: !!G.see, noTop: true, sgate: op.id, o: { ...gb } } };
+    COL.push(op.gate.c);
+  }
   SURV.open.push(op);
   return op;
 }
 const survCollapse = (c) => { c.x0 = c.x1 = c.y0 = c.y1 = c.z0 = c.z1 = 1e6; };
-function survBoardSet(op, s, on) { const c = s.c; if (on) Object.assign(c, c.o); else survCollapse(c); }
+function survBoardSet(op, s, on) { const c = s.c; if (on) Object.assign(c, c.o); else survCollapse(c); SURV.ver++; }
 /* Avant le réseau des bots : planches, tôles et meubles repliés (le réseau passe partout) ; après : les nœuds des portes à fermer, les meubles à
    leur place (NAV.pblock) */
-function survNavOpen() { for (const op of SURV.open) { for (const s of op.slots) survBoardSet(op, s, false); survCollapse(op.plate.c); } for (const p of SURV.props) if (p.c) survCollapse(p.c); }
+function survNavOpen() { for (const op of SURV.open) { for (const s of op.slots) survBoardSet(op, s, false); survCollapse(op.plate.c); if (op.gate) survCollapse(op.gate.c); } for (const p of SURV.props) if (p.c) survCollapse(p.c); }
 function survNavGate() {
   if (!NAV.nx || !SURV.open.length) return;
   const n = NAV.count || NAV.nx.length; NAV.bgate = new Int16Array(NAV.nx.length);
@@ -76,7 +90,8 @@ function survNavGate() {
     if (op.kind === 'fenetre') continue;
     const m = op.t / 2 + 0.45, mid = op.fixed;
     const x0 = op.axis === 'x' ? op.a0 - 0.1 : mid - m, x1 = op.axis === 'x' ? op.a1 + 0.1 : mid + m, z0 = op.axis === 'x' ? mid - m : op.a0 - 0.1, z1 = op.axis === 'x' ? mid + m : op.a1 + 0.1;
-    for (let i = 0; i < n; i++) { const x = NAV.nx[i], z = NAV.nz[i]; if (x >= x0 && x <= x1 && z >= z0 && z <= z1 && NAV.ny[i] < 0.8) NAV.bgate[i] = op.id + 1; }
+    // (les nœuds de son étage : de 35 cm sous son plancher à 80 cm au-dessus ; jusqu'en 6.2.0, ceux du rez-de-chaussée seulement)
+    for (let i = 0; i < n; i++) { const x = NAV.nx[i], z = NAV.nz[i], y = NAV.ny[i]; if (x >= x0 && x <= x1 && z >= z0 && z <= z1 && y > op.fl - 0.35 && y < op.fl + 0.8) NAV.bgate[i] = op.id + 1; }
   }
   if (!NAV.gate) NAV.gate = new Uint16Array(NAV.nx.length); // (navGated n'est appelé que si NAV.gate existe, 03-nav.js)
   for (const p of SURV.props) survPropPlace(p);
@@ -101,12 +116,40 @@ function survPropNav() {
       }
     }
   }
-  for (const z of ZOMBIES) if (z.alive && !z.zNet) z.zRepT = Math.min(z.zRepT, 0.15); // (les chemins en cours passent peut-être par là)
+  survReplanAll(); // (les chemins en cours passent peut-être par là)
+  SURV.ver++;
+}
+/* Un passage a changé : chaque mort reprend son plan bientôt, pas tous à la même image (vingt-quatre recherches de chemin d'un coup faisaient
+   un à-coup) */
+function survReplanAll() { for (const z of ZOMBIES) if (z.alive && !z.zNet) z.zRepT = Math.min(z.zRepT, 0.05 + Math.random() * 0.7); }
+/* Composantes ouvertes : les nœuds que la marche relie sans passer par un nœud fermé (navGated), refaites quand un passage s'ouvre ou se ferme
+   (SURV.ver). Deux points de composantes différentes n'ont aucun chemin ouvert : inutile de le chercher (la recherche parcourait tout ce que le
+   mort pouvait atteindre avant d'échouer ; sur une grande carte, des milliers de nœuds, plusieurs fois par seconde et par mort) */
+const SVOC = { ver: -1, comp: null };
+function survOpenComp() {
+  const N = NAV.count;
+  if (SVOC.ver === SURV.ver && SVOC.comp && SVOC.comp.length === N) return SVOC.comp;
+  let c = SVOC.comp; if (!c || c.length !== N) c = SVOC.comp = new Int32Array(N);
+  c.fill(-1); const st = [], g = !!NAV.gate; let k = 0;
+  for (let i = 0; i < N; i++) {
+    if (c[i] >= 0 || (g && navGated(i))) continue;
+    c[i] = k; st.push(i);
+    while (st.length) { const a = st.pop(); for (let j = NAV.adjStart[a]; j < NAV.adjStart[a + 1]; j++) { const m = NAV.adj[j]; if (c[m] < 0 && !(g && navGated(m))) { c[m] = k; st.push(m); } } }
+    k++;
+  }
+  SVOC.ver = SURV.ver; return c;
+}
+/* Un chemin ouvert peut-il relier a à b (faux : sûrement pas ; vrai : sans doute, findPath le dira) ; sid : nœud de départ imposé */
+function survOpenReach(a, b, sid = -1) {
+  if (!NAV.nx) return false;
+  const s = sid >= 0 ? sid : navNode(a.x, a.y, a.z), e = navNode(b.x, b.y, b.z); if (s < 0 || e < 0) return false;
+  const c = survOpenComp(); return c[s] >= 0 && c[s] === c[e];
 }
 /* Une ouverture est fermée dès qu'une planche y est clouée, qu'une tôle la couvre, ou qu'un meuble la bloque */
-function survOpenShut(op) { return op.plate.hp > 0 || op.slots.some((s) => s.hp > 0) || !!(op.prop && op.prop.hp > 0); }
+function survOpenShut(op) { return op.plate.hp > 0 || op.slots.some((s) => s.hp > 0) || !!(op.prop && op.prop.hp > 0) || survGateShut(op); }
+const survGateShut = (op) => !!op.gate && op.gate.down && op.gate.hp > 0;
 function survOpenClear(op) { return !survOpenShut(op); }
-const survOpenHp = (op) => op.slots.reduce((a, s) => a + Math.max(0, s.hp), 0) + Math.max(0, op.plate.hp) + (op.prop && op.prop.hp > 0 ? op.prop.hp : 0);
+const survOpenHp = (op) => op.slots.reduce((a, s) => a + Math.max(0, s.hp), 0) + Math.max(0, op.plate.hp) + (op.prop && op.prop.hp > 0 ? op.prop.hp : 0) + (survGateShut(op) ? op.gate.hp : 0);
 function survBGated(id) { const g = NAV.bgate ? NAV.bgate[id] : 0; return (g > 0 && survOpenShut(SURV.open[g - 1])) || (!!NAV.pblock && NAV.pblock[id] > 0); }
 /* Coût d'un nœud fermé pour un chemin « soft » (findPath, 03-nav.js) : ce qu'il faudrait abattre ; une brèche fermée (autres modes) reste fermée */
 function survSoftCost(id) {
@@ -116,8 +159,9 @@ function survSoftCost(id) {
   if (pb) { const p = SURV.props[pb - 1]; c += 2.5 + p.hp / 45 + p.crowd * 1.5; }
   const bg = NAV.bgate ? NAV.bgate[id] : 0;
   if (bg) { const op = SURV.open[bg - 1]; if (survOpenShut(op)) c += 3 + survOpenHp(op) / 45 + Math.max(0, op.crowd - 2) * 3; }
-  return c;
+  return c * SVK.soft; // (SVK.soft : le poids de ce qu'il faut forcer, surv.softK de la carte, posé au départ de la partie)
 }
+const SVK = { soft: 1 };
 /* L'obstacle d'un nœud fermé : { t: 'prop', p } ou { t: 'open', op } */
 function survObstacleOf(id) {
   const pb = NAV.pblock ? NAV.pblock[id] : 0; if (pb) return { t: 'prop', p: SURV.props[pb - 1], op: null };
@@ -128,10 +172,14 @@ function survObstacleOf(id) {
 function survOpenAnchor(op, side, out, lat = 0) {
   const s = side === 'out' ? op.out : -op.out, d = op.t / 2 + 0.65, m = (op.a0 + op.a1) / 2 + lat;
   if (op.axis === 'x') out.set(m, 0, op.fixed + s * d); else out.set(op.fixed + s * d, 0, m);
-  out.y = groundHeight(out.x, out.z, 1.2, 0.25);
+  out.y = groundHeight(out.x, out.z, op.fl + 1.2, 0.25);
   return out;
 }
-function survOpenFace(op, out) { const m = (op.a0 + op.a1) / 2; return op.axis === 'x' ? out.set(m, 1.2, op.fixed) : out.set(op.fixed, 1.2, m); }
+function survOpenFace(op, out) { const m = (op.a0 + op.a1) / 2, y = op.fl + 1.2; return op.axis === 'x' ? out.set(m, y, op.fixed) : out.set(op.fixed, y, m); }
+/* Le point de la face de l'ouverture le plus proche de p (une vitrine de 8 m : on cloue au bout où l'on se tient) */
+function survOpenNear(op, p, out) { const a = clamp(op.axis === 'x' ? p.x : p.z, op.a0 + 0.3, op.a1 - 0.3), y = op.fl + 1.2; return op.axis === 'x' ? out.set(a, y, op.fixed) : out.set(op.fixed, y, a); }
+/* Une ouverture qu'un pan à brèche ferme encore (le mur tient) : ni planche, ni passage */
+const survOpenWalled = (op) => op.brk >= 0 && !BRCH.open[op.brk];
 /* Le côté (dehors, dedans) d'un point par rapport à une ouverture */
 function survOpenSide(op, p) { const d = op.axis === 'x' ? p.z - op.fixed : p.x - op.fixed; return d * op.out >= 0 ? 'out' : 'in'; }
 /* Distance à plat d'un point à l'ouverture (au segment de sa face) */
@@ -147,7 +195,7 @@ function survOpenFor(e, g, only) {
   const room = survRoomAt(g); let best = null, bd = 1e9;
   for (const op of SURV.open) {
     if (room && op.room !== room) continue;
-    if (only && op.kind !== only) continue;
+    if ((only && op.kind !== only) || survOpenWalled(op)) continue;
     if (survOpenSide(op, e.pos) === survOpenSide(op, g)) continue; // (déjà du côté de sa proie : cette ouverture ne le rapproche de rien)
     const a = survOpenAnchor(op, survOpenSide(op, e.pos), _sbA), clear = survOpenClear(op);
     const d = hyp(a.x - e.pos.x, a.z - e.pos.z) * (clear ? 0.5 : 1) + (op.kind === 'fenetre' ? 2 : 0) + (clear ? 0 : survOpenHp(op) / 60) + Math.max(0, op.crowd - (op.kind === 'portail' ? 3 : 2)) * 4;
@@ -155,12 +203,15 @@ function survOpenFor(e, g, only) {
   }
   return best;
 }
-/* La pièce (le bâtiment) qui contient un point : d'après les zones nommées des ouvertures (room) et les bornes de la carte */
-function survRoomAt(p) {
-  for (const z of SURV_ROOMS) if (p.x >= z[1] && p.x <= z[2] && p.z >= z[3] && p.z <= z[4]) return z[0];
+/* La pièce qui contient un point, et son bâtiment : d'après les pièces que déclare la carte (rooms : [nom, x0, x1, z0, z1, y0, y1, bâtiment] ;
+   sans hauteurs, toute la hauteur ; sans bâtiment, la pièce est le sien) */
+function survRoomOf(p) {
+  const L = CURMAP.def && CURMAP.def.rooms; if (!L) return null;
+  for (const z of L) if (p.x >= z[1] && p.x <= z[2] && p.z >= z[3] && p.z <= z[4] && (z[5] === undefined || (p.y >= z[5] && p.y < z[6]))) return z;
   return null;
 }
-const SURV_ROOMS = [['maison', -6, 6, -4.5, 4.5], ['grange', -27, -15, -21, -9], ['appentis', 15, 19.5, -17.5, -13.5]];
+function survRoomAt(p) { const z = survRoomOf(p); return z ? z[0] : null; }
+function survBldAt(p) { const z = survRoomOf(p); return z ? z[7] || z[0] : null; }
 const _sbA = new V3(), _sbB = new V3(), _sbC = new V3();
 /* Un coup de mort sur une ouverture : la tôle d'abord, puis la planche du haut, puis le meuble posé derrière */
 function survOpenHit(op, dmg, by) {
@@ -169,6 +220,7 @@ function survOpenHit(op, dmg, by) {
   if (P.hp > 0) { P.hp -= dmg; survPlateFx(op, P.hp <= 0); if (P.hp <= 0) survPlateRemove(op); else survPlateLook(op); survPub('b', op.id); return; }
   const s = op.slots.filter((x) => x.hp > 0).sort((a, b) => b.y - a.y)[0];
   if (s) { s.hp -= dmg; survBoardFx(op, s, s.hp <= 0); if (s.hp <= 0) survBoardRemove(op, s); else survBoardLook(op, s); survPub('b', op.id); return; }
+  if (survGateShut(op)) { survGateHit(op, dmg); return; }
   if (op.prop && op.prop.hp > 0) survPropHit(op.prop, dmg, by, null);
 }
 /* Planches : maillage (créé à la demande), aspect selon ses points de vie, retrait */
@@ -207,18 +259,158 @@ function survPlateLook(op) {
   for (const o of m.children) if (o.userData.body) o.material = BARR.mats[k < 0.3 ? 7 : k < 0.65 ? 6 : 5];
   m.rotation.z = (k < 0.65 ? 0.035 : 0) + (k < 0.3 ? 0.07 : 0) * (op.id % 2 ? 1 : -1); // cabossée, de travers
 }
-function survPlateAdd(op) { const P = op.plate; P.max = BARR.plateHp; P.hp = P.max; Object.assign(P.c, P.c.o); survPlateLook(op); }
-function survPlateRemove(op) { const P = op.plate; P.hp = 0; survCollapse(P.c); if (P.mesh) P.mesh.visible = false; }
+function survPlateAdd(op) { const P = op.plate; P.max = BARR.plateHp; P.hp = P.max; Object.assign(P.c, P.c.o); survPlateLook(op); SURV.ver++; }
+function survPlateRemove(op) { const P = op.plate; P.hp = 0; survCollapse(P.c); if (P.mesh) P.mesh.visible = false; SURV.ver++; }
 function survPlateFx(op, broke) {
   const c = op.plate.c.o, p = _sbA.set((c.x0 + c.x1) / 2, (c.y0 + c.y1) / 2, (c.z0 + c.z1) / 2);
   for (let i = 0; i < (broke ? 14 : 5); i++) FX.add.spawn(p.x + rand(-0.4, 0.4), p.y + rand(-0.3, 0.3), p.z + rand(-0.4, 0.4), rand(-2, 2), rand(0.5, 3), rand(-2, 2), rand(0.15, 0.4), 0.03, 0.01, 4, 2.6, 1.1, 1, 0, 9, 0.5);
   sfxBarr(p, broke ? 'tear' : 'clang');
 }
+/* ---------- Vantaux : portes et rideaux (6.3) ----------
+   grille : rideau ajouré d'une boutique (on tire au travers, nul ne passe), qu'un survivant baisse ou lève ; rollup : rideau plein d'un quai,
+   qui se baisse à la main mais ne se lève qu'avec le courant ; door : porte d'acier (service, issues de secours) ; glass : porte vitrée
+   d'une entrée, que coups, balles et souffles brisent pour de bon ; fire : rideau coupe-feu, que seul le poste de sécurité manœuvre.
+   hp : points de vie ; see : les balles passent ; th : demi-épaisseur ; t : durée de la manœuvre (s) ; user : un survivant le manœuvre ;
+   fix : se répare ; power : ne se lève qu'avec le courant */
+const SGATE = {
+  grille: { hp: 900, see: true, m: 'metal', th: 0.03, t: 2.0, user: true, fix: true },
+  rollup: { hp: 1500, m: 'metal', th: 0.04, t: 2.6, user: true, fix: true, power: true },
+  door: { hp: 450, m: 'metal', th: 0.03, t: 0.3, user: true, fix: true },
+  glass: { hp: 140, m: 'glass', th: 0.03, t: 0.3, user: true, fix: false },
+  fire: { hp: 1800, m: 'metal', th: 0.05, t: 3.0, user: false, fix: true },
+};
+function survGateMats() {
+  if (BARR.gmats) return BARR.gmats;
+  const mk = (o) => csmMaterial(volumeLit(new THREE.MeshStandardMaterial(o)));
+  // grille : maillons tirés d'une petite toile (découpe alpha), qui se répète sur le rideau
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  g.clearRect(0, 0, 64, 64); g.strokeStyle = '#d0d2d4'; g.lineWidth = 5;
+  for (let i = 0; i <= 2; i++) { g.beginPath(); g.moveTo(0, i * 32); g.lineTo(64, i * 32); g.stroke(); }
+  g.lineWidth = 3; for (let i = 0; i <= 4; i++) { g.beginPath(); g.moveTo(i * 16, 0); g.lineTo(i * 16, 64); g.stroke(); }
+  const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.encoding = THREE.sRGBEncoding;
+  BARR.gmats = {
+    grille: mk({ map: tx, color: 0x9a9c9e, roughness: 0.5, metalness: 0.7, alphaTest: 0.5, side: THREE.DoubleSide }),
+    roll: mk({ color: 0x8c9094, roughness: 0.55, metalness: 0.55 }), rollDk: mk({ color: 0x5a5e62, roughness: 0.6, metalness: 0.5 }),
+    door: mk({ color: 0x6f7a72, roughness: 0.6, metalness: 0.35 }), doorDk: mk({ color: 0x3e4440, roughness: 0.7, metalness: 0.3 }),
+    bar: mk({ color: 0xb8bcc0, roughness: 0.3, metalness: 0.85 }), frame: mk({ color: 0x2a2c2e, roughness: 0.45, metalness: 0.7 }),
+    glass: (() => { const m = new THREE.MeshStandardMaterial({ color: 0xb8d0d4, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide }); m.userData.noShadow = true; return m; })(),
+    fire: mk({ color: 0x8a1e18, roughness: 0.6, metalness: 0.4 }), stripe: mk({ color: 0xd8b02a, roughness: 0.6, metalness: 0.2 }),
+  };
+  BARR.gmats.grille.userData.own = [tx];
+  return BARR.gmats;
+}
+/* Maillage d'un vantail, dans le repère de l'ouverture : x le long du mur, y vers le haut (depuis b0), z vers le dehors. userData.leaf : ce qui
+   bouge (le rideau qui monte, la porte qui pivote) */
+function survGateMesh(op) {
+  const G = op.gate; if (G.mesh) return G.mesh;
+  const T = survGateMats(), g = new THREE.Group(), W = op.a1 - op.a0, H = op.b1 - op.b0, leaf = new THREE.Group(); g.add(leaf); g.userData.leaf = leaf;
+  if (G.type === 'grille') {
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(W, H), T.grille); pl.position.y = H / 2; leaf.add(pl);
+    const uv = pl.geometry.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * W / 0.5, uv.getY(i) * H / 0.5);
+    rb(leaf, T.bar, 0, 0.04, 0, W, 0.08, 0.06, 0.01); // la barre du bas
+    rb(g, T.frame, 0, H + 0.14, 0, W + 0.1, 0.28, 0.3, 0.02); // le caisson où il s'enroule
+  } else if (G.type === 'rollup' || G.type === 'fire') {
+    const n = Math.max(6, Math.round(H / 0.16)), m1 = G.type === 'fire' ? T.fire : T.roll, m2 = G.type === 'fire' ? T.fire : T.rollDk;
+    for (let i = 0; i < n; i++) rb(leaf, i % 2 ? m2 : m1, 0, (i + 0.5) * (H / n), 0, W, H / n - 0.008, 0.035, 0.004);
+    rb(leaf, G.type === 'fire' ? T.stripe : T.bar, 0, 0.05, 0, W, 0.1, 0.06, 0.01);
+    rb(g, T.frame, 0, H + 0.16, 0, W + 0.12, 0.32, 0.36, 0.02);
+  } else if (G.type === 'door') {
+    leaf.position.x = -W / 2; // charnière à gauche
+    const body = rb(leaf, T.door, W / 2, H / 2, 0, W - 0.02, H - 0.02, 0.05, 0.006); body.userData.body = true;
+    rb(leaf, T.doorDk, W / 2, H / 2, 0.028, W - 0.24, H - 0.3, 0.008, 0.002);
+    rb(leaf, T.bar, W * 0.55, H * 0.45, 0.06, W * 0.7, 0.04, 0.04, 0.01); rb(leaf, T.bar, W * 0.55, H * 0.45, -0.06, W * 0.7, 0.04, 0.04, 0.01); // barres antipanique
+  } else { // glass : deux vantaux vitrés dans leur cadre
+    for (const s of [-1, 1]) {
+      const v = new THREE.Group(); v.position.x = s * W / 4; leaf.add(v);
+      rb(v, T.frame, 0, H / 2, 0, W / 2 - 0.02, 0.07, 0.06, 0.008).position.y = 0.035;
+      rb(v, T.frame, 0, H - 0.035, 0, W / 2 - 0.02, 0.07, 0.06, 0.008);
+      for (const sx of [-1, 1]) rb(v, T.frame, sx * (W / 4 - 0.045), H / 2, 0, 0.07, H, 0.06, 0.008);
+      const gl = new THREE.Mesh(new THREE.PlaneGeometry(W / 2 - 0.12, H - 0.14), T.glass); gl.position.set(0, H / 2, 0); v.add(gl); v.userData.glass = gl;
+      rb(v, T.bar, -s * (W / 4 - 0.16), H * 0.48, 0.05, 0.04, 0.5, 0.04, 0.01);
+    }
+  }
+  g.traverse((o) => { if (o.isMesh && o.material !== T.glass && o.material !== T.grille) { o.castShadow = true; o.receiveShadow = true; } });
+  const m = (op.a0 + op.a1) / 2;
+  if (op.axis === 'x') g.position.set(m, op.b0, op.fixed + (op.gateOff || 0)); else { g.position.set(op.fixed + (op.gateOff || 0), op.b0, m); g.rotation.y = Math.PI / 2; }
+  if (op.out < 0) g.rotation.y += Math.PI; // (z du repère vers le dehors : rotation d'un quart de tour, le z local va vers +x)
+  scene.add(g); G.mesh = g; return g;
+}
+/* Aspect : ouvert ou fermé (k, de 0 à 1, suit l'état chaque image : survGateAnim), abîmé, cédé */
+function survGateLook(op) {
+  const G = op.gate, m = survGateMesh(op), T = BARR.gmats, H = op.b1 - op.b0, W = op.a1 - op.a0, leaf = m.userData.leaf, k = G.k, dmg = G.max ? 1 - G.hp / G.max : 0;
+  m.visible = true;
+  if (G.type === 'grille' || G.type === 'rollup' || G.type === 'fire') {
+    leaf.visible = G.hp > 0 || G.type !== 'glass'; leaf.position.y = (1 - k) * (H - 0.12); leaf.scale.y = Math.max(0.04, k);
+    leaf.rotation.z = G.hp <= 0 ? 0.12 : dmg > 0.5 ? 0.03 : 0; // cédé : de travers, relevé d'un côté
+    if (G.hp <= 0) { leaf.position.y = H * 0.55; leaf.scale.y = 0.4; }
+  } else if (G.type === 'door') {
+    leaf.visible = G.hp > 0; leaf.rotation.y = (1 - k) * 1.65 * (op.out > 0 ? 1 : -1) * (op.axis === 'x' ? 1 : -1);
+    for (const o of leaf.children) if (o.userData.body) o.material = dmg > 0.6 ? T.doorDk : T.door;
+  } else {
+    leaf.visible = true;
+    leaf.children.forEach((v, i) => { v.position.x = (i ? 1 : -1) * (W / 4 + (1 - k) * (W / 2 - 0.1)); if (v.userData.glass) v.userData.glass.visible = G.hp > 0; });
+  }
+}
+/* Ouvrir ou fermer : la collision tout de suite, le maillage suit (survGateAnim) */
+function survGateSet(op, down) {
+  const G = op.gate; G.down = !!down && G.hp > 0;
+  if (G.down) Object.assign(G.c, G.c.o); else survCollapse(G.c);
+  SURV.ver++; survReplanAll(); survGateLook(op);
+}
+function survGateAnim(dt) {
+  for (const op of SURV.open) {
+    const G = op.gate; if (!G) continue;
+    const want = G.down && G.hp > 0 ? 1 : 0; if (Math.abs(G.k - want) < 1e-3) continue;
+    const sp = 1 / Math.max(0.25, (SGATE[G.type].t || 1) * (G.type === 'grille' && SV.power ? 0.35 : 0.6));
+    G.k = want > G.k ? Math.min(want, G.k + dt * sp) : Math.max(want, G.k - dt * sp); survGateLook(op);
+  }
+}
+/* Quelqu'un dans l'embrasure (on ne referme pas un vantail sur un corps) */
+function survGateBlocked(op) {
+  const b = op.gate.c.o, r = 0.42;
+  for (const e of entities) if (e.alive && !e.off && e.pos.x > b.x0 - r && e.pos.x < b.x1 + r && e.pos.z > b.z0 - r && e.pos.z < b.z1 + r && e.pos.y > op.fl - 0.5 && e.pos.y < op.b1) return true;
+  return false;
+}
+/* Un coup sur le vantail fermé (après la tôle et les planches) ; à zéro, il cède pour de bon */
+function survGateHit(op, dmg) {
+  if (!survLocal()) return;
+  const G = op.gate; if (!survGateShut(op)) return;
+  G.hp -= dmg; const broke = G.hp <= 0;
+  survGateFx(op, broke);
+  if (broke) { G.hp = 0; survGateSet(op, false); survAnnounceGate(op); } else survGateLook(op);
+  survPub('b', op.id);
+}
+/* Une balle ou un souffle sur une porte vitrée : elle éclate (chez l'hôte ; un invité annonce son tir) */
+function survGateShot(op, dmg) {
+  const G = op.gate; if (!G || G.type !== 'glass' || !survGateShut(op)) return;
+  if (!survLocal()) { netEvent({ k: 'sq', a: 'gshot', o: op.id, d: Math.round(dmg) }); return; }
+  survGateHit(op, dmg);
+}
+function survGateBlast(p, r) {
+  if (!SURV.open.length || !survLocal()) return;
+  for (const op of SURV.open) if (op.gate && op.gate.type === 'glass' && survGateShut(op) && survOpenFace(op, _sbA).distanceTo(p) < r * 1.3) survGateHit(op, 999);
+}
+function survGateFx(op, broke) {
+  const G = op.gate, p = survOpenFace(op, _sbA);
+  if (G.type === 'glass') {
+    for (let i = 0; i < (broke ? 26 : 6); i++) FX.add.spawn(p.x + rand(-0.8, 0.8), p.y + rand(-0.9, 0.9), p.z + rand(-0.8, 0.8), rand(-2.5, 2.5), rand(-1, 2), rand(-2.5, 2.5), rand(0.05, 0.14), 0.04, 0.01, 1.6, 1.9, 2.0, 1, 0, 14, 0.6);
+    sfxBarr(p, broke ? 'shatter' : 'crack');
+  } else {
+    for (let i = 0; i < (broke ? 16 : 5); i++) FX.add.spawn(p.x + rand(-0.6, 0.6), p.y + rand(-0.6, 0.6), p.z + rand(-0.6, 0.6), rand(-2, 2), rand(0.5, 3), rand(-2, 2), rand(0.15, 0.4), 0.03, 0.01, 4, 2.6, 1.1, 1, 0, 9, 0.5);
+    sfxBarr(p, broke ? 'tear' : 'clang');
+  }
+}
+/* Un vantail qui cède s'entend et s'annonce (la galerie : les survivants savent par où ils entrent) */
+function survAnnounceGate(op) {
+  const D = CURMAP.def && CURMAP.def.surv; if (!D || !op.name) return;
+  survAnnounce(op.gate.type === 'glass' ? _t('{0} vole en éclats', op.name) : _t('{0} a cédé', op.name), 'warn', survOpenFace(op, _sbA).clone());
+}
+
 /* ---------- Meubles lourds ---------- */
 function survProp(kind, x, y, z, ry) {
   const D = SURV_PROPS[kind] || SURV_PROPS.bookcase;
   const p = { id: SURV.props.length, kind, x, y, z, ry, w: D.w, h: D.h, dd: D.d, hp: D.hp, max: D.hp, low: !!D.low, op: null, carried: null, mesh: null, c: null, home: { x, y, z, ry }, shake: 0, look: -1, crowd: 0 };
-  const b = survPropBox(p); p.c = { ...b, m: 'wood', ray: false, noTop: true, sprop: p.id, o: { ...b } }; COL.push(p.c);
+  const b = survPropBox(p); p.c = { ...b, m: 'wood', ray: false, noTop: true, sprop: p.id, o: { ...b } }; p.ci = COL.length; COL.push(p.c);
   SURV.props.push(p);
   return p;
 }
@@ -259,7 +451,7 @@ function survPropLook(p) {
 function survPropPlace(p) {
   const m = survPropMesh(p); m.position.set(p.x, p.y, p.z); m.rotation.set(0, p.ry, 0); m.visible = p.hp > 0;
   survPropLook(p);
-  if (p.c) { Object.assign(p.c.o, survPropBox(p)); if (p.hp > 0 && !p.carried) Object.assign(p.c, p.c.o); else survCollapse(p.c); }
+  if (p.c) { Object.assign(p.c.o, survPropBox(p)); if (p.hp > 0 && !p.carried) { Object.assign(p.c, p.c.o); if (p.ci !== undefined) hashCol(p.ci); } else survCollapse(p.c); }
 }
 /* Les meubles qui tremblent sous les coups (chaque image) */
 function survPropAnim(dt) {
@@ -295,7 +487,7 @@ function survPropShove(p, dx, dz, d) {
     if (c.x1 > b.x0 + 0.01 && c.x0 < b.x1 - 0.01 && c.z1 > b.z0 + 0.01 && c.z0 < b.z1 - 0.01) return false;
   }
   if (Math.abs(groundHeight(nx, nz, p.y + 0.3, 0.2) - p.y) > 0.12) return false;
-  p.x = nx; p.z = nz; survPropPlace(p); buildHash(); SURV.navDirty = true; sfxBarr(_sbA.set(p.x, p.y + 0.3, p.z), 'drag');
+  p.x = nx; p.z = nz; survPropPlace(p); SURV.navDirty = true; sfxBarr(_sbA.set(p.x, p.y + 0.3, p.z), 'drag');
   return true;
 }
 function survPropBreak(p) {
@@ -303,22 +495,23 @@ function survPropBreak(p) {
   for (let i = 0; i < 22; i++) FX.smoke.spawn(c.x + rand(-0.5, 0.5), c.y + rand(-0.4, 0.4), c.z + rand(-0.5, 0.5), rand(-2, 2), rand(0.3, 2.5), rand(-2, 2), rand(0.3, 0.8), 0.03, 0.02, 0.42, 0.33, 0.25, 1, 1, 9, 0.5);
   sfxBarr(c, 'break');
   p.hp = 0; if (p.op) { p.op.prop = null; p.op = null; } if (p.carried === PL.ent) SACT.carry = null; p.carried = null; p.y = -50;
-  survPropPlace(p); buildHash(); survPropNav(); survPub('p', p.id);
+  survPropPlace(p); survPropNav(); survPub('p', p.id);
 }
 /* ---------- Réserves et objectifs ---------- */
 function survCache(kind, x, y, z, ry) {
   const c = { id: SURV.caches.length, kind, x, y, z, ry, left: 0, max: 0, rt: 0 };
   if (kind === 'planks') DECOR.place(PF.plankStack(2.2, 0.9, 0.55), x, y, z, ry);
   else if (kind === 'metal') { DECOR.save().color([0.5, 0.52, 0.54]).local(1).move(x, y, z).rotY(ry); for (let i = 0; i < 4; i++) DECOR.boxB('steel', -0.7, 0.7, i * 0.025, i * 0.025 + 0.02, -0.45 + i * 0.02, 0.45 + i * 0.02, { bevel: 0.004 }); DECOR.restore(); DECOR.col(x - 0.75, x + 0.75, y, y + 0.1, z - 0.5, z + 0.5, 'metal'); }
+  else if (kind === 'med') { DECOR.save().color([0.86, 0.86, 0.84]).local(1).move(x, y, z).rotY(ry); DECOR.boxB('plastic', -0.22, 0.22, 0, 0.16, -0.14, 0.14, { bevel: 0.02 }); DECOR.color([0.75, 0.1, 0.1]); DECOR.boxB('plastic', -0.035, 0.035, 0.16, 0.165, -0.1, 0.1); DECOR.boxB('plastic', -0.1, 0.1, 0.16, 0.165, -0.035, 0.035); DECOR.restore(); }
   else if (kind !== 'ammo') { DECOR.save().color(kind === 'tools' ? [0.62, 0.16, 0.12] : [0.4, 0.42, 0.44]).local(1).move(x, y, z).rotY(ry); DECOR.boxB('steel', -0.25, 0.25, 0, kind === 'tools' ? 0.22 : 0.14, -0.13, 0.13, { bevel: 0.01 }); DECOR.restore(); }
   SURV.caches.push(c);
   return c;
 }
-function survObjective(kind, x, z) { SURV.objs.push({ kind, x, z, done: false, t: 0 }); }
+function survObjective(kind, x, z, o) { SURV.objs.push(Object.assign({ kind, x, z, done: false, t: 0 }, o)); } // (o : ce qui lui est propre, y, textes, aile)
 /* Nouvelle carte : registres vidés (mapUnload) */
 function survClear() {
   survAmmoClear(); for (const c of SURV.caches) if (c.mesh) scene.remove(c.mesh);
-  for (const op of SURV.open) { for (const s of op.slots) if (s.mesh) scene.remove(s.mesh); if (op.plate.mesh) scene.remove(op.plate.mesh); }
+  for (const op of SURV.open) { for (const s of op.slots) if (s.mesh) scene.remove(s.mesh); if (op.plate.mesh) scene.remove(op.plate.mesh); if (op.gate && op.gate.mesh) scene.remove(op.gate.mesh); }
   for (const p of SURV.props) if (p.mesh) scene.remove(p.mesh);
   SURV.open.length = 0; SURV.props.length = 0; SURV.caches.length = 0; SURV.objs.length = 0; NAV.bgate = null; NAV.pblock = null;
 }
@@ -328,11 +521,12 @@ const SURV_RES = { planks: 0, tools: false, nails: false, metal: 0 };
 /* Début d'une partie de survie : planches de départ, réserves pleines, ouvertures vides, meubles à leur place */
 function survBarrReset() {
   SURV_RES.planks = 6; SURV_RES.tools = false; SURV_RES.nails = false; SURV_RES.metal = 0;
-  for (const c of SURV.caches) c.left = c.kind === 'planks' ? 8 : c.kind === 'metal' ? 4 : c.kind === 'ammo' ? c.max : 1;
+  for (const c of SURV.caches) c.left = c.kind === 'planks' ? c.n || 8 : c.kind === 'metal' ? c.n || 4 : c.kind === 'ammo' ? c.max : c.kind === 'med' ? 2 : 1;
   for (const op of SURV.open) { op.prop = null; op.crowd = 0; for (const s of op.slots) survBoardRemove(op, s); survPlateRemove(op); }
   for (const p of SURV.props) { Object.assign(p, p.home); p.hp = p.max; p.op = null; p.carried = null; p.shake = 0; p.look = -1; survPropPlace(p); }
-  for (const o of SURV.objs) { o.done = false; o.t = 0; }
-  buildHash(); survPropNav();
+  for (const o of SURV.objs) { o.done = false; o.t = 0; o.once = false; }
+  for (const op of SURV.open) if (op.gate) { const G = op.gate; G.hp = G.max; G.k = G.start ? 1 : 0; survGateSet(op, G.start); }
+  survPropNav();
 }
 
 /* ---------- Action (une touche) : ce qu'il y a à faire ici ---------- */
@@ -343,14 +537,22 @@ function survActionAt(e) {
   const p = e.pos, fx = -Math.sin(e.yaw), fz = -Math.cos(e.yaw), R = BARR.reach;
   if (SACT.carry) return { k: 'drop', label: _t('Poser le meuble'), dur: 0, run: () => survPropDrop(e) };
   let best = null, bs = 1e9;
-  const consider = (a, x, z, extra = 0, y = null) => { if (y !== null && Math.abs(y - p.y) > 1.2) return; const dx = x - p.x, dz = z - p.z, d = hyp(dx, dz); if (d > R + extra) return; const f = (dx * fx + dz * fz) / (d || 1), s = d - f * 0.8; if (s < bs) { bs = s; best = a; } };
+  // (pen : un retrait du score, pour qu'une action secondaire au même endroit ne passe pas devant la principale)
+  const consider = (a, x, z, extra = 0, y = null, pen = 0) => { if (y !== null && Math.abs(y - p.y) > 1.2) return; const dx = x - p.x, dz = z - p.z, d = hyp(dx, dz); if (d > R + extra) return; const f = (dx * fx + dz * fz) / (d || 1), s = d - f * 0.8 + pen; if (s < bs) { bs = s; best = a; } };
   const tl = survToolK(e);
   for (const op of SURV.open) {
-    const m = survOpenFace(op, _sbA); if (Math.abs(m.y - 1.2 - p.y) > 1.5) continue;
-    const hurt = (op.plate.hp > 0 && op.plate.hp < op.plate.max * 0.95) || op.slots.some((s) => s.hp > 0 && s.hp < s.max * 0.95), free = op.slots.find((s) => s.hp <= 0);
+    if (Math.abs(op.fl - p.y) > 1.5 || survOpenWalled(op)) continue;
+    const m = survOpenNear(op, p, _sbA), G = op.gate, GD = G && SGATE[G.type];
+    const hurt = (op.plate.hp > 0 && op.plate.hp < op.plate.max * 0.95) || op.slots.some((s) => s.hp > 0 && s.hp < s.max * 0.95) || (G && GD.fix && G.hp > 0 && G.hp < G.max * 0.95), free = op.slots.find((s) => s.hp <= 0);
     if (hurt) consider({ k: 'fix', op, label: _t('Réparer la barricade'), dur: BARR.fixT * tl, run: () => survReq('fix', op.id) }, m.x, m.z, 0.3);
     else if (free && SURV_RES.planks > 0) consider({ k: 'nail', op, label: _t('Clouer une planche ({0})', SURV_RES.planks), dur: BARR.nailT * tl, run: () => survReq('nail', op.id) }, m.x, m.z, 0.3);
-    else if (!free && op.plate.hp <= 0 && SURV_RES.metal > 0) consider({ k: 'plate', op, label: _t('Renforcer avec une tôle ({0})', SURV_RES.metal), dur: BARR.plateT * tl, run: () => survReq('plate', op.id) }, m.x, m.z, 0.3);
+    else if (op.max && !free && op.plate.hp <= 0 && SURV_RES.metal > 0) consider({ k: 'plate', op, label: _t('Renforcer avec une tôle ({0})', SURV_RES.metal), dur: BARR.plateT * tl, run: () => survReq('plate', op.id) }, m.x, m.z, 0.3);
+    // le vantail : l'ouvrir ou le fermer (à portée, d'un côté ou de l'autre ; planches clouées par-dessus : on n'y touche plus)
+    if (G && GD.user && G.hp > 0 && !op.slots.some((s) => s.hp > 0) && op.plate.hp <= 0) {
+      const shut = G.down, roll = G.type !== 'door' && G.type !== 'glass';
+      if (shut && GD.power && !SV.power) consider({ k: 'gate', op, label: _t('Sans courant, le rideau ne se lève pas'), dur: 0, run: () => {} }, m.x, m.z, 0.2, null, 0.4);
+      else consider({ k: 'gate', op, label: shut ? (roll ? _t('Lever le rideau') : _t('Ouvrir la porte')) : roll ? _t('Baisser le rideau') : _t('Fermer la porte'), dur: roll ? GD.t * (SV.power && G.type === 'grille' ? 0.35 : 1) : 0, run: () => survReq('gate', op.id) }, m.x, m.z, 0.2, null, hurt || free ? 0.4 : 0);
+    }
   }
   for (const c of SURV.caches) if (c.left > 0 && survCacheUseful(c)) consider({ k: 'take', label: survCacheLabel(c), dur: BARR.takeT, run: () => survReq('take', c.id) }, c.x, c.z, 0, c.y);
   for (const q of SURV.props) if (q.hp > 0 && !q.carried) consider({ k: 'carry', label: _t('Pousser le meuble'), dur: 0, run: () => survPropTake(e, q) }, q.x, q.z, 0.3 + q.w * 0.25, q.y);
@@ -359,7 +561,7 @@ function survActionAt(e) {
   return best;
 }
 function survCacheLabel(c) {
-  return c.kind === 'planks' ? _t('Prendre des planches') : c.kind === 'tools' ? _t('Prendre la caisse à outils') : c.kind === 'drop' ? _t('Prendre le ravitaillement')
+  return c.kind === 'planks' ? _t('Prendre des planches') : c.kind === 'tools' ? _t('Prendre la caisse à outils') : c.kind === 'drop' ? _t('Prendre le ravitaillement') : c.kind === 'med' ? _t('Prendre une seringue d\u0027adrénaline ({0})', c.left)
     : c.kind === 'metal' ? _t('Prendre une tôle') : c.kind === 'ammo' ? _t('Prendre des munitions ({0})', c.left) : _t('Prendre les clous');
 }
 const survToolK = (e) => (SURV_RES.tools ? 0.62 : 1) * (survRoleOf(e) === 'engineer' ? 0.6 : 1);
@@ -377,7 +579,7 @@ function survActTick(dt) {
   const e = PL.ent;
   if (SACT.carry) survCarryTick(e, dt);
   if (SURV.navDirty) survPropNav();
-  survPropAnim(dt);
+  survPropAnim(dt); survGateAnim(dt);
   const a = SACT.cur;
   if (a) {
     const still = survActionAt(e);
@@ -411,7 +613,7 @@ function survPropDrop(e) {
   const near = survPropSettle(q, e, null);
   // un invité : la place choisie chez lui part chez l'hôte, qui la vérifie et la publie (jusqu'en 6.1.0, le meuble ne bougeait que chez l'invité)
   if (!survLocal()) { q.dropT = MATCH.time; survPropPlace(q); sfxBarr(e.pos, 'drop'); netEvent({ k: 'sq', a: 'drop', o: q.id, x: +q.x.toFixed(2), y: +q.y.toFixed(2), z: +q.z.toFixed(2), r: +q.ry.toFixed(3), op: near ? near.id : -1 }); return; }
-  survPropPlace(q); buildHash(); survPropNav(); sfxBarr(e.pos, 'drop'); survPub('p', q.id);
+  survPropPlace(q); survPropNav(); sfxBarr(e.pos, 'drop'); survPub('p', q.id);
 }
 /* Chez l'hôte : un invité pose le meuble qu'il porte (la place qu'il propose, s'il en est près ; sinon la règle de toujours, contre lui) */
 function survPropDropNet(ev, by) {
@@ -420,7 +622,7 @@ function survPropDropNet(ev, by) {
   if (Number.isFinite(x) && Number.isFinite(z) && Number.isFinite(y) && hyp(x - by.pos.x, z - by.pos.z) < 3.2) { q.x = x; q.z = z; q.y = y; q.ry = Math.round((+ev.r || 0) / (Math.PI / 2)) * (Math.PI / 2); }
   q.carried = null;
   survPropSettle(q, by, ev.op >= 0 ? SURV.open[ev.op | 0] || null : null);
-  survPropPlace(q); buildHash(); survPropNav(); survPub('p', q.id);
+  survPropPlace(q); survPropNav(); survPub('p', q.id);
 }
 /* Où le meuble se pose : contre une ouverture (force : celle-là, si elle est à portée), sinon là s'il tient, sinon contre le porteur, sinon à sa
    dernière place libre. Rend l'ouverture, ou null */
@@ -458,7 +660,9 @@ function survApply(k, id, by) {
     if (op.plate.hp > 0 && op.plate.hp / op.plate.max < wk) { w = 'plate'; wk = op.plate.hp / op.plate.max; }
     for (const s of op.slots) if (s.hp > 0 && s.hp / s.max < wk) { w = s; wk = s.hp / s.max; }
     if (!w) return;
-    if (w === 'plate') { op.plate.hp = op.plate.max; survPlateLook(op); } else { w.hp = w.max; survBoardLook(op, w); }
+    if (op.gate && SGATE[op.gate.type].fix && op.gate.hp > 0 && op.gate.hp / op.gate.max < wk) { w = 'gate'; wk = op.gate.hp / op.gate.max; }
+    if (!w) return;
+    if (w === 'plate') { op.plate.hp = op.plate.max; survPlateLook(op); } else if (w === 'gate') { op.gate.hp = op.gate.max; survGateLook(op); } else { w.hp = w.max; survBoardLook(op, w); }
     sfxBarr(survOpenFace(op, _sbA), 'nail'); survStat(by, 'repairs'); survPub('b', id);
   } else if (k === 'plate') { const op = SURV.open[id]; if (!op || op.plate.hp > 0 || SURV_RES.metal <= 0) return; SURV_RES.metal--; survPlateAdd(op); sfxBarr(survOpenFace(op, _sbA), 'clang'); survStat(by, 'plates'); survPub('b', id); survPub('r'); }
   else if (k === 'take') {
@@ -468,11 +672,23 @@ function survApply(k, id, by) {
     else if (c.kind === 'metal') { c.left--; SURV_RES.metal++; hudMsgTo(by, _t('+1 tôle, de quoi renforcer une ouverture barricadée')); }
     else if (c.kind === 'ammo') { if (!survAmmoBoxTake(c, by)) return; }
     else if (c.kind === 'drop') { if (!survDropTake(c, by)) return; }
+    else if (c.kind === 'med') { c.left--; survMedGrant(by); }
     else { c.left = 0; SURV_RES.nails = true; hudMsgTo(by, _t('Clous trouvés, les planches tiennent mieux')); }
     survPub('r');
   } else if (k === 'carry') { const q = SURV.props[id]; if (q && !q.carried && q.hp > 0) { q.carried = by; if (q.op) { q.op.prop = null; q.op = null; } survCollapse(q.c); survPropNav(); survPub('p', id); } }
   else if (k === 'loot') survLootTake(id, by);
+  else if (k === 'gate') {
+    const op = SURV.open[id], G = op && op.gate; if (!G || G.hp <= 0 || !SGATE[G.type].user || op.slots.some((s) => s.hp > 0) || op.plate.hp > 0) return;
+    if (G.down && SGATE[G.type].power && !SV.power) return;
+    if (!G.down && survGateBlocked(op)) { hudMsgTo(by, _t('Quelque chose bloque le passage')); return; }
+    survGateSet(op, !G.down); sfxBarr(survOpenFace(op, _sbA), G.type === 'door' || G.type === 'glass' ? 'door' : 'roll'); survPub('b', id);
+  }
 }
+/* Seringue d'adrénaline (pharmacie, soins) : on se relèvera seul une fois de plus, et la vie pleine */
+function survMedGrant(by) {
+  if (by === PL.ent) survMedApply(); else if (by && by.isRemote && survLocal()) netEvent({ k: 'ag', to: netIdOf(by), a: 'med' });
+}
+function survMedApply() { SURV_DOWN.self = Math.max(SURV_DOWN.self, 1); PL.ent.health = Math.max(PL.ent.health, 100); hudMsg(_t('Adrénaline : vous vous relèverez seul une fois'), 'xp', 2.4); sfxMech('pickup'); }
 
 /* ---------- Sons (synthèse) : coups de marteau, planche qui craque, qui éclate, meuble traîné, tôle ---------- */
 function sfxBarr(p, kind) {
@@ -487,4 +703,8 @@ function sfxBarr(p, kind) {
   else if (kind === 'take') nz(o, t, 0.18, 'bandpass', 1200, 900, 2, 0.15, 0.01);
   else if (kind === 'clang') { tn(o, t, 0.45, 310, 290, 'square', 0.07, 0.002); tn(o, t, 0.6, 523, 505, 'triangle', 0.08, 0.002); nz(o, t, 0.12, 'bandpass', 3200, 2400, 4, 0.22, 0.001); }
   else if (kind === 'tear') { nz(o, t, 0.5, 'bandpass', 2600, 900, 2, 0.4, 0.002); tn(o, t, 0.5, 240, 120, 'sawtooth', 0.08, 0.002); tn(o, t + 0.1, 0.4, 470, 300, 'square', 0.05, 0.002); }
+  else if (kind === 'crack') { nz(o, t, 0.08, 'highpass', 5200, 4200, 2, 0.3, 0.001); tn(o, t, 0.06, 2400, 1800, 'triangle', 0.06, 0.001); }
+  else if (kind === 'shatter') { for (let i = 0; i < 6; i++) nz(o, t + i * 0.05 + Math.random() * 0.04, 0.18, 'highpass', 6000 - i * 500, 3500, 1.5, 0.35, 0.001); nz(o, t, 0.25, 'bandpass', 2200, 1200, 1, 0.3, 0.002); }
+  else if (kind === 'roll') { nz(o, t, 1.4, 'bandpass', 700, 500, 3, 0.18, 0.08); for (let i = 0; i < 10; i++) tn(o, t + i * 0.12, 0.05, 180, 150, 'square', 0.03, 0.002); }
+  else if (kind === 'door') { nz(o, t, 0.12, 'lowpass', 700, 300, 1, 0.4, 0.002); tn(o, t, 0.18, 120, 70, 'sine', 0.25, 0.002); nz(o, t + 0.02, 0.06, 'bandpass', 2600, 2000, 3, 0.15, 0.001); }
 }

@@ -45,9 +45,15 @@ const zCloth = (base, soft) => ({ style: 'poly', base, soft, mid: ['#3a1612', '#
 SKINS.zfarmer = { name: 'zfarmer', role: '', seed: 141, sym: 'L', parts: ZPARTS, gear: ZGEAR, tone: [[0.7, 0.76, 0.68], [0.7, 0.76, 0.68]], camo: zCloth('#3d4b63', ['#44526b', '#38445a']) }; // salopette de toile bleue
 SKINS.zcivil = { name: 'zcivil', role: '', seed: 557, sym: 'L', parts: ZPARTS, gear: ZGEAR, tone: [[0.7, 0.76, 0.68], [0.7, 0.76, 0.68]], camo: zCloth('#6b645a', ['#736b60', '#625c52']) }; // chemise et pantalon gris-brun
 SKINS.zworker = { name: 'zworker', role: '', seed: 883, sym: 'L', parts: ZPARTS, gear: ZGEAR, tone: [[0.7, 0.76, 0.68], [0.7, 0.76, 0.68]], camo: zCloth('#7a5a36', ['#82613b', '#6f5231']) }; // bleu de travail délavé, roux
-const ZSKINS = ['zfarmer', 'zcivil', 'zworker'];
-/* Une fois par partie de survie : les géométries des tenues des morts (pas de corps construit en pleine vague) */
-function zombiePrebuild() { for (const s of ZSKINS) { soldierGeometry(s, 'hi'); soldierGeometry(s, 'lo'); soldierMaterial(s, 1); } }
+// (la galerie, 6.3 : clients, vigiles, employés en gilet)
+SKINS.zshopper = { name: 'zshopper', role: '', seed: 229, sym: 'L', parts: ZPARTS, gear: ZGEAR, tone: [[0.7, 0.76, 0.68], [0.7, 0.76, 0.68]], camo: zCloth('#5a3b4b', ['#634252', '#4f3442']) }; // pull prune, jean délavé
+SKINS.zguard = { name: 'zguard', role: '', seed: 677, sym: 'L', parts: ZPARTS, gear: ZGEAR, tone: [[0.7, 0.76, 0.68], [0.7, 0.76, 0.68]], camo: zCloth('#2b3345', ['#323b4f', '#262d3d']) }; // uniforme bleu nuit de vigile
+SKINS.zstaff = { name: 'zstaff', role: '', seed: 941, sym: 'L', parts: ZPARTS, gear: ZGEAR, tone: [[0.7, 0.76, 0.68], [0.7, 0.76, 0.68]], camo: zCloth('#7d2b22', ['#86322a', '#70261e']) }; // gilet rouge d'employé
+const ZSKINS = ['zfarmer', 'zcivil', 'zworker', 'zshopper', 'zguard', 'zstaff'];
+/* Les tenues d'une sorte de mort sur la carte chargée (la carte peut les remplacer : surv.skins) */
+const zombieSkins = (kind) => { const S = CURMAP.def && CURMAP.def.surv && CURMAP.def.surv.skins; return (S && S[kind]) || (ZKIND[kind] || ZKIND.shambler).skins; };
+/* Une fois par partie de survie : les géométries des tenues des morts de la carte (pas de corps construit en pleine vague) */
+function zombiePrebuild() { const L = new Set(); for (const k in ZKIND) for (const s of zombieSkins(k)) L.add(s); for (const s of L) { soldierGeometry(s, 'hi'); soldierGeometry(s, 'lo'); soldierMaterial(s, 1); } }
 
 /* ---------- Réserve ---------- */
 function zombieMake() {
@@ -83,7 +89,7 @@ function zombieSpawn(kind, x, z, yaw, mul = {}) {
   e.zs = 'wander'; e.zt = 0; e.zTgt = null; e.zPath = null; e.zRepT = R() * 0.5; e.zAtkT = 0; e.zAtk = 0; e.zStag = 0; e.zFlinch = 0; e.zOb = null; e.zClimb = 0; e.zHeard = null;
   e.zStuck = 0; e.zForceSoft = false; e.zDetour = null; e.zDetourT = 0; e.zShoveT = 0; e.zNearT = 0; e.zClimbCd = 0;
   e.zProg.copy(e.pos); e.zProgT = 0; e.dmgBy.clear(); e.lastForce = null; e.respawnT = 0; e.zHeadOff = false;
-  const skin = K.skins[Math.floor(R() * K.skins.length)]; e.skin = skin; soldierLook(e.model, skin, 1);
+  const SK = zombieSkins(kind), skin = SK[Math.floor(R() * SK.length)]; e.skin = skin; soldierLook(e.model, skin, 1);
   e.model.root.scale.setScalar(1); e.model.rag = null; e.model.sink = 0; e.model.root.visible = true; e.model.cyc = undefined;
   zombiePose(e, 0); layoutSoldier(e.model, true);
   return e;
@@ -138,7 +144,7 @@ function zombieTick(e, dt, now) {
     // qu'il lui reste à abattre (le temps de le finir, compté en mètres de marche) ? il le lâche. Un chemin qui y passe quand même : un obstacle
     // que le réseau ignore, il continue de frapper ; un détour par l'autre bout de la maison pour un meuble presque cassé, aussi
     if ((e.zRepT -= dt) <= 0) {
-      e.zRepT = 3; const T2 = e.zTgt, p = T2 && T2.alive && NAV.nx ? findPath(e.pos, T2.pos) : null;
+      e.zRepT = 3; const T2 = e.zTgt, s0 = T2 && T2.alive && NAV.nx ? zombieStart(e) : -1, p = s0 >= 0 && survOpenReach(e.pos, T2.pos, s0) ? findPath(e.pos, T2.pos, s0) : null;
       const via = p && p.some((q, i) => i > 0 && i < 6 && (ob.t === 'open' ? survOpenDist(ob.op, q) : survPropDist(ob.p, q)) < 1.0);
       const left = ob.t === 'open' ? survOpenHp(ob.op) : ob.p.hp, dps = (e.zDmg * K.barr * BARR.zk) / (K.rate * 0.9);
       if (p && !via && zombiePathLen(p) < T2.pos.distanceTo(e.pos) + 2 + (left / Math.max(1, dps)) * e.zSpd) { e.zOb = null; e.zs = 'hunt'; e.zPath = p; e.zPathI = 1; }
@@ -167,8 +173,8 @@ function zombieSense(e, near, now) {
   if ((e.zSenseT = (e.zSenseT || 0) - 1) > 0) return; e.zSenseT = e.zFar ? 20 : 6; // une fois toutes les quelques images
   if (near) {
     const p = near.e, d = near.d, eye = _zA.set(e.pos.x, e.pos.y + (ZKIND[e.zk].low ? 0.5 : 1.55), e.pos.z), room = survRoomAt(e.pos);
-    // l'odeur passe les planchers (distance vraie) ; dans le même bâtiment, il entend les pas
-    const see = p.pos.distanceTo(e.pos) < ZOMBIE.smell || (room && room === survRoomAt(p.pos)) || (d < ZOMBIE.sight && lineClear(eye, entChest(p, _zB)));
+    // l'odeur passe les planchers (distance vraie) ; dans la même pièce, à moins de 24 m, il entend les pas (la galerie est une seule pièce de 60 m)
+    const see = p.pos.distanceTo(e.pos) < ZOMBIE.smell || (room && d < 24 && room === survRoomAt(p.pos)) || (d < ZOMBIE.sight && lineClear(eye, entChest(p, _zB)));
     if (see) { if (e.zTgt !== p) zombieGroan(e, 'spot'); e.zTgt = p; e.zLostT = now; e.zs = e.zs === 'wander' ? 'hunt' : e.zs; }
     else if (e.zTgt && now - (e.zLostT || 0) > 6) e.zTgt = null;
   }
@@ -214,14 +220,18 @@ const zombiePathLen = (P) => { let L = 0; for (let i = 1; i < P.length; i++) L +
 function zombiePlan(e, g) {
   e.zOb = null; e.zs = e.zTgt ? 'hunt' : 'wander';
   if (!NAV.nx) { e.zPath = null; return; }
-  // (la proie dans un bâtiment dont toutes les portes sont closes, lui dehors : le chemin ouvert n'existe pas, et le chercher parcourait tout le
-  // réseau avant d'échouer ; on passe directement au plan qui franchit)
-  const room = survRoomAt(g), sealed = room && survRoomAt(e.pos) !== room && SURV.open.every((o) => o.room !== room || o.kind === 'fenetre' || survOpenShut(o));
-  if (!e.zForceSoft && !sealed) { e.zPath = findPath(e.pos, g); e.zPathI = 1; if (e.zPath) return; }
+  // (aucun chemin ouvert entre lui et g, les composantes ouvertes le disent tout de suite : le chercher parcourait tout ce que le mort pouvait
+  // atteindre avant d'échouer ; jusqu'en 6.2.0, seule la proie dans un bâtiment aux portes toutes closes était repérée)
+  // (le siège : toujours le chemin le moins coûteux, ce qu'il faudrait forcer compris, pesé par surv.softK ; une porte vitrée à côté plutôt que
+  // 90 m de détour jusqu'à une entrée déjà ouverte. Le même calcul dedans et dehors : un mort entré par le quai, qui reprenait le chemin ouvert
+  // d'abord une fois dedans, ressortait faire le tour, puis rentrait, sur le seuil. Ailleurs, le chemin ouvert d'abord)
+  const s0 = zombieStart(e), open = !SURV.open.length || survOpenReach(e.pos, g, s0);
+  if (!e.zForceSoft && open && !survDef().siege) { e.zPath = findPath(e.pos, g, s0); e.zPathI = 1; if (e.zPath) return; }
   e.zForceSoft = false;
   let best = null, bc = 1e9;
   if (NAV.gate && SURV.open.length + SURV.props.length) {
-    const sp = findPath(e.pos, g, -1, survSoftCost), sid = NAV.softId;
+    const sp = findPath(e.pos, g, s0, survSoftCost), sid = NAV.softId;
+    if (sp && sid < 0) { e.zPath = sp; e.zPathI = 1; return; } // (le chemin « soft » ne passe par rien de fermé : un chemin ouvert, tout simplement)
     if (sp && sid >= 0) {
       const i = sp.findIndex((p) => p.soft), ob = survObstacleOf(sid);
       if (ob && i > 0) {
@@ -242,8 +252,23 @@ function zombiePlan(e, g) {
   if (!best) { e.zPath = null; return; }
   e.zOb = best.ob; e.zPath = best.path; e.zPathI = 1; e.zs = 'toObs';
 }
+/* Le nœud d'où part son chemin : le plus proche qu'il rejoint en ligne droite (navNode prend le plus proche tout court, parfois de l'autre côté
+   d'un mur : collé à la face d'un mur près d'une porte, un plan partait de dedans, le suivant de dehors, et le mort oscillait contre le mur) */
+function zombieStart(e) {
+  const p = e.pos, cx0 = Math.floor(p.x - NAV.x0), cz0 = Math.floor(p.z - NAV.z0); let best = -1, bd = 1e9;
+  for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+    const cx = cx0 + dx, cz = cz0 + dz; if (cx < 0 || cz < 0 || cx >= NAV.W || cz >= NAV.H) continue;
+    for (const id of NAV.cells[cz * NAV.W + cx]) {
+      if (NAV.comp[id] !== NAV.mainComp || (NAV.gate && navGated(id))) continue;
+      const dy = NAV.ny[id] - p.y; if (dy > 0.9 || dy < -1.2) continue;
+      const d = Math.abs(dy) * 3 + hyp(NAV.nx[id] - p.x, NAV.nz[id] - p.z);
+      if (d < bd && navLinkClear(p.x, p.z, p.y, NAV.nx[id], NAV.nz[id], NAV.ny[id])) { bd = d; best = id; }
+    }
+  }
+  return best >= 0 ? best : navNode(p.x, p.y, p.z);
+}
 /* Places devant une ouverture : les morts se répartissent le long du mur (trois de front, plus devant un portail) */
-function zombieLat(e, op) { const w = op.a1 - op.a0, n = op.kind === 'portail' ? 5 : 3; return ((e.id % n) - (n - 1) / 2) * Math.min(0.5, w / n); }
+function zombieLat(e, op) { const w = op.a1 - op.a0, n = Math.max(op.kind === 'portail' ? 5 : 3, Math.min(7, Math.round(w / 1.3))); return ((e.id % n) - (n - 1) / 2) * Math.min(w > 3 ? 0.9 : 0.5, w / n); } // (une vitrine de 8 m : jusqu'à sept de front)
 /* Le point où aller pour frapper l'obstacle */
 function zombieObPoint(e, out) {
   const ob = e.zOb;
@@ -341,7 +366,7 @@ function zombieUnstick(e) {
   if (n === 3) { // un obstacle à portée : il s'y attaque
     const R = ZKIND[e.zk].reach + 0.45;
     for (const p of SURV.props) if (p.hp > 0 && !p.carried && survPropDist(p, e.pos) < R && Math.abs(p.y - e.pos.y) < 1) { e.zOb = { t: 'prop', p, op: null }; e.zs = 'breach'; e.zPath = null; return; }
-    for (const op of SURV.open) if (survOpenShut(op) && survOpenDist(op, e.pos) < R && e.pos.y < op.b0 + 1.2) { e.zOb = { t: 'open', op, p: null }; e.zs = 'breach'; e.zPath = null; return; }
+    for (const op of SURV.open) if (survOpenShut(op) && survOpenDist(op, e.pos) < R && e.pos.y < op.b0 + 1.2 && e.pos.y > op.fl - 1) { e.zOb = { t: 'open', op, p: null }; e.zs = 'breach'; e.zPath = null; return; }
     e.zForceSoft = true; e.zRepT = 0; return;
   }
   if (n === 4) { e.zForceSoft = true; e.zRepT = 0; return; }
@@ -360,7 +385,7 @@ function zombieUnstick(e) {
     const id = navNode(e.pos.x, e.pos.y, e.pos.z), room = survRoomAt(e.pos);
     if (id >= 0) {
       const d = hyp(NAV.nx[id] - e.pos.x, NAV.nz[id] - e.pos.z);
-      if (d < 2.5 && d > 0.4 && survRoomAt(_zA.set(NAV.nx[id], 0, NAV.nz[id])) === room) { e.pos.set(NAV.nx[id], NAV.ny[id], NAV.nz[id]); e.vel.set(0, 0, 0); e.zRepT = 0; SV.unstuck = (SV.unstuck || 0) + 1; return; }
+      if (d < 2.5 && d > 0.4 && survRoomAt(_zA.set(NAV.nx[id], NAV.ny[id], NAV.nz[id])) === room) { e.pos.set(NAV.nx[id], NAV.ny[id], NAV.nz[id]); e.vel.set(0, 0, 0); e.zRepT = 0; SV.unstuck = (SV.unstuck || 0) + 1; return; }
     }
     if (n >= 16) { zombieStow(e); if (survLocal() && SV.phase !== 'over') SV.toSpawn++; SV.unstuck = (SV.unstuck || 0) + 1; }
   }
