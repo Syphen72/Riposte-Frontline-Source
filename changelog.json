@@ -1,5 +1,33 @@
 [
   {
+    "version": "6.3.1",
+    "date": "2026-11-18",
+    "title": "Survie : la tourelle, la galerie",
+    "title_en": "Survival: the turret, the mall",
+    "changes": [
+      {
+        "t": "fixed",
+        "x": "La tourelle et le chien robot ne figent plus la survie. Dès qu'un mort les voyait, une erreur revenait à chaque image, et l'écran restait figé ou noir jusqu'à la fin de la tourelle pendant que la horde avançait.",
+        "x_en": "The turret and the robot dog no longer freeze survival. As soon as a zombie saw them, an error came back every frame, and the screen stayed frozen or black until the turret ran out while the horde kept coming."
+      },
+      {
+        "t": "fixed",
+        "x": "Le garde-corps de l'escalier mécanique ouest d'Halcyon montait à l'envers des marches. Le verre, la main courante et le garde-corps invisible suivent maintenant la pente.",
+        "x_en": "The railing of Halcyon's west escalator sloped the wrong way. The glass, the handrail and the invisible guard now follow the steps."
+      },
+      {
+        "t": "improved",
+        "x": "Les boutiques d'Halcyon sont aménagées. Panneaux muraux, faux plafonds et spots, affiches et banderoles, portiques antivol, étiquettes de prix, marchandise tombée, et pour chaque boutique ce qui lui est propre (aquariums peuplés, pince à peluches, flippers, guitares, bacs à disques, machine à pop-corn, vestiaires et lit de camp du poste de sécurité, réserves remplies).",
+        "x_en": "Halcyon's shops are furnished. Wall panels, ceiling tiles and spotlights, posters and banners, security gates, price strips, fallen stock, and each shop's own fittings (stocked aquariums, a claw machine, pinball tables, guitars, record bins, a popcorn machine, the security office's lockers and camp bed, filled stockrooms)."
+      },
+      {
+        "t": "improved",
+        "x": "Les escaliers mécaniques d'Halcyon ont leurs nez de marche jaunes, leurs paliers d'acier et une main courante de caoutchouc enroulée sur ses pieds.",
+        "x_en": "Halcyon's escalators have yellow step edges, steel landing plates and a rubber handrail wrapped around its end posts."
+      }
+    ]
+  },
+  {
     "version": "6.3.0",
     "date": "2026-11-06",
     "title": "Survie : la galerie marchande",

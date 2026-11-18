@@ -67,7 +67,7 @@ function boxC(key, cx, y0, cz, w, h, d, o = {}) {
   const thin = o.collide === false && Math.min(w, h, d) < 0.12 && key !== 'glass' && key !== 'lamp' && !o.cast;
   const k = LEGACY_KEY[key] || key, M = DECOR, rot = o.rot || 0;
   M.save().move(cx, y0, cz).rotY(rot).color(o.tint);
-  M.cls = thin ? 1 : 0;
+  M.cls = o.cls !== undefined ? o.cls : thin ? 1 : 0; // o.cls (Breachline) : classe imposée (1 : détail sans ombre, masqué au loin ; 2 : menu détail, masqué plus tôt)
   if (rot === 0 && !o.localUV) M.world(1); else M.local(1);
   if (o.uv && TEXSCALE[k]) M.uvS = o.uv / TEXSCALE[k];
   M.aoFn = o.ao === false ? null : (x, y, z, nx, ny) => aoAt(y, o) * (ny < -0.5 ? 0.6 : 1);

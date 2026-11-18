@@ -17,7 +17,9 @@ async function openGame(o = {}) {
   if (o.countdown !== true) await pg.addInitScript(`window.MATCH_COUNTDOWN = ${JSON.stringify(o.countdown === undefined ? 0 : +o.countdown)}`);
   if (o.init) await pg.addInitScript(o.init); // o.init : script exécuté avant la page (simuler le mode application, par exemple)
   const logs = [];
-  pg.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(`[${m.type()}] ${m.text()}`); });
+  // (6.3.1) la liste reste vivante : avant, openGame en rendait une copie prise au chargement, et les erreurs levées pendant un banc n'y
+  // arrivaient jamais (la tourelle qui figeait l'écran en survie est passée ainsi) ; les échecs de requête (ERR_FAILED) sont écartés à l'entrée
+  pg.on('console', (m) => { if ((m.type() === 'error' || m.type() === 'warning') && !m.text().includes('ERR_FAILED')) logs.push(`[${m.type()}] ${m.text()}`); });
   pg.on('pageerror', (e) => logs.push(`[pageerror] ${e}`));
   await pg.route('**/*', async (r) => {
     const u = r.request().url();
@@ -32,6 +34,6 @@ async function openGame(o = {}) {
   await pg.waitForFunction(() => typeof MATCH !== 'undefined' && MATCH.state === 'menu', null, { timeout: 600000, polling: 500 });
   // la carte n'est construite qu'au lancement d'une partie (les versions plus anciennes la construisaient au démarrage)
   if (!o.noMap) await pg.evaluate(() => (typeof mapEnsure === 'function' ? mapEnsure(Settings.map) : null));
-  return { browser: b, page: pg, logs: logs.filter((l) => !l.includes('ERR_FAILED')) };
+  return { browser: b, page: pg, logs };
 }
 module.exports = { openGame, REPO, HERE };

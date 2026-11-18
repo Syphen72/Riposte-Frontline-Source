@@ -2,7 +2,7 @@
 
 Produite à partir du code par `python3 tools/dev/assets.py`, que `build.py` lance à chaque construction : ne pas la modifier à la main. Tout le jeu est construit par le code (README, « Direction artistique : tout en code ») ; seules les textures photo, les ciels et les HDRI viennent de fichiers, tous en CC0. La description d'un asset est le commentaire écrit au-dessus de sa définition : pour la changer, changer le commentaire.
 
-223 prefabs, 40 props physiques, 47 surfaces photo, 62 surfaces procédurales, 15 atlas dessinés au chargement, 8 ciels photographiés, 3 HDRI, 19 armes, 18 accessoires.
+223 prefabs, 40 props physiques, 47 surfaces photo, 62 surfaces procédurales, 16 atlas dessinés au chargement, 8 ciels photographiés, 3 HDRI, 19 armes, 18 accessoires.
 
 ## Cartes
 
@@ -705,6 +705,7 @@ Générées sur le GPU au chargement de la carte (`TEXLAB`) ; une surface photo 
 | `tpDecalAtlas` |  | `src/02yg-tephra-kit.js` |
 | `fdSignAtlas` |  | `src/02ym-pavillons-kit.js` |
 | `galSignAtlas` |  | `src/02yp-galerie.js` |
+| `galPosterAtlas` |  | `src/02yq-galerie-boutiques.js` |
 
 ## Ciels et éclairage
 

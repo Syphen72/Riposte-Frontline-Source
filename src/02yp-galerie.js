@@ -99,7 +99,7 @@ function galTvTex() {
   g.putImageData(im, 0, 0);
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding; return t;
 }
-function galKit() { fdKit(); TEX.galSigns = galSignAtlas(); }
+function galKit() { fdKit(); TEX.galSigns = galSignAtlas(); TEX.galPost = galPosterAtlas(); } // (affiches des boutiques : 02yq-galerie-boutiques.js)
 function galMaterials(M) {
   makeFdMaterials(M);
   // enseignes lumineuses (allumées avec le courant ; galSignF vacille), écrans, verre des vitrines et du garde-corps, néons de service
@@ -109,6 +109,8 @@ function galMaterials(M) {
   MAT.galSignE = basic({ map: TEX.galSigns.map, color: new THREE.Color(1.3, 1.3, 1.3) }); // issues de secours : sur batterie, toujours allumées
   const tv = galTvTex(); MAT.galTV = basic({ map: tv, color: new THREE.Color(0.7, 0.75, 0.8) }); MAT.galTV.userData.own = [tv];
   MAT.galExit = basic({ color: new THREE.Color(0.25, 1.6, 0.6) });
+  MAT.galNeon = basic({ vertexColors: true, color: new THREE.Color(1.4, 1.4, 1.4) }); // néons des boutiques (teinte de la boîte), avec le courant
+  M('galPost', { tex: 'galPost', rough: 0.55, env: 0.25, macro: 0.04, scale: 1, noNormal: true }); MAT.galPost.userData.noShadow = true; // affiches, éclairées comme le décor
   const gl = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, opacity: 0.18, depthWrite: false, roughness: 0.05, metalness: 0.1, envMapIntensity: 0.55, side: THREE.DoubleSide });
   gl.userData.noShadow = true; gl.userData.noAO = true; gl.userData.noReceive = true; MAT.galGlass = gl;
   M('galFloor', { tex: 'concrete', scale: 5, macro: 0.18, env: 1.0, rough: 0.26, dust: 0.1 }); // sol du mail : béton poli, qui luit sous les lampes
@@ -310,6 +312,7 @@ function galShops() {
     gLamp(xc - (S.x1 - S.x0) * 0.22, top - 0.02, zc, 1.2, 0.3, true, 1.1, 7); gLamp(xc + (S.x1 - S.x0) * 0.22, top - 0.02, zc, 1.2, 0.3, true, 1.1, 7);
     // les étagères, comptoirs, meubles de chaque sorte de boutique ; d : profondeur depuis la vitrine
     galFit(S, y0, f, sg, (d) => f + sg * d);
+    galShopDress(S, y0, f, sg, (d) => f + sg * d); // l'habillage (02yq-galerie-boutiques.js)
     // à l'étage sud : la réserve du fond (z de 18 à 21), sa porte
     if (S.lv && !n) gWall('x', GL.sb, S.x0, S.x1, SL, RF - SL, [gDoor(S.x1 - 1.5)], { tint: GPAL.wall2 });
   }
@@ -322,8 +325,12 @@ function galFit(S, y0, f, sg, Z) {
     const za = Math.min(Z(d0), Z(d1)), zb = Math.max(Z(d0), Z(d1));
     box('paint', x - 0.04, x + 0.04, y0, y0 + h, za, zb, { tint: frame, collide: false }); box('paint', x - 0.3, x + 0.3, y0, y0 + 0.14, za, zb, { tint: frame, collide: false });
     M.col(x - 0.3, x + 0.3, y0, y0 + h, za, zb, 'metal');
+    // (6.3.1) bouts de gondole : panneau plein, l'affiche de la boutique côté allée
+    for (const [z, s] of [[za, -1], [zb, 1]]) { box('paint', x - 0.3, x + 0.3, y0, y0 + h, z, z + s * 0.02, { tint: frame, collide: false, cls: 1 }); const pk = GQ.kp[S.kind]; if (pk !== undefined && h > 1.4) gPoster(x, y0 + h * 0.56, z + s * 0.024, 0.46, 0, s, GQ.po[pk]); }
     for (let k = 1; k <= 4; k++) {
       const y = y0 + (k * h) / 5 - 0.18; box('paint', x - 0.3, x + 0.3, y - 0.02, y, za, zb, { tint: frame, collide: false });
+      // (6.3.1) bandeau des prix au bord de la tablette, une étiquette jaune de loin en loin
+      for (const s of [-1, 1]) { box('paint', x + s * 0.3 - 0.004, x + s * 0.3 + 0.004, y - 0.05, y, za, zb, { tint: [0.96, 0.96, 0.94], collide: false, cls: 2 }); for (let q = za + 0.2, j = 0; q < zb - 0.1; q += 0.45, j++) if ((j + k) % 3 === 0) box('paint', x + s * 0.305 - 0.003, x + s * 0.305 + 0.003, y - 0.045, y - 0.01, q, q + 0.06, { tint: [1, 0.85, 0.1], collide: false, cls: 2 }); }
       for (const s of [-1, 1]) for (let i = 0; i < Math.floor((zb - za) / 0.3); i++) if (R() < 0.85) { const c = cols[Math.floor(R() * cols.length)], zz = za + 0.04 + i * 0.3, hh = 0.12 + R() * 0.2; box('cardboard', x + s * 0.06, x + s * 0.27, y, y + hh, zz, zz + 0.24, { tint: c, collide: false }); }
     }
   };
@@ -427,6 +434,39 @@ function galFit(S, y0, f, sg, Z) {
   }
 }
 
+/* Habillage d'un escalier mécanique (pied en za, haut en zb, au rez-de-chaussée et à l'étage) : nez de marche et bords jaunes, paliers d'acier
+   strié aux deux bouts avec leur peigne, main courante de caoutchouc noir qui déborde en palier et s'enroule dans un pied d'acier (le pied
+   arrête les soldats ; les centres de case, à 0,44 m, restent libres) */
+function galEscalatorTrim(x0, x1, za, zb) {
+  const { SL } = GL, M = DECOR, dir = Math.sign(zb - za), n = Math.round(SL / 0.2), Y = [0.95, 0.78, 0.12], len = Math.abs(zb - za);
+  for (let i = 0; i < n; i++) {
+    const s0 = i / n, s1 = (i + 1) / n, ze = za + dir * len * s0, y = s1 * SL, zf = za + dir * len * s1;
+    box('paint', x0 + 0.05, x1 - 0.05, y - 0.012, y + 0.004, Math.min(ze, ze + dir * 0.05), Math.max(ze, ze + dir * 0.05), { tint: Y, collide: false });
+    for (const x of [x0 + 0.06, x1 - 0.1]) box('paint', x, x + 0.04, y - 0.012, y + 0.004, Math.min(ze, zf), Math.max(ze, zf), { tint: Y, collide: false });
+  }
+  for (const [z, y, s] of [[za, 0, -dir], [zb, SL, dir]]) {
+    // palier : plaque d'acier strié, peigne jaune contre la première marche
+    const zo = z + s * 1.1;
+    box('steel', x0, x1, y, y + 0.02, Math.min(z, zo), Math.max(z, zo), { tint: [0.6, 0.62, 0.64], collide: false });
+    for (let k = 1; k < 7; k++) { const zz = z + s * k * 0.15; box('dark', x0 + 0.08, x1 - 0.08, y + 0.02, y + 0.026, zz - 0.01, zz + 0.01, { collide: false }); }
+    box('paint', x0 + 0.04, x1 - 0.04, y + 0.02, y + 0.035, Math.min(z, z + s * 0.08), Math.max(z, z + s * 0.08), { tint: Y, collide: false });
+  }
+  for (const x of [x0, x1]) {
+    const xo = x === x0 ? x0 + 0.02 : x1 - 0.02, zf = za - dir * 0.95, zt = zb + dir * 0.95;
+    // pieds d'acier aux deux bouts (le flanc qui enferme la main courante), sur 10 cm de large : à 0,43 m au moins des centres de case.
+    // Ils mordent de 5 cm sur le garde-corps invisible : bout à bout sur une ligne de centres de case (z = 3,5), le lien de marche passait
+    // entre les deux boîtes (navLinkClear suit une ligne sans épaisseur) et un mort s'y coinçait au pied de l'escalier
+    const za2 = za + dir * 0.05, zb2 = zb - dir * 0.05;
+    box('steel', xo - 0.05, xo + 0.05, 0, 0.98, Math.min(za2, zf), Math.max(za2, zf), { tint: [0.7, 0.72, 0.74], m: 'metal' });
+    box('steel', xo - 0.05, xo + 0.05, SL, SL + 0.98, Math.min(zb2, zt), Math.max(zb2, zt), { tint: [0.7, 0.72, 0.74], m: 'metal' });
+    // main courante : du pied, le long de la pente, jusqu'au haut, enroulée aux deux bouts
+    const pts = [[xo, 0.62, zf - dir * 0.02], [xo, 0.86, zf - dir * 0.08], [xo, 1.0, zf + dir * 0.06], [xo, 1.02, za], [xo, SL + 1.02, zb], [xo, SL + 1.0, zt - dir * 0.06], [xo, SL + 0.86, zt + dir * 0.08], [xo, SL + 0.62, zt + dir * 0.02]];
+    M.save().color([0.05, 0.05, 0.05]); M.cls = 1; M.tube('rubber', 0.034, pts, 6); M.restore();
+  }
+  // sous l'escalier : le caisson d'acier brossé (le dessous de la rampe), une plinthe sombre
+  for (const x of [x0, x1]) box('dark', x + (x === x0 ? -0.04 : 0), x + (x === x0 ? 0 : 0.04), 0, 0.12, Math.min(za, zb), Math.max(za, zb), { collide: false });
+}
+
 /* ---------- L'atrium : escaliers mécaniques à l'arrêt, garde-corps de verre, fontaine, kiosques, bancs, suspensions ---------- */
 function galAtrium() {
   const { SL, RF } = GL, M = DECOR;
@@ -439,20 +479,21 @@ function galAtrium() {
   rail('x', -4, -13, -10); rail('x', -4, -7, -2); rail('x', 4, -13, -2); rail('z', -13, -4, 4); rail('z', -2, -4, 4);
   rail('x', -4, 2, 13); rail('x', 4, 2, 7); rail('x', 4, 10, 13); rail('z', 2, -4, 4); rail('z', 13, -4, 4);
   rail('z', 24, -9, 9);
-  // escaliers mécaniques à l'arrêt : marches d'acier, flancs, mains courantes ; dessous plein (ramp)
+  // escaliers mécaniques à l'arrêt : marches d'acier, flancs, mains courantes ; dessous plein (ramp). za : le pied (rez-de-chaussée), zb : le
+  // haut (l'étage). (Jusqu'en 6.3.1, le verre, la main courante et le garde-corps invisible de l'escalier ouest prenaient les hauteurs de la
+  // rampe, rangées par z croissant : ils montaient à l'envers des marches.)
   for (const [x0, x1, za, zb] of [[-10, -7, 3.5, -4], [7, 10, -3.5, 4]]) {
-    const z0 = Math.min(za, zb), z1 = Math.max(za, zb);
+    const z0 = Math.min(za, zb), z1 = Math.max(za, zb), yAt = (t) => lerp(0, SL, t);
     ramp(x0, x1, z0, z1, 'z', za < zb ? 0 : SL, za < zb ? SL : 0, 'steel', [0.72, 0.74, 0.76], { mat: 'steel' });
     for (const x of [x0, x1]) {
-      // flanc d'acier brossé, main courante noire (en pente)
-      M.save().color([0.62, 0.64, 0.66]); M.cls = 0;
-      const xo = x + (x === x0 ? -0.025 : 0.025), hb = za < zb ? 0 : SL, ht = za < zb ? SL : 0;
-      M.restore(); // (le flanc des marches, plein, est celui de la rampe : un habillage d'acier clair ; au-dessus, un garde-corps de verre en pente)
-      M.save().color([0.85, 0.95, 0.95]); M.cls = 1; M.quad('galGlass', [xo, hb + 0.05, za], [xo, ht + 0.05, zb], [xo, ht + 1.0, zb], [xo, hb + 1.0, za], [x === x0 ? -1 : 1, 0, 0]); M.restore();
-      railing(xo, null, 0, za, zb, 'z', [hb, ht], [0.06, 0.06, 0.06]);
+      // au-dessus du flanc plein (celui de la rampe), un garde-corps de verre en pente et sa main courante noire
+      const xo = x + (x === x0 ? -0.025 : 0.025);
+      M.save().color([0.85, 0.95, 0.95]); M.cls = 1; M.quad('galGlass', [xo, 0.05, za], [xo, SL + 0.05, zb], [xo, SL + 1.0, zb], [xo, 1.0, za], [x === x0 ? -1 : 1, 0, 0]); M.restore();
+      RAILS.push({ x: xo, y: 0, a0: za, a1: zb, axis: 'z', ys: [0, SL] }); // (scellé par railingsSeal ; la main courante est celle de galEscalatorTrim)
     }
+    galEscalatorTrim(x0, x1, za, zb);
     // garde-corps invisible au-dessus des flancs (on ne saute pas du haut de l'escalier dans l'atrium)
-    for (const x of [x0, x1]) for (let i = 0; i < 6; i++) { const t0 = i / 6, t1 = (i + 1) / 6, ya = lerp(za < zb ? 0 : SL, za < zb ? SL : 0, Math.min(t0, t1)), yb = lerp(za < zb ? 0 : SL, za < zb ? SL : 0, Math.max(t0, t1)), zz0 = lerp(za, zb, t0), zz1 = lerp(za, zb, t1); COL.push({ x0: x - 0.03, x1: x + 0.03, y0: Math.min(ya, yb) + 0.2, y1: Math.max(ya, yb) + 1.9, z0: Math.min(zz0, zz1), z1: Math.max(zz0, zz1), m: 'glass', ray: false, noRay: true, inv: true, noTop: true }); }
+    for (const x of [x0, x1]) for (let i = 0; i < 6; i++) { const t0 = i / 6, t1 = (i + 1) / 6, ya = yAt(t0), yb = yAt(t1), zz0 = lerp(za, zb, t0), zz1 = lerp(za, zb, t1); COL.push({ x0: x - 0.03, x1: x + 0.03, y0: Math.min(ya, yb) + 0.2, y1: Math.max(ya, yb) + 1.9, z0: Math.min(zz0, zz1), z1: Math.max(zz0, zz1), m: 'glass', ray: false, noRay: true, inv: true, noTop: true }); }
   }
   // la fontaine (bassin rond, muret à hauteur d'assise), les kiosques (lunettes, téléphones), bancs, bacs à plantes, poubelles
   M.save().color([0.78, 0.76, 0.72]).move(-4.5, 0, 0); M.cyl('concrete', 1.6, 0.48, 24, {}); M.restore();
@@ -684,6 +725,7 @@ function galUpdate(t, dt) {
   if (MAT.galSignF) MAT.galSignF.color.setScalar(on ? (Math.random() < 0.06 ? 0.2 : 1.3) : Math.random() < 0.02 ? 0.5 : 0.08);
   if (MAT.galTV) { const m = MAT.galTV.map; if (m) { m.offset.set(Math.random(), Math.random()); } MAT.galTV.color.setScalar(on ? 0.75 : 0.06); }
   if (MAT.galExit) MAT.galExit.color.setRGB(0.25, Math.random() < 0.01 ? 0.4 : 1.6, 0.6);
+  if (MAT.galNeon) MAT.galNeon.color.setScalar(damp(MAT.galNeon.color.r, on ? 1.4 : 0.06, 5, dt));
   GAL.t += dt;
 }
 /* La fuite : le courant revient, les rideaux du quai se lèvent (et les morts de la cour entrent) */

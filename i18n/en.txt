@@ -1922,3 +1922,12 @@ Le poste de sécurité est sans courant ⇒ The security office has no power
 Forcer la cage de la réserve ⇒ Break open the stockroom cage
 La cage est cadenassée, il faut des outils ⇒ The cage is padlocked, you need tools
 La cage est ouverte, planches, tôles, clous et munitions ⇒ The cage is open, planks, metal sheets, nails and ammo
+Nouvelle collection ⇒ New collection
+Meilleures ventes ⇒ Bestsellers
+Vaccin contre la grippe ⇒ Flu shots
+2 pour 1 ⇒ 2 for 1
+Disparus ⇒ Missing
+Évacuation ⇒ Evacuation
+Par ordre des autorités ⇒ By order of the authorities
+Quittez la galerie sans attendre ⇒ Leave the mall immediately
+Point de rassemblement au parking ⇒ Assembly point in the parking lot

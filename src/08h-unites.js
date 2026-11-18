@@ -71,7 +71,9 @@ const UNIT_SEEN = { turret: 30, dog: 28, mine: 9, claymore: 9 };
 function unitsBotsTick(dt) {
   if (!UNITS.length) return;
   for (const b of entities) {
-    if (b.isPlayer || !b.alive || b.isRemote || (MATCH.online && !b.netBot) || b.inMecha || !b.model) continue;
+    // (les morts de la survie sont des entités sans arme : armsW levait une erreur à chaque image dès qu'un mort voyait la tourelle ou le chien,
+    // la fin de l'image sautait et l'écran restait figé, en solo, jusqu'à la fin de l'unité)
+    if (b.isPlayer || b.isZombie || !b.alive || b.isRemote || (MATCH.online && !b.netBot) || b.inMecha || !b.model) continue;
     if (b.visible && b.target && b.target.alive) { b.uTgt = null; continue; } // un soldat en vue passe avant
     if ((b.uT -= dt) > 0) continue;
     const eye = entEye(b, _unA);
